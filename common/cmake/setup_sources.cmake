@@ -1,0 +1,24 @@
+﻿
+file(GLOB_RECURSE PROJECT_SOURCES
+		"${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/source/*.cxx"
+		"${CMAKE_CURRENT_SOURCE_DIR}/source/*.c"
+		"${CMAKE_CURRENT_SOURCE_DIR}/modules/*.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/modules/*.cxx"
+		"${CMAKE_CURRENT_SOURCE_DIR}/modules/*.c"
+)
+
+file(GLOB_RECURSE PROJECT_HEADERS
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/*.hxx"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+)
+
+file(GLOB_RECURSE PROJECT_MODULES
+		"${CMAKE_CURRENT_SOURCE_DIR}/modules/*.ixx"    # MSVC
+		"${CMAKE_CURRENT_SOURCE_DIR}/modules/*.cppm"   # Clang/GCC
+		"${CMAKE_CURRENT_SOURCE_DIR}/modules/*.cxxm"
+)
+
+target_sources(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCES} ${PROJECT_HEADERS})
+target_sources(${PROJECT_NAME} PUBLIC FILE_SET out_modules TYPE CXX_MODULES FILES ${PROJECT_MODULES})
