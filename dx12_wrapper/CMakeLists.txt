@@ -15,36 +15,41 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
-		GLFW
-		GIT_REPOSITORY https://github.com/glfw/glfw.git
-		GIT_TAG        3.4
+		DirectXMath
+		GIT_REPOSITORY https://github.com/microsoft/DirectXMath.git
+		GIT_TAG        main
 		GIT_SHALLOW    TRUE
 )
 
 FetchContent_Declare(
-		fmt
-		GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-		GIT_TAG        12.1.0
+		DirectXTK12
+		GIT_REPOSITORY https://github.com/microsoft/DirectXTK12.git
+		GIT_TAG        main
 		GIT_SHALLOW    TRUE
 )
 
-FetchContent_MakeAvailable(DirectX-Headers GLFW fmt)
+FetchContent_MakeAvailable(DirectX-Headers DirectXMath DirectXTK12)
 
 add_library(dx12_wrapper)
 
 include(../common/cmake/setup_sources.cmake)
 
-target_include_directories(dx12_wrapper PRIVATE
+target_include_directories(dx12_wrapper PUBLIC
+		${CMAKE_SOURCE_DIR}/include
 		../external
 		${DirectX-Headers_SOURCE_DIR}/include
-		${GLFW_SOURCE_DIR}/include
+		${DirectXTK12_SOURCE_DIR}/Inc
 		${fmt_SOURCE_DIR}/include
 )
 
-target_link_libraries(dx12_wrapper PRIVATE
+target_link_libraries(dx12_wrapper PUBLIC
+		d3d12.lib
+		dxgi.lib
+		dxguid.lib
 		Microsoft::DirectX-Headers
 		Microsoft::DirectX-Guids
-		glfw
+		DirectXMath
+		DirectXTK12
 )
 
 set(DX12_LIBARY_PATH ${CMAKE_BINARY_DIR}/dx12_wrapper)

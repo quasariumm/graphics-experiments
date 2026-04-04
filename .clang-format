@@ -29,7 +29,7 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
-ColumnLimit: 120
+ColumnLimit: 128
 ContinuationIndentWidth: 8
 EmptyLineAfterAccessModifier: Always
 IncludeCategories: 
@@ -41,6 +41,7 @@ IncludeCategories:
     Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentPPDirectives: BeforeHash
+IndentExportBlock: false
 IndentWidth: 4
 InsertNewlineAtEOF: true
 MacroBlockBegin: ''
@@ -54,4 +55,7 @@ SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 TabWidth: 4
 UseTab: Always
+BinPackArguments: false
+AllowAllConstructorInitializersOnNextLine: true
+AllowAllArgumentsOnNextLine: false
 ...
