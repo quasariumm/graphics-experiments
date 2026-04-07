@@ -1,0 +1,139 @@
+---
+Checks: "-*,\
+
+misc-misplaced-const,\
+bugprone-return-const-ref-from-parameter,\
+readability-non-const-parameter,\
+readability-const-return-type,\
+readability-make-member-function-const,\
+avoid-const-params-in-decls,\
+move-const-arg,\
+cppcoreguidelines-pro-type-const-cast,\
+cppcoreguidelines-avoid-const-or-ref-data-members,\
+portability-std-allocator-const,\
+bugprone-unused-return-value,\
+
+readability-qualified-auto,\
+modernize-use-auto,\
+
+performance-unnecessary-value-param,\
+cppcoreguidelines-rvalue-reference-param-not-moved,\
+readability-redundant-function-ptr-dereference,\
+readability-reference-to-constructed-temporary,\
+bugprone-forwarding-reference-overload,\
+bugprone-multi-level-implicit-pointer-conversion,\
+bugprone-move-forwarding-reference,\
+bugprone-pointer-arithmetic-on-polymorphic-object,\
+readability-delete-null-pointer,\
+readability-container-data-pointer,\
+cppcoreguidelines-misleading-capture-default-by-value,\
+modernize-pass-by-value,\
+readability-avoid-return-with-void-value,\
+
+readability-container-size-empty,\
+modernize-replace-auto-ptr,\
+bugprone-optional-value-conversion,\
+readability-container-data-pointer,\
+readability-container-contains,\
+performance-inefficient-algorithm,\
+
+readability-redundant-smartptr-get,\
+readability-uniqueptr-delete-release,\
+readability-redundant-function-ptr-dereference,\
+modernize-use-nullptr,\
+misc-uniqueptr-reset-release,\
+bugprone-unique-ptr-array-mismatch,\
+bugprone-shared-ptr-array-mismatch,\
+
+readability-enum-initial-value,\
+bugprone-unused-raii,\
+bugprone-forwarding-reference-overload,\
+cppcoreguidelines-avoid-do-while,\
+cppcoreguidelines-avoid-goto,\
+cppcoreguidelines-init-variables,\
+cppcoreguidelines-misleading-capture-default-by-value,\
+misc-unused-using-decls,\
+misc-unused-parameters,\
+misc-unconventional-assign-operator,\
+misc-static-assert,\
+misc-redundant-expression,\
+misc-non-copyable-objects,\
+misc-confusable-identifiers,\
+modernize-deprecated-headers,\
+bugprone-use-after-move,\
+
+readability-identifier-naming,\
+"
+
+WarningsAsErrors: '*'
+FormatStyle: file
+SystemHeaders: false
+HeaderFilterRegex: '.*'
+ExcludeHeaderFilterRegex: '.*\\external\\.*'
+# lower_case
+# UPPER_CASE
+# camelBack
+# CamelCase
+# camel_Snake_Back
+# Camel_Snake_Case
+# aNy_CasE
+# Leading_upper_snake_case
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.ConceptCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.ConstantMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.MemberPrefix
+    value: m_
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+  - key: readability-identifier-naming.NamespaceCase
+    value: CamelCase
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.ScopedEnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.ValueTemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
+    value: '.*VISITABLE_STRUCT.*'

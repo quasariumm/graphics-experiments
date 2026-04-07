@@ -1,12 +1,15 @@
 ﻿module;
 
+#include <filesystem>
+#include <fstream>
 #include <string>
+#include <vector>
 #include <wrl/client.h>
 
-export module core.dx_common;
-import log;
+export module dx_wrapper.core.dx_common;
+import dx_wrapper.log;
 
-using Microsoft::WRL::ComPtr;
+export using Microsoft::WRL::ComPtr;
 
 export void CheckHR(HRESULT hr)
 {
@@ -33,4 +36,19 @@ export void CheckHR(HRESULT hr)
 			Log::Critical("A DirectX 12 error has occured");
 		}
 	}
+}
+
+export std::vector<char> ReadFileBinary(const std::filesystem::path& path)
+{
+	if (!std::filesystem::exists(path))
+	{
+		Log::Error("File {} nor found", path.string());
+		return {};
+	}
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    auto size = file.tellg();
+    file.seekg(0);
+    std::vector<char> data(size);
+    file.read(data.data(), size);
+    return data;
 }

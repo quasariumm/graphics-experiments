@@ -5,11 +5,9 @@
 
 #include <format>
 
-#define WINDOWS_LEAN_AND_MEAN
-#define NOMINMAX
 #include <windows.h>
 
-export module log;
+export module dx_wrapper.log;
 
 namespace Log
 {

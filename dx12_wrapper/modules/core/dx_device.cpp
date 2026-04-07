@@ -1,20 +1,21 @@
 ﻿module;
 
-#define UNICODE
-#include <dxgi1_6.h>
+#include <d3dx12.h>
 #include <filesystem>
 #include <memory>
 #include <xstring>
 #include <wrl/client.h>
 
+#include <ResourceUploadBatch.h>
+
 /*
  * DX Device
  */
 
-module core.dx_device;
-import core.dx_common;
-import helper.device_resources;
-import log;
+module dx_wrapper.core.dx_device;
+import dx_wrapper.core.dx_common;
+import dx_wrapper.helper.device_resources;
+import dx_wrapper.log;
 
 using namespace Microsoft::WRL;
 
@@ -37,14 +38,15 @@ LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARA
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-DxDevice::DxDevice(const int width, const int height, const LPCWSTR title) : m_windowWidth(width), m_windowHeight(height)
+DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
+	: m_resourceUpload{}, m_windowWidth(width), m_windowHeight(height)
 {
 	// Create the window
-	WNDCLASSEX wc = { sizeof(wc) };
+	WNDCLASSEX wc = {sizeof(wc)};
 
 	wc.lpfnWndProc	 = WindowProc;
 	wc.hInstance	 = GetModuleHandle(nullptr);
-	wc.lpszClassName = L"DX Wrapper Window";
+	wc.lpszClassName = "DX Wrapper Window";
 	wc.hCursor		 = LoadCursor(nullptr, IDC_ARROW);
 	::RegisterClassEx(&wc);
 
@@ -52,7 +54,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCWSTR title) : m_w
 	::AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND window = ::CreateWindowEx(0,
-								   L"DX Wrapper Window",
+								   "DX Wrapper Window",
 								   title,
 								   WS_OVERLAPPEDWINDOW,
 								   CW_USEDEFAULT,
@@ -67,27 +69,29 @@ DxDevice::DxDevice(const int width, const int height, const LPCWSTR title) : m_w
 
 	::ShowWindow(window, SW_SHOW);
 
-	m_deviceResources = std::make_unique<DX::DeviceResources>(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D32_FLOAT, 3);
-	m_deviceResources->SetWindow(window, width, height);
-	m_deviceResources->CreateDeviceResources();
-	m_deviceResources->CreateWindowSizeDependentResources();
+	m_deviceResources = DirectX::DeviceResources{DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D32_FLOAT, 3};
+	m_deviceResources.SetWindow(window, width, height);
+	m_deviceResources.CreateDeviceResources();
+	m_deviceResources.CreateWindowSizeDependentResources();
+
+	m_resourceUpload= std::make_unique<DirectX::ResourceUploadBatch>(m_deviceResources.GetD3DDevice());
 }
 
-void DxDevice::SetWindowTitle(const std::wstring& title) const { SetWindowText(m_deviceResources->GetWindow(), title.c_str()); }
+void DxDevice::SetWindowTitle(const std::string& title) const { SetWindowText(m_deviceResources.GetWindow(), title.c_str()); }
 
 void DxDevice::SetWindowSize(int width, int height)
 {
 	m_windowWidth  = width;
 	m_windowHeight = height;
-	m_deviceResources->WindowSizeChanged(width, height);
+	m_deviceResources.WindowSizeChanged(width, height);
 }
 
 void DxDevice::SetWindowPos(int xpos, int ypos) const
-{ ::SetWindowPos(m_deviceResources->GetWindow(), HWND_TOPMOST, xpos, ypos, m_windowWidth, m_windowHeight, SWP_NOACTIVATE); }
+{ ::SetWindowPos(m_deviceResources.GetWindow(), HWND_TOPMOST, xpos, ypos, m_windowWidth, m_windowHeight, SWP_NOACTIVATE); }
 
 void DxDevice::SetWindowFullscreenState(bool active, int width, int height, int xpos, int ypos)
 {
-	const HWND hwnd = m_deviceResources->GetWindow();
+	const HWND hwnd = m_deviceResources.GetWindow();
 	if (active)
 	{
 		// Save current placement so we can restore it
@@ -108,17 +112,17 @@ void DxDevice::SetWindowFullscreenState(bool active, int width, int height, int 
 
 void DxDevice::SetWindowIcon(const std::filesystem::path& filename) const
 {
-	const HWND hwnd = m_deviceResources->GetWindow();
+	const HWND hwnd = m_deviceResources.GetWindow();
 
 	auto hIconSmall = static_cast<HICON>(::LoadImage(nullptr,
-													 filename.c_str(),
+													 filename.string().c_str(),
 													 IMAGE_ICON,
 													 GetSystemMetrics(SM_CXSMICON),
 													 GetSystemMetrics(SM_CYSMICON),
 													 LR_LOADFROMFILE));
 
 	auto hIconBig = static_cast<HICON>(::LoadImage(nullptr,
-												   filename.c_str(),
+												   filename.string().c_str(),
 												   IMAGE_ICON,
 												   GetSystemMetrics(SM_CXICON),
 												   GetSystemMetrics(SM_CYICON),
@@ -133,7 +137,7 @@ void DxDevice::SetWindowIcon(const std::filesystem::path& filename) const
 
 void DxDevice::SetWindowCursorState(bool active) const
 {
-	const HWND hwnd = m_deviceResources->GetWindow();
+	const HWND hwnd = m_deviceResources.GetWindow();
 	if (active)
 	{
 		::ShowCursor(TRUE);
@@ -151,20 +155,20 @@ void DxDevice::SetWindowCursorState(bool active) const
 
 void DxDevice::BeginFrame()
 {	
-	m_deviceResources->Prepare();
+	m_deviceResources.Prepare();
 }
 
 void DxDevice::EndFrame()
 {
-	m_deviceResources->Present();
+	m_deviceResources.Present();
 	
 	MSG msg{};
-	if (::GetMessage(&msg, m_deviceResources->GetWindow(), 0, 0) <= 0)
+	if (::GetMessage(&msg, m_deviceResources.GetWindow(), 0, 0) <= 0)
 	{
 		m_shouldClose = true;
 		return;
 	}
 	
-	TranslateMessage(&msg);
-	DispatchMessage(&msg);
+	::TranslateMessage(&msg);
+	::DispatchMessage(&msg);
 }

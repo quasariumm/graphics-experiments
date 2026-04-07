@@ -3,7 +3,6 @@
 //
 module;
 
-#define NOMINMAX
 #include <algorithm>
 #include <dxgi1_6.h>
 #include <directx/d3d12.h>
@@ -15,10 +14,10 @@ module;
 #include <system_error>
 #include <wrl/wrappers/corewrappers.h>
 
-module helper.device_resources;
-import core.dx_common;
+module dx_wrapper.helper.device_resources;
+import dx_wrapper.core.dx_common;
 
-using namespace DX;
+using namespace DirectX;
 
 using Microsoft::WRL::ComPtr;
 

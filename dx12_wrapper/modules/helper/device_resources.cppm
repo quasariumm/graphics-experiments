@@ -11,9 +11,9 @@ module;
 #include <directx/dxgiformat.h>
 #include <wrl/wrappers/corewrappers.h>
 
-export module helper.device_resources;
+export module dx_wrapper.helper.device_resources;
 
-namespace DX
+namespace DirectX
 {
     // Provides an interface for an application that owns DeviceResources to be notified of the device being lost or created.
     export interface IDeviceNotify
@@ -62,7 +62,7 @@ namespace DX
         RECT GetOutputSize() const noexcept { return m_outputSize; }
 
         // Direct3D Accessors.
-        ID3D12Device*               GetD3DDevice() const noexcept          { return m_d3dDevice.Get(); }
+        ID3D12Device2*              GetD3DDevice() const noexcept          { return m_d3dDevice.Get(); }
         IDXGISwapChain3*            GetSwapChain() const noexcept          { return m_swapChain.Get(); }
         IDXGIFactory4*              GetDXGIFactory() const noexcept        { return m_dxgiFactory.Get(); }
         HWND                        GetWindow() const noexcept             { return m_window; }
@@ -113,7 +113,7 @@ namespace DX
         UINT                                                m_backBufferIndex;
 
         // Direct3D objects.
-        Microsoft::WRL::ComPtr<ID3D12Device>                m_d3dDevice;
+        Microsoft::WRL::ComPtr<ID3D12Device2>               m_d3dDevice;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>   m_commandList;
         Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_commandQueue;
         Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_commandAllocators[MAX_BACK_BUFFER_COUNT];
