@@ -31,6 +31,9 @@ LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARA
 		PostQuitMessage(0);
 		device->m_shouldClose = true;
 		break;
+	case WM_SIZE:
+		device->SetWindowSize(LOWORD(lp), HIWORD(lp));
+		break;
 	default:
 		break;
 	}
@@ -75,6 +78,11 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 	m_deviceResources.CreateWindowSizeDependentResources();
 
 	m_resourceUpload= std::make_unique<DirectX::ResourceUploadBatch>(m_deviceResources.GetD3DDevice());
+}
+
+DxDevice::~DxDevice()
+{
+	m_deviceResources.WaitForGpu();
 }
 
 void DxDevice::SetWindowTitle(const std::string& title) const { SetWindowText(m_deviceResources.GetWindow(), title.c_str()); }
@@ -156,14 +164,27 @@ void DxDevice::SetWindowCursorState(bool active) const
 void DxDevice::BeginFrame()
 {	
 	m_deviceResources.Prepare();
+	
+	auto* commandList = m_deviceResources.GetCommandList();
+	const auto viewport = m_deviceResources.GetScreenViewport();
+	const auto rect = m_deviceResources.GetScissorRect();
+	commandList->RSSetViewports(1, &viewport);
+	commandList->RSSetScissorRects(1, &rect);
 }
 
 void DxDevice::EndFrame()
 {
-	m_deviceResources.Present();
+	try {
+		m_deviceResources.Present();
+	}
+	catch (std::exception&) {
+		m_deviceResources.HandleDeviceLost();
+	}
 	
 	MSG msg{};
-	if (::GetMessage(&msg, m_deviceResources.GetWindow(), 0, 0) <= 0)
+	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
+	
+	if (msg.message == WM_QUIT)
 	{
 		m_shouldClose = true;
 		return;

@@ -22,6 +22,7 @@ export class DxDevice
 public:
 
 	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window");
+	~DxDevice();
 
 	[[nodiscard]] int GetWidth() const { return m_windowWidth; }
 	[[nodiscard]] int GetHeight() const { return m_windowHeight; }
@@ -41,6 +42,7 @@ public:
 
 	DirectX::ResourceUploadBatch& GetResourceUpload() const { return *m_resourceUpload; }
 
+	ID3D12Device2*				  operator*() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12Device2*				  operator->() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12Device2*				  GetDXDevice() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12GraphicsCommandList*	  GetDXDirectComList() const { return m_deviceResources.GetCommandList(); }

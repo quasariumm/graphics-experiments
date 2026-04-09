@@ -1,4 +1,8 @@
-﻿struct VSIn
+﻿#include "shader_resources.hlsli"
+
+ConstantBuffer<CameraConstBuffer> CameraCB : register(b0);
+
+struct VSIn
 {
     float4 Position : POSITION;
 };
@@ -11,6 +15,6 @@ struct VSOut
 VSOut main(VSIn IN) 
 {
     VSOut OUT;
-    OUT.Position = IN.Position;
+    OUT.Position = mul(CameraCB.m_shaderCamera.m_viewProjectionMatrix, IN.Position);
     return OUT;
 }
