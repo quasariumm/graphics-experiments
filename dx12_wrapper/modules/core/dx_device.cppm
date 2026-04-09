@@ -14,7 +14,7 @@
  */
 
 export module dx_wrapper.core.dx_device;
-import dx_wrapper.helper.device_resources;
+import dx_wrapper.external.device_resources;
 
 export class DxDevice
 {

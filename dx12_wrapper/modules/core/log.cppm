@@ -7,7 +7,7 @@
 
 #include <windows.h>
 
-export module dx_wrapper.log;
+export module dx_wrapper.core.log;
 
 namespace Log
 {

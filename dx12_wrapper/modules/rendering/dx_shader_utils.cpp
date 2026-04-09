@@ -8,7 +8,7 @@
 
 module dx_wrapper.rendering.dx_shader_utils;
 import dx_wrapper.core.dx_common;
-import dx_wrapper.log;
+import dx_wrapper.core.log;
 
 namespace fs = std::filesystem;
 

@@ -1,8 +1,8 @@
 ﻿module;
 
-// #define GLM_GTC_INLINE_NAMESPACE to inline glm::gtc into glm
-// #define GLM_EXT_INLINE_NAMESPACE to inline glm::ext into glm
-// #define GLM_GTX_INLINE_NAMESPACE to inline glm::gtx into glm
+#define GLM_GTC_INLINE_NAMESPACE
+#define GLM_EXT_INLINE_NAMESPACE
+#define GLM_GTX_INLINE_NAMESPACE
 
 #define GLM_FORCE_INTRINSICS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -11,7 +11,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-export module glm;
+export module dx_wrapper.external.glm;
 
 export namespace glm {
 	// Base types
@@ -340,6 +340,23 @@ export namespace glm {
 	using glm::dquat;
 	using glm::f64quat;
 
+	// Operators
+	using glm::operator+;
+	using glm::operator-;
+	using glm::operator*;
+	using glm::operator/;
+	using glm::operator%;
+	using glm::operator^;
+	using glm::operator&;
+	using glm::operator|;
+	using glm::operator~;
+	using glm::operator<<;
+	using glm::operator>>;
+	using glm::operator==;
+	using glm::operator!=;
+	using glm::operator&&;
+	using glm::operator||;
+
 	// Core functions
 	using glm::abs;
 	using glm::acos;
@@ -637,6 +654,7 @@ export namespace glm {
 		using glm::frustum;
 		using glm::greaterThan;
 		using glm::greaterThanEqual;
+		using glm::identity;
 		using glm::infinitePerspective;
 		using glm::intBitsToFloat;
 		using glm::inverse;

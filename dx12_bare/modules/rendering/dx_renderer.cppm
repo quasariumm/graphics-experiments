@@ -3,10 +3,9 @@
 #include <filesystem>
 #include <vector>
 
-export module dx_bare.dx_render;
-import dx_wrapper.core.dx_device;
-import dx_wrapper.rendering.gltf;
-import dx_wrapper.rendering.dx_pipelinestate;
+export module dx_bare.rendering.dx_render;
+import dx_wrapper.core;
+import dx_wrapper.rendering;
 
 export class DxRenderer
 {

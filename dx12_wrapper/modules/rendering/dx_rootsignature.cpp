@@ -6,7 +6,7 @@
 #include "d3dx12_root_signature.h"
 
 module dx_wrapper.rendering.dx_rootsignature;
-import dx_wrapper.log;
+import dx_wrapper.core.log;
 
 DxRootSignature& DxRootSignature::Add32BitConstants(const uint32_t shaderRegister, const uint32_t sizeBytes,
 													const D3D12_SHADER_VISIBILITY visibility, const uint32_t space)

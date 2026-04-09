@@ -12,7 +12,7 @@
 export module dx_wrapper.rendering.gltf;
 import dx_wrapper.core.dx_device;
 import dx_wrapper.core.dx_common;
-import glm;
+import dx_wrapper.external.glm;
 
 export struct Vertex
 {

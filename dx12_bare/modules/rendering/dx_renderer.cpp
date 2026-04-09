@@ -3,7 +3,7 @@
 #include <d3d12.h>
 #include <filesystem>
 
-module dx_bare.dx_render;
+module dx_bare.rendering.dx_render;
 
 DxRenderer::DxRenderer(DxDevice* device)
 {

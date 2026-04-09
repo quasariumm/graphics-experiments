@@ -14,7 +14,7 @@ module;
 #include <system_error>
 #include <wrl/wrappers/corewrappers.h>
 
-module dx_wrapper.helper.device_resources;
+module dx_wrapper.external.device_resources;
 import dx_wrapper.core.dx_common;
 
 using namespace DirectX;

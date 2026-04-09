@@ -1,7 +1,7 @@
-import dx_wrapper.core.dx_device;
-import dx_wrapper.rendering.gltf;
-import dx_bare.dx_render;
-import dx_wrapper.rendering.dx_pipelinestate;
+import dx_wrapper.core;
+import dx_wrapper.rendering;
+
+import dx_bare.rendering.dx_render;
 
 int main()
 {

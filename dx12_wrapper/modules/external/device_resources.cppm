@@ -11,7 +11,7 @@ module;
 #include <directx/dxgiformat.h>
 #include <wrl/wrappers/corewrappers.h>
 
-export module dx_wrapper.helper.device_resources;
+export module dx_wrapper.external.device_resources;
 
 namespace DirectX
 {

@@ -13,9 +13,9 @@
  */
 
 module dx_wrapper.core.dx_device;
+import dx_wrapper.external.device_resources;
 import dx_wrapper.core.dx_common;
-import dx_wrapper.helper.device_resources;
-import dx_wrapper.log;
+import dx_wrapper.core.log;
 
 using namespace Microsoft::WRL;
 

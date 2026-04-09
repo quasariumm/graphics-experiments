@@ -7,7 +7,7 @@
 #include <wrl/client.h>
 
 export module dx_wrapper.core.dx_common;
-import dx_wrapper.log;
+import dx_wrapper.core.log;
 
 export using Microsoft::WRL::ComPtr;
 
