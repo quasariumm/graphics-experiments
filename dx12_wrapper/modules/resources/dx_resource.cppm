@@ -23,8 +23,8 @@ public:
 	 */
 
 	virtual ID3D12Resource* GetResource() const = 0;
-	virtual ID3D12Resource* operator*() const = 0;
-	virtual ID3D12Resource* operator->() const = 0;
+	virtual ID3D12Resource* operator*() const	= 0;
+	virtual ID3D12Resource* operator->() const	= 0;
 
 	DXGI_FORMAT GetFormat() const { return m_format; }
 	void		SetFormat(const DXGI_FORMAT format) { m_format = format; }
@@ -39,17 +39,17 @@ public:
 	virtual void Upload(DxDevice& device);
 
 protected:
-	
+
 	// API for inherited classes
-	
+
 	void SetData(void* data, const size_t size)
 	{
 		m_cpuData	  = data;
 		m_cpuDataSize = size;
 	}
-	
+
 	void SetState(const D3D12_RESOURCE_STATES newState) { m_currentState = newState; }
-	
+
 private:
 
 	void*  m_cpuData	 = nullptr;

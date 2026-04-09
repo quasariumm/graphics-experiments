@@ -2,10 +2,7 @@
 
 module dx_wrapper.core.transform;
 
-void Transform::SetMatrix(const glm::mat4& matrix)
-{
-	m_localTransform = matrix;
-}
+void Transform::SetMatrix(const glm::mat4& matrix) { m_localTransform = matrix; }
 
 void Transform::SetPosition(const glm::vec3& position)
 {
@@ -24,7 +21,7 @@ glm::mat4 Transform::GetWorldTransform() const
 	if (!m_worldDirty && !m_localDirty)
 		return m_worldTransform;
 	m_worldDirty = false;
-    
+
 	if (!m_parent)
 	{
 		m_worldTransform = GetLocalTransform();
@@ -32,9 +29,9 @@ glm::mat4 Transform::GetWorldTransform() const
 	else
 	{
 		const glm::mat4 rootMatrix = m_parent->GetWorldTransform();
-		m_worldTransform = rootMatrix * GetLocalTransform();
+		m_worldTransform		   = rootMatrix * GetLocalTransform();
 	}
-    
+
 	return m_worldTransform;
 }
 

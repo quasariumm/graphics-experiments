@@ -2,8 +2,8 @@
 
 #include <d3d12.h>
 #include <d3dx12.h>
-#include <filesystem>
 #include <fastgltf/types.hpp>
+#include <filesystem>
 
 /*
  * glTF module. Handles loading models from
@@ -26,17 +26,18 @@ export struct Vertex
 export struct GltfPrimitive
 {
 	explicit GltfPrimitive(DxDevice& device, const fastgltf::Asset& asset, const fastgltf::Primitive& primitive);
-	
+
 	std::vector<uint32_t> m_indices{};
-	std::vector<Vertex> m_vertices{};
+	std::vector<Vertex>	  m_vertices{};
 	// GltfMaterial* m_material = nullptr;
 
-	ComPtr<ID3D12Resource> m_vertexBuffer{};
+	ComPtr<ID3D12Resource>	 m_vertexBuffer{};
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
-	ComPtr<ID3D12Resource> m_indexBuffer{};
-	D3D12_INDEX_BUFFER_VIEW m_indexBufferView{};
-	
+	ComPtr<ID3D12Resource>	 m_indexBuffer{};
+	D3D12_INDEX_BUFFER_VIEW	 m_indexBufferView{};
+
 private:
+
 	void ProcessVerticesIndices(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive);
 	void ProcessMaterial(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive);
 	void CalculateTangents();
@@ -45,17 +46,19 @@ private:
 export struct GltfMesh
 {
 	explicit GltfMesh(DxDevice& device, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh);
-	
+
 	std::vector<GltfPrimitive> m_primitives{};
 };
 
 export class GltfModel
 {
 public:
+
 	explicit GltfModel(DxDevice& device, const std::filesystem::path& path);
-	
+
 	const std::vector<GltfMesh>& GetMeshes() const { return m_meshes; }
-	
-private:	
+
+private:
+
 	std::vector<GltfMesh> m_meshes{};
 };

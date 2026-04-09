@@ -3,8 +3,8 @@
 #include <d3dx12.h>
 #include <filesystem>
 #include <memory>
-#include <xstring>
 #include <wrl/client.h>
+#include <xstring>
 
 #include <ResourceUploadBatch.h>
 
@@ -21,8 +21,9 @@ using namespace Microsoft::WRL;
 
 LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 {
-	if (!gRegisteredDevices.contains(hwnd)) return DefWindowProc(hwnd, msg, wp, lp);
-	
+	if (!gRegisteredDevices.contains(hwnd))
+		return DefWindowProc(hwnd, msg, wp, lp);
+
 	DxDevice* device = gRegisteredDevices.at(hwnd);
 
 	switch (msg)
@@ -72,18 +73,19 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 
 	::ShowWindow(window, SW_SHOW);
 
-	m_deviceResources = DirectX::DeviceResources{DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_D32_FLOAT, 3};
+	m_deviceResources = DirectX::DeviceResources{DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+												 DXGI_FORMAT_D32_FLOAT,
+												 3,
+												 D3D_FEATURE_LEVEL_11_0,
+												 DirectX::DeviceResources::c_AllowTearing};
 	m_deviceResources.SetWindow(window, width, height);
 	m_deviceResources.CreateDeviceResources();
 	m_deviceResources.CreateWindowSizeDependentResources();
 
-	m_resourceUpload= std::make_unique<DirectX::ResourceUploadBatch>(m_deviceResources.GetD3DDevice());
+	m_resourceUpload = std::make_unique<DirectX::ResourceUploadBatch>(m_deviceResources.GetD3DDevice());
 }
 
-DxDevice::~DxDevice()
-{
-	m_deviceResources.WaitForGpu();
-}
+DxDevice::~DxDevice() { m_deviceResources.WaitForGpu(); }
 
 void DxDevice::SetWindowTitle(const std::string& title) const { SetWindowText(m_deviceResources.GetWindow(), title.c_str()); }
 
@@ -162,34 +164,36 @@ void DxDevice::SetWindowCursorState(bool active) const
 }
 
 void DxDevice::BeginFrame()
-{	
+{
 	m_deviceResources.Prepare();
-	
-	auto* commandList = m_deviceResources.GetCommandList();
-	const auto viewport = m_deviceResources.GetScreenViewport();
-	const auto rect = m_deviceResources.GetScissorRect();
+
+	auto*	   commandList = m_deviceResources.GetCommandList();
+	const auto viewport	   = m_deviceResources.GetScreenViewport();
+	const auto rect		   = m_deviceResources.GetScissorRect();
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &rect);
 }
 
 void DxDevice::EndFrame()
 {
-	try {
+	try
+	{
 		m_deviceResources.Present();
 	}
-	catch (std::exception&) {
+	catch (std::exception&)
+	{
 		m_deviceResources.HandleDeviceLost();
 	}
-	
+
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
-	
+
 	if (msg.message == WM_QUIT)
 	{
 		m_shouldClose = true;
 		return;
 	}
-	
+
 	::TranslateMessage(&msg);
 	::DispatchMessage(&msg);
 }

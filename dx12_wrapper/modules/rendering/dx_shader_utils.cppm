@@ -11,7 +11,8 @@ import dx_wrapper.core.dx_common;
  * @param path The path to the HLSL shader
  * @param type The type of shader ("vs", "ps", "cs", "lib")
  * @param shaderModel The shader model to use (e.g. "6_6")
- * @param outDirExtension [optional, default = ""] Defines whether the shader needs to be placed in a subdirectory of the output dir
+ * @param outDirExtension [optional, default = ""] Defines whether the shader needs to be placed in a subdirectory of the output
+ * dir
  * @returns Whether it was successful or was skipped
  */
 export bool RuntimeCompileShader(const std::filesystem::path& path, const std::string& type, const std::string& shaderModel,

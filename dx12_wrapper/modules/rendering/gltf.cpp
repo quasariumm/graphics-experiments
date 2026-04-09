@@ -34,27 +34,27 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const fastgltf::Asset& asset, con
 
 	// Make DX12 buffers
 	device.GetResourceUpload().Begin();
-	
+
 	CheckHR(DirectX::CreateStaticBuffer(device.GetDXDevice(),
 										device.GetResourceUpload(),
 										m_vertices,
 										D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 										&m_vertexBuffer));
-	
+
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-	m_vertexBufferView.SizeInBytes = m_vertices.size() * sizeof(Vertex);
-	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+	m_vertexBufferView.SizeInBytes	  = m_vertices.size() * sizeof(Vertex);
+	m_vertexBufferView.StrideInBytes  = sizeof(Vertex);
 
 	CheckHR(DirectX::CreateStaticBuffer(device.GetDXDevice(),
 										device.GetResourceUpload(),
 										m_indices,
 										D3D12_RESOURCE_STATE_INDEX_BUFFER,
 										&m_indexBuffer));
-	
+
 	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.SizeInBytes = m_indices.size() * sizeof(uint32_t);
-	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	
+	m_indexBufferView.SizeInBytes	 = m_indices.size() * sizeof(uint32_t);
+	m_indexBufferView.Format		 = DXGI_FORMAT_R32_UINT;
+
 	const auto finish = device.GetResourceUpload().End(device.GetDXDirectComQueue());
 	finish.wait();
 }

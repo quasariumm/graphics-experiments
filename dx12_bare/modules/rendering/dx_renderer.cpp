@@ -23,10 +23,10 @@ DxRenderer::DxRenderer(DxDevice* device)
 			.SetCullMode(D3D12_CULL_MODE_NONE)
 			.AddVertexInput("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
 			.Finalize(*m_device, m_renderRootSignature, "Main Render Pipeline", "dx12_wrapper");
-	
+
 	m_camera = Camera{m_device};
 	m_camera.GetTransform().SetPosition(glm::vec3{0, 0, 4});
-	
+
 	m_cameraConstBuffer.Init(*m_device, nullptr, ConstBufferType::Static);
 }
 
@@ -38,24 +38,21 @@ void DxRenderer::Render()
 
 	commandList->SetGraphicsRootSignature(*m_renderRootSignature);
 	commandList->SetPipelineState(*m_renderPipeline);
-	
+
 	const auto rtv = m_device->GetRTV();
 	const auto dsv = m_device->GetDSV();
-	
-	static constexpr float rt_clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	static constexpr float rt_clear_color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 	commandList->ClearRenderTargetView(rtv, rt_clear_color, 0, nullptr);
 	commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
-	
+
 	commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-	
+
 	commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
+
 	m_camera.UpdateShaderCamera();
-	CameraConstBuffer cameraCb = {
-		m_camera.GetShaderCamera(),
-		{glm::vec4{0.f}}
-	};
-	
+	CameraConstBuffer cameraCb = {m_camera.GetShaderCamera(), {glm::vec4{0.f}}};
+
 	m_cameraConstBuffer.Bind(*m_device, &cameraCb, 0);
 
 	for (const auto& model : m_models)

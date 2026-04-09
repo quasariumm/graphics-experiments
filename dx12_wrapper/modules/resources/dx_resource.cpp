@@ -7,21 +7,22 @@ module dx_wrapper.resources.dx_resource;
 
 void DxResource::Upload(DxDevice& device)
 {
-	if (!m_cpuData) return;
-	
+	if (!m_cpuData)
+		return;
+
 	auto& resourceUpload = device.GetResourceUpload();
 	resourceUpload.Begin();
-	
+
 	D3D12_SUBRESOURCE_DATA subResourceData{};
-	subResourceData.pData = m_cpuData;
-	subResourceData.RowPitch = m_cpuDataSize;
+	subResourceData.pData	   = m_cpuData;
+	subResourceData.RowPitch   = m_cpuDataSize;
 	subResourceData.SlicePitch = subResourceData.RowPitch;
 
 	const D3D12_RESOURCE_STATES oldState = m_currentState;
 	Transition(device, D3D12_RESOURCE_STATE_COPY_DEST);
 	resourceUpload.Upload(GetResource(), 0, &subResourceData, 1);
 	Transition(device, oldState);
-	
+
 	resourceUpload.End(device.GetDXDirectComQueue());
 }
 

@@ -17,22 +17,24 @@ public:
 	explicit DxRenderer(DxDevice* device);
 
 	void AddModel(const std::filesystem::path& path);
-	
+
 	void Render();
+
+	Camera& GetCamera() { return m_camera; }
 
 private:
 
 	DxDevice* m_device;
-	Camera m_camera;
-	
+	Camera	  m_camera;
+
 	struct CameraConstBuffer
 	{
 		Camera::ShaderCamera m_shaderCamera;
-		glm::vec4 m_padding[2];
+		glm::vec4			 m_padding[2];
 	};
 	static_assert(sizeof(CameraConstBuffer) % 256 == 0, "Camera const buffer is not 256-byte aligned");
 	DxConstBuffer<CameraConstBuffer> m_cameraConstBuffer;
-	
+
 	DxRootSignature m_renderRootSignature;
 	DxPipelineState m_renderPipeline;
 

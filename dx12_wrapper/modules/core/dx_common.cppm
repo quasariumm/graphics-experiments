@@ -15,7 +15,7 @@ export void CheckHR(HRESULT hr)
 {
 	if (FAILED(hr))
 	{
-		CHAR errMsgBuf[256];
+		CHAR  errMsgBuf[256];
 		DWORD errMsgLen = 0;
 
 		errMsgLen = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -45,10 +45,10 @@ export std::vector<char> ReadFileBinary(const std::filesystem::path& path)
 		Log::Error("File {} nor found", path.string());
 		return {};
 	}
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    auto size = file.tellg();
-    file.seekg(0);
-    std::vector<char> data(size);
-    file.read(data.data(), size);
-    return data;
+	std::ifstream file(path, std::ios::binary | std::ios::ate);
+	auto		  size = file.tellg();
+	file.seekg(0);
+	std::vector<char> data(size);
+	file.read(data.data(), size);
+	return data;
 }

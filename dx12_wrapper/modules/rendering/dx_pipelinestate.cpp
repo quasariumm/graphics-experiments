@@ -158,7 +158,8 @@ DxPipelineState& DxPipelineState::SetPrimitiveTopology(const D3D12_PRIMITIVE_TOP
 	return *this;
 }
 
-void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSignature, const std::string& name, const std::string& outDirExtension)
+void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSignature, const std::string& name,
+							   const std::string& outDirExtension)
 {
 	// Create Input Layout
 	std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout;
@@ -231,7 +232,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 
 						 psoDesc.NumRenderTargets = static_cast<UINT>(m_renderTargets.size());
 						 memcpy(&psoDesc.RTVFormats[0], m_renderTargets.data(), m_renderTargets.size() * sizeof(DXGI_FORMAT));
-				
+
 						 psoDesc.DSVFormat			= m_depthFormat;
 						 psoDesc.SampleDesc.Count	= 1;
 						 psoDesc.SampleDesc.Quality = 0;
@@ -277,7 +278,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 																		   IID_PPV_ARGS(m_pipelineState.GetAddressOf())));
 					 }},
 			m_shaders);
-	
+
 	if (!name.empty())
 	{
 		std::wstring wname = fs::path{name}.wstring();

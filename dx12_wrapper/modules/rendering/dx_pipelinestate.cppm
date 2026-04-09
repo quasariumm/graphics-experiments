@@ -17,7 +17,7 @@ export class DxPipelineState
 public:
 
 	DxPipelineState() = default;
-	
+
 	ID3D12PipelineState* operator*() const { return m_pipelineState.Get(); }
 
 	/*
@@ -60,7 +60,8 @@ public:
 	DxPipelineState& SetDepthTesting(bool testDepth);
 	DxPipelineState& SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
 
-	void Finalize(DxDevice& device, const DxRootSignature& rootSignature, const std::string& name = "", const std::string& outDirExtension = "");
+	void Finalize(DxDevice& device, const DxRootSignature& rootSignature, const std::string& name = "",
+				  const std::string& outDirExtension = "");
 
 private:
 
@@ -97,12 +98,12 @@ private:
 
 	std::vector<DXGI_FORMAT> m_renderTargets{};
 	DXGI_FORMAT				 m_depthFormat = DXGI_FORMAT_UNKNOWN;
-	
+
 	struct Params
 	{
-		bool m_blend = false;
-		D3D12_CULL_MODE m_cullMode = D3D12_CULL_MODE_BACK;
-		bool m_depthTesting = true;
+		bool						  m_blend			  = false;
+		D3D12_CULL_MODE				  m_cullMode		  = D3D12_CULL_MODE_BACK;
+		bool						  m_depthTesting	  = true;
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE m_primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	};
 	Params m_params{};
