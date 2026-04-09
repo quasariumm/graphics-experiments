@@ -15,6 +15,7 @@
 
 export module dx_wrapper.core.dx_device;
 import dx_wrapper.external.device_resources;
+import dx_wrapper.core.input;
 
 export class DxDevice
 {
@@ -23,6 +24,8 @@ public:
 
 	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window");
 	~DxDevice();
+
+	Input& GetInput() { return m_input; }
 
 	[[nodiscard]] int GetWidth() const { return m_windowWidth; }
 	[[nodiscard]] int GetHeight() const { return m_windowHeight; }
@@ -59,6 +62,8 @@ public:
 private:
 
 	friend LRESULT WindowProc(HWND, UINT, WPARAM, LPARAM);
+
+	Input m_input{};
 
 	DirectX::DeviceResources					  m_deviceResources;
 	std::unique_ptr<DirectX::ResourceUploadBatch> m_resourceUpload;

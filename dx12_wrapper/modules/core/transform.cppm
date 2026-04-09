@@ -4,7 +4,7 @@
 #include <type_traits>
 
 export module dx_wrapper.core.transform;
-import dx_wrapper.external.glm;
+export import dx_wrapper.external.glm;
 
 export enum class TransformSpace : uint8_t {
 	Local, // Call function in local space

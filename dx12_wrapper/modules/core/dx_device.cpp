@@ -3,8 +3,6 @@
 #include <d3dx12.h>
 #include <filesystem>
 #include <memory>
-#include <wrl/client.h>
-#include <xstring>
 
 #include <ResourceUploadBatch.h>
 
@@ -14,8 +12,7 @@
 
 module dx_wrapper.core.dx_device;
 import dx_wrapper.external.device_resources;
-import dx_wrapper.core.dx_common;
-import dx_wrapper.core.log;
+import dx_wrapper.core;
 
 using namespace Microsoft::WRL;
 
@@ -35,6 +32,12 @@ LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARA
 	case WM_SIZE:
 		device->SetWindowSize(LOWORD(lp), HIWORD(lp));
 		break;
+	case WM_KEYDOWN:
+		device->m_input.SetBit(LOWORD(wp), true);
+		break;
+	case WM_KEYUP:
+		device->m_input.SetBit(LOWORD(wp), false);
+		break;
 	default:
 		break;
 	}
@@ -43,7 +46,7 @@ LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARA
 }
 
 DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
-	: m_resourceUpload{}, m_windowWidth(width), m_windowHeight(height)
+	: m_windowWidth(width), m_windowHeight(height)
 {
 	// Create the window
 	WNDCLASSEX wc = {sizeof(wc)};
@@ -184,6 +187,8 @@ void DxDevice::EndFrame()
 	{
 		m_deviceResources.HandleDeviceLost();
 	}
+	
+	m_input.BlitState();
 
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
