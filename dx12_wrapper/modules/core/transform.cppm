@@ -185,5 +185,5 @@ T Transform::GetRotation(TransformSpace space) const
 	else if constexpr (std::is_same_v<T, glm::vec3>)
 		return glm::eulerAngles(glm::quat_cast(rotationMatrix));
 	// This can't happen because of the concept's bounds
-	return 0.f;
+	return glm::identity<T>();
 }

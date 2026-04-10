@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <ResourceUploadBatch.h>
+#include <bitset>
 
 /*
  * DX Device
@@ -14,17 +15,24 @@ module dx_wrapper.core.dx_device;
 import dx_wrapper.external.device_resources;
 import dx_wrapper.core;
 
-using namespace Microsoft::WRL;
+std::bitset<0xff> current_input_state{}; // NOLINT
+glm::vec2 current_mouse_pos{}; // NOLINT
+glm::vec2 current_scroll_delta{}; // NOLINT
 
-LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
+LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 {
 	if (!gRegisteredDevices.contains(hwnd))
 		return DefWindowProc(hwnd, msg, wp, lp);
 
 	DxDevice* device = gRegisteredDevices.at(hwnd);
+	
+	float dpi = GetDpiForWindow(hwnd) / 96.0f;
 
 	switch (msg)
 	{
+	/*
+	 * Window
+	 */
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		device->m_shouldClose = true;
@@ -32,11 +40,59 @@ LRESULT WindowProc(const HWND hwnd, const UINT msg, const WPARAM wp, const LPARA
 	case WM_SIZE:
 		device->SetWindowSize(LOWORD(lp), HIWORD(lp));
 		break;
+	/*
+	 * Keyboard
+	 */
 	case WM_KEYDOWN:
-		device->m_input.SetBit(LOWORD(wp), true);
+		current_input_state.set(LOWORD(wp), true);
 		break;
 	case WM_KEYUP:
-		device->m_input.SetBit(LOWORD(wp), false);
+		current_input_state.set(LOWORD(wp), false);
+		break;
+	/*
+	 * Mouse
+	 */
+	case WM_LBUTTONDOWN:
+		current_input_state.set(static_cast<size_t>(MouseButton::Left), true);
+		SetCapture(hwnd);
+		break;
+	case WM_RBUTTONDOWN:
+		current_input_state.set(static_cast<size_t>(MouseButton::Right), true);
+		break;
+	case WM_MBUTTONDOWN:
+		current_input_state.set(static_cast<size_t>(MouseButton::Middle), true);
+		break;
+	case WM_XBUTTONDOWN:
+	{
+		const UINT button = GET_XBUTTON_WPARAM(wp);
+		current_input_state.set(static_cast<size_t>(button == XBUTTON1 ? MouseButton::X1 : MouseButton::X2), true);
+		break;
+	}
+	case WM_LBUTTONUP:
+		current_input_state.set(static_cast<size_t>(MouseButton::Left), false);
+		ReleaseCapture();
+		break;
+	case WM_RBUTTONUP:
+		current_input_state.set(static_cast<size_t>(MouseButton::Right), false);
+		break;
+	case WM_MBUTTONUP:
+		current_input_state.set(static_cast<size_t>(MouseButton::Middle), false);
+		break;
+	case WM_XBUTTONUP:
+	{
+		const UINT button = GET_XBUTTON_WPARAM(wp);
+		current_input_state.set(static_cast<size_t>(button == XBUTTON1 ? MouseButton::X1 : MouseButton::X2), false);
+		break;
+	}
+	case WM_MOUSEMOVE:
+		current_mouse_pos.x = static_cast<float>(LOWORD(lp)) / dpi;
+		current_mouse_pos.y = static_cast<float>(HIWORD(lp)) / dpi;
+		break;
+	case WM_MOUSEWHEEL:
+		current_scroll_delta.y = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wp)) / 120.0f;
+		break;
+	case WM_MOUSEHWHEEL:
+		current_scroll_delta.x = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wp)) / 120.0f;
 		break;
 	default:
 		break;
@@ -188,8 +244,6 @@ void DxDevice::EndFrame()
 		m_deviceResources.HandleDeviceLost();
 	}
 	
-	m_input.BlitState();
-
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
 
@@ -201,4 +255,6 @@ void DxDevice::EndFrame()
 
 	::TranslateMessage(&msg);
 	::DispatchMessage(&msg);
+	
+	m_input.Update();
 }
