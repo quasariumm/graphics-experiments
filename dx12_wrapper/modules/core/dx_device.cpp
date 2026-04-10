@@ -1,5 +1,6 @@
 ﻿module;
 
+#include <chrono>
 #include <d3dx12.h>
 #include <filesystem>
 #include <memory>
@@ -21,10 +22,10 @@ glm::vec2 current_scroll_delta{}; // NOLINT
 
 LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 {
-	if (!gRegisteredDevices.contains(hwnd))
+	if (!registered_devices.contains(hwnd))
 		return DefWindowProc(hwnd, msg, wp, lp);
 
-	DxDevice* device = gRegisteredDevices.at(hwnd);
+	DxDevice* device = registered_devices.at(hwnd);
 	
 	float dpi = GetDpiForWindow(hwnd) / 96.0f;
 
@@ -128,7 +129,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 								   nullptr,
 								   wc.hInstance,
 								   nullptr);
-	gRegisteredDevices.emplace(window, this);
+	registered_devices.emplace(window, this);
 
 	::ShowWindow(window, SW_SHOW);
 
@@ -224,6 +225,8 @@ void DxDevice::SetWindowCursorState(bool active) const
 
 void DxDevice::BeginFrame()
 {
+	m_lastFrameTime = Clock::now();
+	
 	m_deviceResources.Prepare();
 
 	auto*	   commandList = m_deviceResources.GetCommandList();
@@ -257,4 +260,5 @@ void DxDevice::EndFrame()
 	::DispatchMessage(&msg);
 	
 	m_input.Update();
+	m_deltaTime = std::chrono::duration<float>(Clock::now() - m_lastFrameTime).count();
 }

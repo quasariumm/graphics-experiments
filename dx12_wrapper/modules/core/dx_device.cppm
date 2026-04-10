@@ -56,6 +56,7 @@ public:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetRTV() const { return m_deviceResources.GetRenderTargetView(); }
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetDSV() const { return m_deviceResources.GetDepthStencilView(); }
 	UINT						  GetCurBackBufferIndex() const { return m_deviceResources.GetCurrentFrameIndex(); }
+	float						  GetDeltaTime() const { return m_deltaTime; }
 
 	void BeginFrame();
 	void EndFrame();
@@ -63,6 +64,10 @@ public:
 private:
 
 	friend LRESULT WindowProc(HWND, UINT, WPARAM, LPARAM);
+	
+	using Clock = std::chrono::high_resolution_clock;
+	Clock::time_point m_lastFrameTime;
+	float m_deltaTime = 0.f;
 
 	Input m_input{};
 
@@ -77,4 +82,4 @@ private:
 	bool m_shouldClose = false;
 };
 
-inline std::unordered_map<HWND, DxDevice*> gRegisteredDevices = {};
+inline std::unordered_map<HWND, DxDevice*> registered_devices = {}; // NOLINT
