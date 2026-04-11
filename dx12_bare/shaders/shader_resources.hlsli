@@ -5,6 +5,21 @@
 // m_texIndices2
 #define TEX_ROUGH_METAL 0
 
+struct ShaderLight
+{
+    float3 m_position;
+    int m_type;
+    float3 m_direction;
+    float m_range;
+    float3 m_color;
+    float m_intensity;
+    float m_innerAngle;
+    float m_outerAngle;
+    uint m_castShadows;
+
+    float m_padding;
+};
+
 struct ShaderTransform
 {
     float4x4 m_worldMatrix;

@@ -16,8 +16,6 @@ struct VSOut
     float3 WorldPos : WORLDPOS;
     float3 Normal : NORMAL;
     float4 Tangent : TANGENT;
-    float3 CurClip : CURCLIP;
-    float3 PrevClip : PREVCLIP;
     float4 Position : SV_Position;
 };
 
@@ -39,11 +37,6 @@ VSOut main(VSIn IN)
     
     OUT.Tangent.xyz = mul(TransformC.m_normalMatrix, float4(IN.Tangent.xyz, 0.0f)).xyz;
     OUT.Tangent.w = IN.Tangent.w;
-    
-    // Velocity calculation
-    OUT.CurClip = float3(OUT.Position.xy, OUT.Position.w);
-    float4 prevClip = mul(CameraCB.m_shaderCamera.m_prevViewProjectionMatrix, worldPos);
-    OUT.PrevClip = float3(prevClip.xy, prevClip.w);
     
     return OUT;
 }
