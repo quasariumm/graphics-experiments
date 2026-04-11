@@ -17,6 +17,8 @@
 export module dx_wrapper.core.dx_device;
 import dx_wrapper.external.device_resources;
 import dx_wrapper.core.input;
+import dx_wrapper.rendering.dx_descriptor_pile;
+import dx_wrapper.resources.resource_bank;
 
 export class DxDevice
 {
@@ -45,6 +47,8 @@ public:
 	void SetWindowCursorState(bool active) const;
 
 	DirectX::ResourceUploadBatch& GetResourceUpload() const { return *m_resourceUpload; }
+	DxDescriptorPile&			  GetShaderDescriptorPile() const { return *m_descriptorPile; }
+	ResourceBank&				  GetResourceBank() const { return *m_resourceBank; }
 
 	ID3D12Device2*				  operator*() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12Device2*				  operator->() const { return m_deviceResources.GetD3DDevice(); }
@@ -64,15 +68,17 @@ public:
 private:
 
 	friend LRESULT WindowProc(HWND, UINT, WPARAM, LPARAM);
-	
+
 	using Clock = std::chrono::high_resolution_clock;
 	Clock::time_point m_lastFrameTime;
-	float m_deltaTime = 0.f;
+	float			  m_deltaTime = 0.f;
 
 	Input m_input{};
 
 	DirectX::DeviceResources					  m_deviceResources;
 	std::unique_ptr<DirectX::ResourceUploadBatch> m_resourceUpload;
+	std::unique_ptr<DxDescriptorPile>			  m_descriptorPile;
+	std::unique_ptr<ResourceBank>				  m_resourceBank;
 
 	int m_windowWidth;
 	int m_windowHeight;
@@ -80,6 +86,7 @@ private:
 	WINDOWPLACEMENT m_windowedPlacement;
 
 	bool m_shouldClose = false;
+	bool m_commandListOpened = false;
 };
 
 inline std::unordered_map<HWND, DxDevice*> registered_devices = {}; // NOLINT

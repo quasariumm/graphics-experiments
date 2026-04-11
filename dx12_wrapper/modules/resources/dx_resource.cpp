@@ -3,14 +3,24 @@
 #include <d3d12.h>
 #include <d3dx12.h>
 
-module dx_wrapper.resources.dx_resource;
+#include <ResourceUploadBatch.h>
 
-void DxResource::Upload(DxDevice& device)
+module dx_wrapper.resources.dx_resource;
+import dx_wrapper.core.dx_device;
+
+void DxResource::Transition(ID3D12GraphicsCommandList* commandList, const D3D12_RESOURCE_STATES newState)
+{
+	const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(GetResource(), m_currentState, newState);
+	commandList->ResourceBarrier(1, &barrier);
+	m_currentState = newState;
+}
+
+void DxResource::Upload(DirectX::ResourceUploadBatch& resourceUpload, ID3D12CommandQueue* commandQueue,
+						ID3D12GraphicsCommandList* commandList)
 {
 	if (!m_cpuData)
 		return;
 
-	auto& resourceUpload = device.GetResourceUpload();
 	resourceUpload.Begin();
 
 	D3D12_SUBRESOURCE_DATA subResourceData{};
@@ -19,16 +29,9 @@ void DxResource::Upload(DxDevice& device)
 	subResourceData.SlicePitch = subResourceData.RowPitch;
 
 	const D3D12_RESOURCE_STATES oldState = m_currentState;
-	Transition(device, D3D12_RESOURCE_STATE_COPY_DEST);
+	Transition(commandList, D3D12_RESOURCE_STATE_COPY_DEST);
 	resourceUpload.Upload(GetResource(), 0, &subResourceData, 1);
-	Transition(device, oldState);
+	Transition(commandList, oldState);
 
-	resourceUpload.End(device.GetDXDirectComQueue());
-}
-
-void DxResource::Transition(const DxDevice& device, const D3D12_RESOURCE_STATES newState)
-{
-	const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(GetResource(), m_currentState, newState);
-	device.GetDXDirectComList()->ResourceBarrier(1, &barrier);
-	m_currentState = newState;
+	resourceUpload.End(commandQueue);
 }

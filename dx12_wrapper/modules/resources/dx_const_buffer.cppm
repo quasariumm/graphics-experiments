@@ -34,7 +34,7 @@ public:
 	ID3D12Resource* operator->() const override;
 
 	void Init(DxDevice& device, T* data, Type type = Type::Static);
-	void Bind(DxDevice& device, T* data, uint32_t rootParameterIndex);
+	void Bind(const DxDevice& device, T* data, uint32_t rootParameterIndex);
 
 private:
 
@@ -105,11 +105,11 @@ void DxConstBuffer<T>::Init(DxDevice& device, T* data, const Type type)
 
 template <typename T>
 	requires ConstBufferRequriement<T>
-void DxConstBuffer<T>::Bind(DxDevice& device, T* data, uint32_t rootParameterIndex)
+void DxConstBuffer<T>::Bind(const DxDevice& device, T* data, const uint32_t rootParameterIndex)
 {
 	// Set and upload data
 	DxResource::SetData(data, sizeof(T));
-	Upload(device);
+	Upload(device.GetResourceUpload(), device.GetDXDirectComQueue(), device.GetDXDirectComList());
 
 	device.GetDXDirectComList()->SetGraphicsRootConstantBufferView(rootParameterIndex, GetResource()->GetGPUVirtualAddress());
 }

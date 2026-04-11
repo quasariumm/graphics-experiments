@@ -1,5 +1,6 @@
 ﻿module;
 
+#include <d3dx12.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -10,6 +11,8 @@ export module dx_wrapper.core.dx_common;
 import dx_wrapper.core.log;
 
 export using Microsoft::WRL::ComPtr;
+
+export inline constexpr uint32_t max_shader_descriptors = 16384;
 
 export void CheckHR(HRESULT hr)
 {

@@ -13,7 +13,9 @@ DxRenderer::DxRenderer(DxDevice* device)
 
 	m_renderRootSignature = DxRootSignature{};
 	m_renderRootSignature.AddConstantBuffer(0);
-	m_renderRootSignature.Finalize(*m_device, "Main Render Root Signature");
+	m_renderRootSignature.Add32BitConstants(1, sizeof(ShaderMaterial));
+	m_renderRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+	m_renderRootSignature.Finalize(*m_device, "Main Render Root Signature", true);
 
 	m_renderPipeline = DxPipelineState{};
 	m_renderPipeline.SetVertexShader("../shaders/main_vertex.hlsl")
@@ -22,6 +24,10 @@ DxRenderer::DxRenderer(DxDevice* device)
 			.SetDepthRenderTarget(DXGI_FORMAT_D32_FLOAT)
 			.SetCullMode(D3D12_CULL_MODE_NONE)
 			.AddVertexInput("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
+			.AddVertexInput("UV_PRIM", DXGI_FORMAT_R32G32_FLOAT)
+			.AddVertexInput("UV_SEC", DXGI_FORMAT_R32G32_FLOAT)
+			.AddVertexInput("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+			.AddVertexInput("TANGENT", DXGI_FORMAT_R32G32B32A32_FLOAT)
 			.Finalize(*m_device, m_renderRootSignature, "Main Render Pipeline", "dx12_wrapper");
 
 	m_camera = Camera{m_device};
@@ -61,11 +67,35 @@ void DxRenderer::Render()
 		{
 			for (const auto& primitive : mesh.m_primitives)
 			{
-				commandList->IASetVertexBuffers(0, 1, &primitive.m_vertexBufferView);
-				commandList->IASetIndexBuffer(&primitive.m_indexBufferView);
+				primitive.Bind(*m_device, 0);
 
-				commandList->DrawIndexedInstanced(primitive.m_indices.size(), 1, 0, 0, 0);
+				const auto& material = primitive.GetMaterial();
+				if (material)
+				{
+					ShaderMaterial shaderMaterial;
+					CompileShaderMaterial(*material, shaderMaterial);
+					commandList->SetGraphicsRoot32BitConstants(1, sizeof(ShaderMaterial) / sizeof(DWORD32), &shaderMaterial, 0);
+				}
+
+				commandList->DrawIndexedInstanced(primitive.GetIndices().size(), 1, 0, 0, 0);
 			}
 		}
 	}
+}
+
+void DxRenderer::CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial)
+{
+	shaderMaterial.m_alphaCutoff	   = gltfMaterial.m_alphaCutoff;
+	shaderMaterial.m_emissiveFactor	   = gltfMaterial.m_emissiveFactor;
+	shaderMaterial.m_baseColorFactor   = gltfMaterial.m_baseColorFactor;
+	shaderMaterial.m_metallicFactor	   = gltfMaterial.m_metallicFactor;
+	shaderMaterial.m_roughnessFactor   = gltfMaterial.m_roughnessFactor;
+	shaderMaterial.m_normalScale	   = gltfMaterial.m_normalScale;
+	shaderMaterial.m_occlusionStrength = gltfMaterial.m_occlusionStrength;
+
+	const auto texIdx = gltfMaterial.GetTextureIndices();
+	memcpy(&shaderMaterial.m_texIndices, texIdx.data(), 8 * sizeof(int32_t));
+
+	shaderMaterial.m_flags = static_cast<uint32_t>(gltfMaterial.m_alphaMode);
+	shaderMaterial.m_flags |= gltfMaterial.m_doubleSided ? (1 << 3) : 0;
 }

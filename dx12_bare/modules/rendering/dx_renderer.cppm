@@ -5,6 +5,7 @@
 
 export module dx_bare.rendering.dx_render;
 import dx_wrapper.core;
+import dx_wrapper.gltf;
 import dx_wrapper.rendering;
 import dx_wrapper.resources.dx_const_buffer;
 import dx_wrapper.external.glm;
@@ -34,6 +35,25 @@ private:
 	};
 	static_assert(sizeof(CameraConstBuffer) % 256 == 0, "Camera const buffer is not 256-byte aligned");
 	DxConstBuffer<CameraConstBuffer> m_cameraConstBuffer;
+	
+	struct ShaderMaterial 
+	{
+		float m_alphaCutoff;
+
+		glm::vec3 m_emissiveFactor;
+		glm::vec4 m_baseColorFactor;
+
+		float m_metallicFactor;
+		float m_roughnessFactor;
+		float m_normalScale;
+		float m_occlusionStrength;
+
+		int m_texIndices[8];
+	
+		uint32_t m_flags;
+		uint32_t m_padding[3];
+	};
+	static void CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial);
 
 	DxRootSignature m_renderRootSignature;
 	DxPipelineState m_renderPipeline;

@@ -93,7 +93,7 @@ add_library(dx12_wrapper)
 include(../common/cmake/setup_sources.cmake)
 
 target_include_directories(dx12_wrapper PUBLIC
-		${CMAKE_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/include
 		../external
 		${dxc_SOURCE_DIR}/inc
 		${DirectX-Headers_SOURCE_DIR}/include
@@ -123,6 +123,7 @@ target_compile_definitions(dx12_wrapper PUBLIC BIN_DIR="${CMAKE_CURRENT_BINARY_D
 target_compile_definitions(dx12_wrapper PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
 
 target_compile_definitions(dx12_wrapper PUBLIC GLM_FORCE_SWIZZLE)
+target_compile_options(DirectXMath INTERFACE -Wno-defaulted-function-deleted)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_CXX_COMPILER_TARGET x86_64-pc-windows-msvc)

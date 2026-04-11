@@ -1,21 +1,18 @@
 ﻿module;
 
+#include <d3dx12.h>
+#include <mikktspace.h>
 #include <fastgltf/core.hpp>
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
-#include <mikktspace.h>
 
 #include <BufferHelpers.h>
 
-module dx_wrapper.rendering.gltf;
-import dx_wrapper.core.dx_device;
+module dx_wrapper.gltf.primitive;
 import dx_wrapper.core.log;
 
-/*
- * GltfPrimitive
- */
-
-GltfPrimitive::GltfPrimitive(DxDevice& device, const fastgltf::Asset& asset, const fastgltf::Primitive& primitive)
+GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
+							 const fastgltf::Primitive& primitive)
 {
 	auto positionIt = primitive.findAttribute("POSITION");
 
@@ -31,6 +28,12 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const fastgltf::Asset& asset, con
 	}
 
 	ProcessVerticesIndices(asset, primitive);
+	
+	// Material
+	if (!primitive.materialIndex.has_value())
+		m_material = std::nullopt;
+	else
+		m_material = GltfMaterial{device, modelPath, asset, asset.materials[*primitive.materialIndex]};
 
 	// Make DX12 buffers
 	device.GetResourceUpload().Begin();
@@ -57,6 +60,17 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const fastgltf::Asset& asset, con
 
 	const auto finish = device.GetResourceUpload().End(device.GetDXDirectComQueue());
 	finish.wait();
+}
+
+const std::vector<Vertex>&		   GltfPrimitive::GetVertices() const { return m_vertices; }
+const std::vector<uint32_t>&	   GltfPrimitive::GetIndices() const { return m_indices; }
+const std::optional<GltfMaterial>& GltfPrimitive::GetMaterial() const { return m_material; }
+
+void GltfPrimitive::Bind(const DxDevice& device, const uint32_t vertexBufferSlot) const
+{
+	auto* commandList = device.GetDXDirectComList();
+	commandList->IASetVertexBuffers(vertexBufferSlot, 1, &m_vertexBufferView);
+	commandList->IASetIndexBuffer(&m_indexBufferView);
 }
 
 void GltfPrimitive::ProcessVerticesIndices(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive)
@@ -162,55 +176,9 @@ void GltfPrimitive::ProcessVerticesIndices(const fastgltf::Asset& asset, const f
 		CalculateTangents();
 }
 
-void GltfPrimitive::ProcessMaterial(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive)
-{
-	if (!primitive.materialIndex.has_value())
-		return;
-
-	auto& material = asset.materials[*primitive.materialIndex];
-}
-
-/*
- * GltfMesh
- */
-
-GltfMesh::GltfMesh(DxDevice& device, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh)
-{
-	for (const auto& prim : mesh.primitives)
-		m_primitives.emplace_back(device, asset, prim);
-}
-
-/*
- * GltfModel
- */
-
-GltfModel::GltfModel(DxDevice& device, const std::filesystem::path& path)
-{
-	fastgltf::Parser parser{};
-
-	constexpr auto gltfOptions = fastgltf::Options::DontRequireValidAssetMember | fastgltf::Options::AllowDouble |
-								 fastgltf::Options::LoadExternalBuffers | fastgltf::Options::LoadExternalImages |
-								 fastgltf::Options::GenerateMeshIndices;
-
-	auto gltfFile = fastgltf::MappedGltfFile::FromPath(path);
-	auto asset	  = *parser.loadGltf(gltfFile.get(), path.parent_path(), gltfOptions);
-
-	fastgltf::iterateSceneNodes(asset,
-								0,
-								fastgltf::math::fmat4x4(),
-								[&](fastgltf::Node& node, fastgltf::math::fmat4x4)
-								{
-									if (node.meshIndex.has_value())
-									{
-										m_meshes.emplace_back(device, asset, asset.meshes[*node.meshIndex]);
-									}
-								});
-}
-
 /*
  * Tangent generation
  */
-
 struct GeometryData
 {
 	std::vector<Vertex>&		 m_vertices;

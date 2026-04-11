@@ -3,8 +3,12 @@
 #include <cstdint>
 #include <d3d12.h>
 
+#include <ResourceUploadBatch.h>
+
 export module dx_wrapper.resources.dx_resource;
-import dx_wrapper.core;
+import dx_wrapper.core.dx_common;
+
+export using ::ID3D12Resource;
 
 export class DxResource
 {
@@ -30,13 +34,14 @@ public:
 	void		SetFormat(const DXGI_FORMAT format) { m_format = format; }
 
 	D3D12_RESOURCE_STATES GetCurrentState() const { return m_currentState; }
-	void				  Transition(const DxDevice& device, D3D12_RESOURCE_STATES newState);
+	void				  Transition(ID3D12GraphicsCommandList* commandList, D3D12_RESOURCE_STATES newState);
 
 	/*
 	 * Data
 	 */
 
-	virtual void Upload(DxDevice& device);
+	virtual void Upload(DirectX::ResourceUploadBatch& resourceUpload, ID3D12CommandQueue* commandQueue,
+						ID3D12GraphicsCommandList* commandList);
 
 protected:
 

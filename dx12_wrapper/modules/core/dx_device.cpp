@@ -15,6 +15,7 @@
 module dx_wrapper.core.dx_device;
 import dx_wrapper.external.device_resources;
 import dx_wrapper.core;
+import dx_wrapper.rendering;
 
 std::bitset<0xff> current_input_state{}; // NOLINT
 glm::vec2 current_mouse_pos{}; // NOLINT
@@ -105,6 +106,9 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 	: m_windowWidth(width), m_windowHeight(height)
 {
+	// Needed for WIC textures
+	CheckHR(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
+	
 	// Create the window
 	WNDCLASSEX wc = {sizeof(wc)};
 
@@ -143,6 +147,15 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 	m_deviceResources.CreateWindowSizeDependentResources();
 
 	m_resourceUpload = std::make_unique<DirectX::ResourceUploadBatch>(m_deviceResources.GetD3DDevice());
+	m_descriptorPile = std::make_unique<DxDescriptorPile>(GetDXDevice(), max_shader_descriptors);
+	m_resourceBank = std::make_unique<ResourceBank>();
+	
+	// Open the command list for any initialisers
+	m_deviceResources.Prepare();
+	ID3D12DescriptorHeap* const heaps[1] = {m_descriptorPile->GetHeap()};
+	GetDXDirectComList()->SetDescriptorHeaps(1, heaps);
+	
+	m_commandListOpened = true;
 }
 
 DxDevice::~DxDevice() { m_deviceResources.WaitForGpu(); }
@@ -225,6 +238,12 @@ void DxDevice::SetWindowCursorState(bool active) const
 
 void DxDevice::BeginFrame()
 {
+	if (m_commandListOpened)
+	{
+		m_deviceResources.Present();
+		m_commandListOpened = false;
+	}
+	
 	m_lastFrameTime = Clock::now();
 	
 	m_deviceResources.Prepare();
@@ -234,6 +253,9 @@ void DxDevice::BeginFrame()
 	const auto rect		   = m_deviceResources.GetScissorRect();
 	commandList->RSSetViewports(1, &viewport);
 	commandList->RSSetScissorRects(1, &rect);
+
+	ID3D12DescriptorHeap* const heaps[1] = {m_descriptorPile->GetHeap()};
+	commandList->SetDescriptorHeaps(1, heaps);
 }
 
 void DxDevice::EndFrame()
