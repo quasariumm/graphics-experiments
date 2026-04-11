@@ -5,9 +5,9 @@
 module dx_wrapper.gltf.material;
 import dx_wrapper.resources.resource_bank;
 
-glm::vec2 ToGlm(fastgltf::math::nvec2 v) { return {v.x(), v.y()}; }
-glm::vec3 ToGlm(fastgltf::math::nvec3 v) { return {v.x(), v.y(), v.z()}; }
-glm::vec4 ToGlm(fastgltf::math::nvec4 v) { return {v.x(), v.y(), v.z(), v.w()}; }
+inline glm::vec2 ToGlm(fastgltf::math::nvec2 v) { return {v.x(), v.y()}; }
+inline glm::vec3 ToGlm(fastgltf::math::nvec3 v) { return {v.x(), v.y(), v.z()}; }
+inline glm::vec4 ToGlm(fastgltf::math::nvec4 v) { return {v.x(), v.y(), v.z(), v.w()}; }
 
 GltfMaterial::GltfMaterial(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
 						   const fastgltf::Material& material)

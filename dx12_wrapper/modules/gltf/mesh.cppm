@@ -3,7 +3,8 @@
 #include <fastgltf/types.hpp>
 
 export module dx_wrapper.gltf.mesh;
-export import dx_wrapper.gltf.primitive;
+import dx_wrapper.gltf.primitive;
+import dx_wrapper.core.dx_device;
 
 export struct GltfMesh
 {

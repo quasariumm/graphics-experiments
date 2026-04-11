@@ -5,8 +5,9 @@
 #include <fastgltf/types.hpp>
 
 export module dx_wrapper.gltf.primitive;
-export import dx_wrapper.gltf.material;
-import dx_wrapper.core.dx_common;
+import dx_wrapper.gltf.material;
+import dx_wrapper.external.glm;
+import dx_wrapper.core;
 
 export struct Vertex
 {

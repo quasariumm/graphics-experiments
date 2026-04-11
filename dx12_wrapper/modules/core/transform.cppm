@@ -38,7 +38,7 @@ public:
 	 * @brief Sets the parent of this transform
 	 * @param parent The new parent
 	 */
-	void SetParent(std::shared_ptr<Transform> parent) { m_parent = std::move(parent); }
+	void SetParent(Transform* parent) { m_parent = parent; }
 
 	/**
 	 * @brief Sets the local transform from a matrix
@@ -145,7 +145,7 @@ private:
 	glm::vec3 m_scale{1.0f};
 
 	// Hierarchy
-	std::shared_ptr<Transform> m_parent = nullptr;
+	Transform* m_parent = nullptr;
 };
 
 //====================================

@@ -36,6 +36,12 @@ private:
 	static_assert(sizeof(CameraConstBuffer) % 256 == 0, "Camera const buffer is not 256-byte aligned");
 	DxConstBuffer<CameraConstBuffer> m_cameraConstBuffer;
 	
+	struct ShaderTransform
+	{
+		glm::mat4 m_worldMatrix;
+		glm::mat4 m_normalMatrix;
+	};
+	
 	struct ShaderMaterial 
 	{
 		float m_alphaCutoff;

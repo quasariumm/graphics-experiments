@@ -1,8 +1,18 @@
 ﻿module;
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 module dx_wrapper.core.transform;
 
-void Transform::SetMatrix(const glm::mat4& matrix) { m_localTransform = matrix; }
+void Transform::SetMatrix(const glm::mat4& matrix)
+{
+	m_localTransform = matrix;
+	
+	// Decompose
+	glm::vec3 skew{};
+	glm::vec4 perspective{};
+	glm::decompose(matrix, m_scale, m_rotation, m_translation, skew, perspective);
+}
 
 void Transform::SetPosition(const glm::vec3& position)
 {

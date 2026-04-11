@@ -122,7 +122,7 @@ target_compile_definitions(dx12_wrapper PUBLIC BIN_DIR="${CMAKE_CURRENT_BINARY_D
 
 target_compile_definitions(dx12_wrapper PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
 
-target_compile_definitions(dx12_wrapper PUBLIC GLM_FORCE_SWIZZLE)
+target_compile_definitions(dx12_wrapper PUBLIC GLM_ENABLE_EXPERIMENTAL GLM_FORCE_SWIZZLE)
 target_compile_options(DirectXMath INTERFACE -Wno-defaulted-function-deleted)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")

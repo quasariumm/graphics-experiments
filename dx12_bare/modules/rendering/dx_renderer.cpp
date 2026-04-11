@@ -14,6 +14,7 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_renderRootSignature = DxRootSignature{};
 	m_renderRootSignature.AddConstantBuffer(0);
 	m_renderRootSignature.Add32BitConstants(1, sizeof(ShaderMaterial));
+	m_renderRootSignature.Add32BitConstants(2, sizeof(ShaderTransform));
 	m_renderRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 	m_renderRootSignature.Finalize(*m_device, "Main Render Root Signature", true);
 
@@ -63,9 +64,13 @@ void DxRenderer::Render()
 
 	for (const auto& model : m_models)
 	{
-		for (const auto& mesh : model.GetMeshes())
+		for (const auto& node : model.GetNodes())
 		{
-			for (const auto& primitive : mesh.m_primitives)
+			if (!node->m_mesh)
+				continue;
+
+			const auto& mesh = node->m_mesh;
+			for (const auto& primitive : mesh->m_primitives)
 			{
 				primitive.Bind(*m_device, 0);
 
@@ -76,6 +81,11 @@ void DxRenderer::Render()
 					CompileShaderMaterial(*material, shaderMaterial);
 					commandList->SetGraphicsRoot32BitConstants(1, sizeof(ShaderMaterial) / sizeof(DWORD32), &shaderMaterial, 0);
 				}
+				
+				ShaderTransform shaderTransform;
+				shaderTransform.m_worldMatrix = node->m_transform.GetWorldTransform();
+				shaderTransform.m_normalMatrix = glm::mat4{glm::mat3{glm::transpose(glm::inverse(shaderTransform.m_worldMatrix))}};
+				commandList->SetGraphicsRoot32BitConstants(2, sizeof(ShaderTransform) / sizeof(DWORD32), &shaderTransform, 0);
 
 				commandList->DrawIndexedInstanced(primitive.GetIndices().size(), 1, 0, 0, 0);
 			}

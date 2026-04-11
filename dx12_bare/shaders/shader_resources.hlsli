@@ -5,6 +5,12 @@
 // m_texIndices2
 #define TEX_ROUGH_METAL 0
 
+struct ShaderTransform
+{
+    float4x4 m_worldMatrix;
+    float4x4 m_normalMatrix;
+};
+
 struct ShaderMaterial 
 {
     float m_alphaCutoff;

@@ -1,7 +1,5 @@
 ﻿#include "shader_resources.hlsli"
 
-ConstantBuffer<CameraConstBuffer> CameraCB : register(b0);
-
 struct VSIn
 {
     float3 Position : POSITION;
@@ -23,20 +21,23 @@ struct VSOut
     float4 Position : SV_Position;
 };
 
+ConstantBuffer<CameraConstBuffer> CameraCB : register(b0);
+ConstantBuffer<ShaderTransform> TransformC : register(b2);
+
 VSOut main(VSIn IN) 
 {
     VSOut OUT;
     
-    float4 worldPos = float4(IN.Position, 1.0f);
+    float4 worldPos = mul(TransformC.m_worldMatrix, float4(IN.Position, 1.0f));
     OUT.Position = mul(CameraCB.m_shaderCamera.m_viewProjectionMatrix, worldPos);
     OUT.WorldPos = worldPos.xyz;
     
     OUT.Uv0 = IN.Uv0;
     OUT.Uv1 = IN.Uv1;
     
-    OUT.Normal = IN.Normal;
+    OUT.Normal = mul(TransformC.m_normalMatrix, float4(IN.Normal, 0.0f)).xyz;
     
-    OUT.Tangent.xyz = IN.Tangent.xyz;
+    OUT.Tangent.xyz = mul(TransformC.m_normalMatrix, float4(IN.Tangent.xyz, 0.0f)).xyz;
     OUT.Tangent.w = IN.Tangent.w;
     
     // Velocity calculation

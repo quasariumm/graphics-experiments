@@ -62,7 +62,7 @@ void Demo::HandleInput()
 
 		static constexpr float mouse_sensitivity = 0.5f;
 
-		glm::quat yaw   = glm::angleAxis(-delta.x * deltaTime * mouse_sensitivity, glm::vec3(0, 1, 0));
+		glm::quat yaw   = glm::angleAxis(delta.x * deltaTime * mouse_sensitivity, glm::vec3(0, 1, 0));
 		glm::quat pitch = glm::angleAxis(-delta.y * deltaTime * mouse_sensitivity, cameraTransform.GetRight(TransformSpace::Local));
 
 		cameraTransform.SetRotation(glm::normalize(pitch * yaw * cameraTransform.GetRotation()));
