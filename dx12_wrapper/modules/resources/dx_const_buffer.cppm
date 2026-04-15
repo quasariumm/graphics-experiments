@@ -25,8 +25,6 @@ public:
 
 	using Type = ConstBufferType;
 
-	DxConstBuffer() = default;
-
 	explicit DxConstBuffer(DxDevice& device, T* data, const Type type = Type::Static) { Init(device, data, type); }
 
 	ID3D12Resource* GetResource() const override;
