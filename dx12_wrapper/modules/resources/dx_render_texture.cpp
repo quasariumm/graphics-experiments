@@ -2,7 +2,7 @@
 
 #include <DirectXHelpers.h>
 
-module dx_wrapper.resources.dx_rendertexture;
+module dx_wrapper.resources.dx_render_texture;
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips, bool generateSrv)
 	: DxTexture{device, path, generateMips, true},

@@ -2,7 +2,7 @@
 
 #include <DirectXHelpers.h>
 
-module dx_wrapper.resources.dx_depthrendertexture;
+module dx_wrapper.resources.dx_depth_render_texture;
 
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips,
 										   const bool generateSrv)

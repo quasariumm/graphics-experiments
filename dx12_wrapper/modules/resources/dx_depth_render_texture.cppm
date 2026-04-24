@@ -6,17 +6,17 @@
 
 #include "DescriptorHeap.h"
 
-export module dx_wrapper.resources.dx_rendertexture;
+export module dx_wrapper.resources.dx_depth_render_texture;
 import dx_wrapper.resources.dx_texture;
 
-class DxRenderTexture : protected DxTexture
+class DxDepthRenderTexture : protected DxTexture
 {
 public:
 
-	DxRenderTexture(const DxRenderTexture&)			   = delete;
-	DxRenderTexture& operator=(const DxRenderTexture&) = delete;
-	DxRenderTexture(DxRenderTexture&&)				   = delete;
-	DxRenderTexture& operator=(DxRenderTexture&&)	   = delete;
+	DxDepthRenderTexture(const DxDepthRenderTexture&)			 = delete;
+	DxDepthRenderTexture& operator=(const DxDepthRenderTexture&) = delete;
+	DxDepthRenderTexture(DxDepthRenderTexture&&)				 = delete;
+	DxDepthRenderTexture& operator=(DxDepthRenderTexture&&)		 = delete;
 
 	/**
 	 * @brief Constructs a new texture from a file. Also supports DDS files
@@ -24,9 +24,10 @@ public:
 	 * @param path The path to the image file
 	 * @param generateMips [optional, default = true] Whether to generate mipmaps
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
+	 * generate ones for other mips/slices
 	 */
-	explicit DxRenderTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips = true,
-							 bool generateSrv = false);
+	explicit DxDepthRenderTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips = true,
+								  bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new texture from raw data
@@ -43,8 +44,9 @@ public:
 	 * @attention This function determines the data size from the width, height and format. If your data is not big enough, this
 	 * will break. Use with caution.
 	 */
-	explicit DxRenderTexture(const DxDevice& device, const void* data, TextureType type, DXGI_FORMAT format, uint32_t width,
-							 uint32_t height = 1, uint32_t depth = 1, bool generateMips = true, bool generateSrv = false);
+	explicit DxDepthRenderTexture(const DxDevice& device, const void* data, TextureType type, DXGI_FORMAT format,
+								  uint32_t width, uint32_t height = 1, uint32_t depth = 1, bool generateMips = true,
+								  bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new empty texture
@@ -57,8 +59,8 @@ public:
 	 * @param allocateMips [optional, default = true] Whether to generate mipmaps
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
 	 */
-	explicit DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width, uint32_t height = 1,
-							 uint32_t depth = 1, bool allocateMips = true, bool generateSrv = false);
+	explicit DxDepthRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width,
+								  uint32_t height = 1, uint32_t depth = 1, bool allocateMips = true, bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new texture from encoded data
@@ -69,15 +71,17 @@ public:
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
 	 * @attention If you already loaded the data through STB or aky akin library, please use the other data-based constructor
 	 */
-	explicit DxRenderTexture(const DxDevice& device, const void* data, size_t size, bool generateMips = true,
-							 bool generateSrv = false);
+	explicit DxDepthRenderTexture(const DxDevice& device, const void* data, size_t size, bool generateMips = true,
+								  bool generateSrv = false);
 
-	~DxRenderTexture() override = default;
+	~DxDepthRenderTexture() override = default;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE GetRtv() const { return m_rtv; }
+	D3D12_CPU_DESCRIPTOR_HANDLE GetDsv() const { return m_dsv; }
 
 private:
 
-	DirectX::DescriptorHeap		m_rtvHeap;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_rtv{};
+	void CreateDsv(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t depth);
+
+	DirectX::DescriptorHeap		m_dsvHeap;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_dsv{};
 };
