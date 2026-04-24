@@ -31,10 +31,11 @@ public:
 	ID3D12Resource* operator*() const override;
 	ID3D12Resource* operator->() const override;
 
-	void Init(DxDevice& device, T* data, Type type = Type::Static);
 	void Bind(const DxDevice& device, T* data, uint32_t rootParameterIndex);
-
+	
 private:
+
+	void Init(DxDevice& device, T* data, Type type = Type::Static);
 
 	DxDevice* m_device = nullptr;
 

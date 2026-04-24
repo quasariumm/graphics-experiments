@@ -10,6 +10,7 @@ import dx_wrapper.core.dx_device;
 
 void DxResource::Transition(ID3D12GraphicsCommandList* commandList, const D3D12_RESOURCE_STATES newState)
 {
+	if (newState == m_currentState) return;
 	const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(GetResource(), m_currentState, newState);
 	commandList->ResourceBarrier(1, &barrier);
 	m_currentState = newState;
