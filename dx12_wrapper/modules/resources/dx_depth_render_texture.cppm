@@ -9,7 +9,7 @@
 export module dx_wrapper.resources.dx_depth_render_texture;
 import dx_wrapper.resources.dx_texture;
 
-class DxDepthRenderTexture : protected DxTexture
+export class DxDepthRenderTexture : protected DxTexture
 {
 public:
 

@@ -9,7 +9,7 @@
 export module dx_wrapper.resources.dx_render_texture;
 import dx_wrapper.resources.dx_texture;
 
-class DxRenderTexture : protected DxTexture
+export class DxRenderTexture : protected DxTexture
 {
 public:
 
