@@ -34,7 +34,7 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_camera = Camera{m_device};
 	m_camera.GetTransform().SetPosition(glm::vec3{0, 0, 4});
 
-	m_cameraConstBuffer.Init(*m_device, nullptr, ConstBufferType::Static);
+	m_cameraConstBuffer = DxConstBuffer<CameraConstBuffer>{*m_device, nullptr, ConstBufferType::Static};
 }
 
 void DxRenderer::AddModel(const std::filesystem::path& path) { m_models.emplace_back(*m_device, path); }

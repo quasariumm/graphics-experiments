@@ -1,6 +1,7 @@
 ﻿module;
 
 #include <DirectXHelpers.h>
+#include <filesystem>
 
 module dx_wrapper.resources.dx_render_texture;
 

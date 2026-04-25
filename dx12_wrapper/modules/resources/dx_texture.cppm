@@ -22,11 +22,6 @@ export class DxTexture : protected DxResource
 
 public:
 
-	DxTexture(const DxTexture&)			   = delete;
-	DxTexture& operator=(const DxTexture&) = delete;
-	DxTexture(DxTexture&&)				   = delete;
-	DxTexture& operator=(DxTexture&&)	   = delete;
-
 	/**
 	 * @brief Constructs a new texture from a file. Also supports DDS files
 	 * @param device A reference to the device for uploading to the GPU

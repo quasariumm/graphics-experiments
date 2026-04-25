@@ -17,11 +17,6 @@ public:
 	DxResource()		  = default;
 	virtual ~DxResource() = default;
 
-	DxResource(const DxResource&)			 = delete;
-	DxResource& operator=(const DxResource&) = delete;
-	DxResource(DxResource&&)				 = delete;
-	DxResource& operator=(DxResource&&)		 = delete;
-
 	/*
 	 * State
 	 */

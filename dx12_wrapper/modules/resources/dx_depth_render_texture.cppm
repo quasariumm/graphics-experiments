@@ -7,16 +7,12 @@
 #include "DescriptorHeap.h"
 
 export module dx_wrapper.resources.dx_depth_render_texture;
+import dx_wrapper.core.dx_device;
 import dx_wrapper.resources.dx_texture;
 
 export class DxDepthRenderTexture : protected DxTexture
 {
 public:
-
-	DxDepthRenderTexture(const DxDepthRenderTexture&)			 = delete;
-	DxDepthRenderTexture& operator=(const DxDepthRenderTexture&) = delete;
-	DxDepthRenderTexture(DxDepthRenderTexture&&)				 = delete;
-	DxDepthRenderTexture& operator=(DxDepthRenderTexture&&)		 = delete;
 
 	/**
 	 * @brief Constructs a new texture from a file. Also supports DDS files

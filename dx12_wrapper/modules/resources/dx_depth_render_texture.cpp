@@ -1,8 +1,10 @@
 ﻿module;
 
 #include <DirectXHelpers.h>
+#include <filesystem>
 
 module dx_wrapper.resources.dx_depth_render_texture;
+import dx_wrapper.core.log;
 
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips,
 										   const bool generateSrv)
