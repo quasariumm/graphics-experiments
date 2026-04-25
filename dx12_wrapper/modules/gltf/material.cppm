@@ -44,7 +44,7 @@ public:
 	auto GetEmissiveTexture() { return m_emissiveTexture; }
 	auto GetOcclusionTexture() { return m_occlusionTexture; }
 	auto GetRoughMetalTexture() { return m_roughMetalTexture; }
-	
+
 	std::array<int, 8> GetTextureIndices() const;
 
 private:
@@ -63,5 +63,5 @@ private:
 	MaterialTexture m_roughMetalTexture;
 
 	static void ProcessTexture(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
-						const fastgltf::TextureInfo& textureInfo, MaterialTexture& result);
+							   const fastgltf::TextureInfo& textureInfo, MaterialTexture& result);
 };

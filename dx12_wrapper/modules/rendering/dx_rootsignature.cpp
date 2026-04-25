@@ -190,4 +190,6 @@ void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const 
 	// Clear temporary storage vectors
 	m_samplers.clear();
 	m_rootParameters.clear();
+	
+	m_finalized = true;
 }

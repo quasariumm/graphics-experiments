@@ -58,27 +58,27 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 
 	if ((path.extension() == ".dds") || (path.extension() == ".dxg"))
 	{
-		CheckHR(DirectX::CreateDDSTextureFromFileEx(
-				*device,
-				device.GetResourceUpload(),
-				path.c_str(),
-				0,
-				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-				generateMips ? DirectX::DDS_LOADER_MIP_AUTOGEN : DirectX::DDS_LOADER_IGNORE_MIPS,
-				&m_resource,
-				nullptr,
-				&isCubemap));
+		CheckHR(DirectX::CreateDDSTextureFromFileEx(*device,
+													device.GetResourceUpload(),
+													path.c_str(),
+													0,
+													D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+													generateMips ? DirectX::DDS_LOADER_MIP_AUTOGEN
+																 : DirectX::DDS_LOADER_IGNORE_MIPS,
+													&m_resource,
+													nullptr,
+													&isCubemap));
 	}
 	else
 	{
-		CheckHR(DirectX::CreateWICTextureFromFileEx(
-				*device,
-				device.GetResourceUpload(),
-				path.c_str(),
-				0,
-				D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-				generateMips ? DirectX::WIC_LOADER_MIP_AUTOGEN : DirectX::WIC_LOADER_DEFAULT,
-				&m_resource));
+		CheckHR(DirectX::CreateWICTextureFromFileEx(*device,
+													device.GetResourceUpload(),
+													path.c_str(),
+													0,
+													D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+													generateMips ? DirectX::WIC_LOADER_MIP_AUTOGEN
+																 : DirectX::WIC_LOADER_DEFAULT,
+													&m_resource));
 	}
 
 	device.GetResourceUpload().End(device.GetDXDirectComQueue());
@@ -235,6 +235,12 @@ DxTexture::~DxTexture()
 ID3D12Resource* DxTexture::GetResource() const { return m_resource.Get(); }
 ID3D12Resource* DxTexture::operator*() const { return m_resource.Get(); }
 ID3D12Resource* DxTexture::operator->() const { return m_resource.Get(); }
+
+size_t DxTexture::GetWidth() const { return m_resource->GetDesc().Width; }
+size_t DxTexture::GetHeight() const { return m_resource->GetDesc().Height; }
+size_t DxTexture::GetDepthOrArraySize() const { return m_resource->GetDesc().DepthOrArraySize; }
+uint8_t	 DxTexture::GetNumChannels() const { return GetChannelCount(m_resource->GetDesc().Format); }
+uint32_t DxTexture::GetNumMips() const { return m_resource->GetDesc().MipLevels; }
 
 void DxTexture::CreateUAV(const DxDevice& device, uint32_t mip, uint32_t sliceMin, uint32_t sliceMax)
 {

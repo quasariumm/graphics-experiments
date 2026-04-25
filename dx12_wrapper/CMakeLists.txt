@@ -90,6 +90,8 @@ target_include_directories(mikktspace PUBLIC ${mikktspace_SOURCE_DIR})
 
 add_library(dx12_wrapper)
 
+target_compile_definitions(dx12_wrapper PUBLIC DX_WRAPPER_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
+
 include(../common/cmake/setup_sources.cmake)
 
 target_include_directories(dx12_wrapper PUBLIC

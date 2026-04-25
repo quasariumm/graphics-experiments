@@ -81,6 +81,16 @@ public:
 	ID3D12Resource* operator*() const override;
 	ID3D12Resource* operator->() const override;
 
+	/*
+	 * Getters via the RESOURCE_DESC
+	 */
+
+	size_t	 GetWidth() const;
+	size_t	 GetHeight() const;
+	size_t	 GetDepthOrArraySize() const;
+	uint8_t	 GetNumChannels() const;
+	uint32_t GetNumMips() const;
+
 	/**
 	 * @brief Creates a UAV for a specified mip or slice
 	 * @param device A reference to the device

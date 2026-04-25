@@ -49,6 +49,8 @@ public:
 
 
 	void Finalize(DxDevice& device, const std::string& name, bool heapDirectlyIndexed = false);
+	
+	bool IsFinalized() const { return m_finalized; }
 
 private:
 
@@ -56,4 +58,6 @@ private:
 
 	std::vector<D3D12_STATIC_SAMPLER_DESC> m_samplers;
 	std::vector<D3D12_ROOT_PARAMETER1>	   m_rootParameters;
+	
+	bool m_finalized = false;
 };

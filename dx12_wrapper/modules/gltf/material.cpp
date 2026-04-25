@@ -47,7 +47,8 @@ GltfMaterial::GltfMaterial(DxDevice& device, const std::filesystem::path& modelP
 
 std::array<int, 8> GltfMaterial::GetTextureIndices() const
 {
-	std::array res{-1, -1, -1, -1, -1, -1, -1, -1};
+	std::array<int, 8> res{};
+	std::ranges::fill(res, -1);
 	if (m_baseColorTexture)
 		res[0] = m_baseColorTexture.value()->GetSrvHeapIndex();
 	if (m_normalTexture)
