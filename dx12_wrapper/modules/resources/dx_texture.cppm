@@ -47,7 +47,7 @@ public:
 	 * @attention This function determines the data size from the width, height and format. If your data is not big enough, this
 	 * will break. Use with caution.
 	 */
-	explicit DxTexture(const DxDevice& device, const void* data, TextureType type, DXGI_FORMAT format, uint32_t width,
+	explicit DxTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, uint32_t width,
 					   uint32_t height = 1, uint32_t depth = 1, bool generateMips = true, bool _internal = false);
 
 	/**
@@ -73,7 +73,7 @@ public:
 	 * generate ones for other mips/slices
 	 * @attention If you already loaded the data through STB or aky akin library, please use the other data-based constructor
 	 */
-	explicit DxTexture(const DxDevice& device, const void* data, size_t size, bool generateMips = true, bool _internal = false);
+	explicit DxTexture(const DxDevice& device, const std::byte* data, size_t size, bool generateMips = true, bool _internal = false);
 
 	~DxTexture() override;
 

@@ -5,11 +5,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 
+set(BUILD_SHARED_LIBS OFF)
+
 #
 # Fetch Repos
 #
 
 include(FetchContent)
+
+add_compile_options(-march=native)
 
 FetchContent_Declare(
 		dxc
@@ -30,21 +34,36 @@ FetchContent_Declare(
 FetchContent_Declare(
 		DirectXMath
 		GIT_REPOSITORY https://github.com/microsoft/DirectXMath.git
-		GIT_TAG        main
+		GIT_TAG        apr2025
 		GIT_SHALLOW    TRUE
 )
 
 FetchContent_Declare(
-		DirectXTK12
-		GIT_REPOSITORY https://github.com/microsoft/DirectXTK12.git
-		GIT_TAG        main
+		IMath
+		GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/Imath.git
+		GIT_TAG 	   v3.1.12
+		GIT_SHALLOW    TRUE
+		OVERRIDE_FIND_PACKAGE
+)
+
+FetchContent_Declare(
+		OpenEXR
+		GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/openexr.git
+		GIT_TAG		   v3.4.10
+		GIT_SHALLOW    TRUE
+)
+
+FetchContent_Declare(
+		DirectXTex
+		GIT_REPOSITORY https://github.com/microsoft/DirectXTex.git
+		GIT_TAG 	   mar2026
 		GIT_SHALLOW    TRUE
 )
 
 FetchContent_Declare(
 		fastgltf
 		GIT_REPOSITORY https://github.com/spnda/fastgltf.git
-		GIT_TAG        main
+		GIT_TAG        v0.9.0
 		GIT_SHALLOW    TRUE
 )
 
@@ -58,9 +77,24 @@ FetchContent_Declare(
 FetchContent_Declare(
 		mikktspace
 		GIT_REPOSITORY https://github.com/mmikk/MikkTSpace.git
-		GIT_TAG        master
+		GIT_TAG        3e895b4
 		GIT_SHALLOW    TRUE
 )
+
+#
+# OpenEXR
+#
+set(OPENEXR_BUILD_LIBS ON)
+set(OPENEXR_BUILD_TOOLS OFF)
+set(OPENEXR_BUILD_EXAMPLES OFF)
+
+#
+# DirectXTex
+#
+set(BUILD_TOOLS OFF)
+set(BUILD_SAMPLE OFF)
+set(BUILD_DX11 OFF)
+set(ENABLE_OPENEXR_SUPPORT ON)
 
 #
 # fastgltf
@@ -76,7 +110,7 @@ set(GLM_ENABLE_CXX_20 ON)
 set(GLM_ENABLE_SIMD_AVX2 ON)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
-FetchContent_MakeAvailable(DirectX-Headers DirectXMath DirectXTK12 fastgltf mikktspace glm)
+FetchContent_MakeAvailable(DirectX-Headers DirectXMath IMath OpenEXR DirectXTex fastgltf mikktspace glm)
 
 add_library(mikktspace STATIC
 		${mikktspace_SOURCE_DIR}/mikktspace.c
@@ -88,22 +122,18 @@ target_include_directories(mikktspace PUBLIC ${mikktspace_SOURCE_DIR})
 # Target settings
 #
 
-add_library(dx12_wrapper)
+add_library(dx12_wrapper STATIC)
 
 target_compile_definitions(dx12_wrapper PUBLIC DX_WRAPPER_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
+target_compile_options(dx12_wrapper PUBLIC -march=native)
 
 include(../common/cmake/setup_sources.cmake)
 
 target_include_directories(dx12_wrapper PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		../external
-		${dxc_SOURCE_DIR}/inc
-		${DirectX-Headers_SOURCE_DIR}/include
+		${dxc_SOURCE_DIR}/
 		${DirectX-Headers_SOURCE_DIR}/include/directx
-		${DirectXTK12_SOURCE_DIR}/Inc
-		${fmt_SOURCE_DIR}/include
-		${fastgltf_SOURCE_DIR}/include
-		${glm_SOURCE_DIR}
 )
 
 target_link_libraries(dx12_wrapper PUBLIC
@@ -114,7 +144,7 @@ target_link_libraries(dx12_wrapper PUBLIC
 		Microsoft::DirectX-Headers
 		Microsoft::DirectX-Guids
 		DirectXMath
-		DirectXTK12
+		DirectXTex
 		fastgltf
 		mikktspace
 		glm::glm

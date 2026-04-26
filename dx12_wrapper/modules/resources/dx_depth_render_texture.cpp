@@ -1,6 +1,6 @@
 ﻿module;
 
-#include <DirectXHelpers.h>
+#include <d3d12.h>
 #include <filesystem>
 
 module dx_wrapper.resources.dx_depth_render_texture;
@@ -16,7 +16,7 @@ DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::fi
 	CreateDsv(device, GetTextureType(), GetFormat(), dsvDesc.DepthOrArraySize);
 }
 
-DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const void* data, const TextureType type,
+DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::byte* data, const TextureType type,
 										   const DXGI_FORMAT format, const uint32_t width, const uint32_t height,
 										   const uint32_t depth, const bool generateMips, const bool generateSrv)
 	: DxTexture{device, data, type, format, width, height, depth, generateMips, true},
@@ -36,7 +36,7 @@ DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const Texture
 	CreateDsv(device, type, format, depth);
 }
 
-DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const void* data, const size_t size, const bool generateMips,
+DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::byte* data, const size_t size, const bool generateMips,
 										   const bool generateSrv)
 	: DxTexture{device, data, size, generateMips, true},
 	  m_dsvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}

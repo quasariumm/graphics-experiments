@@ -1,9 +1,10 @@
 ﻿module;
 
-#include <DirectXHelpers.h>
+#include <d3d12.h>
 #include <filesystem>
 
 module dx_wrapper.resources.dx_render_texture;
+import dx_wrapper.core.log;
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips, bool generateSrv)
 	: DxTexture{device, path, generateMips, true},
@@ -13,10 +14,10 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::
 
 	// RTV
 	m_rtv = m_rtvHeap.GetFirstCpuHandle();
-	DirectX::CreateRenderTargetView(*device, DxTexture::GetResource(), m_rtv, 0);
+	CreateRenderTargetView(device, m_rtv, 0);
 }
 
-DxRenderTexture::DxRenderTexture(const DxDevice& device, const void* data, TextureType type, DXGI_FORMAT format, uint32_t width,
+DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, uint32_t width,
 								 uint32_t height, uint32_t depth, bool generateMips, bool generateSrv)
 	: DxTexture{device, data, type, format, width, height, depth, generateMips, true},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
@@ -25,7 +26,7 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const void* data, Textu
 
 	// RTV
 	m_rtv = m_rtvHeap.GetFirstCpuHandle();
-	DirectX::CreateRenderTargetView(*device, DxTexture::GetResource(), m_rtv, 0);
+	CreateRenderTargetView(device, m_rtv, 0);
 }
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width, uint32_t height,
@@ -37,10 +38,10 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_
 
 	// RTV
 	m_rtv = m_rtvHeap.GetFirstCpuHandle();
-	DirectX::CreateRenderTargetView(*device, DxTexture::GetResource(), m_rtv, 0);
+	CreateRenderTargetView(device, m_rtv, 0);
 }
 
-DxRenderTexture::DxRenderTexture(const DxDevice& device, const void* data, size_t size, bool generateMips, bool generateSrv)
+DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, size_t size, bool generateMips, bool generateSrv)
 	: DxTexture{device, data, size, generateMips, true},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
@@ -48,5 +49,44 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const void* data, size_
 
 	// RTV
 	m_rtv = m_rtvHeap.GetFirstCpuHandle();
-	DirectX::CreateRenderTargetView(*device, DxTexture::GetResource(), m_rtv, 0);
+	CreateRenderTargetView(device, m_rtv, 0);
+}
+
+void DxRenderTexture::CreateRenderTargetView(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t mipLevel) const
+{
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
+	rtvDesc.Format = GetFormat();
+	
+	switch (GetTextureType())
+	{
+	case TextureType::D1:
+		rtvDesc.ViewDimension	   = D3D12_RTV_DIMENSION_TEXTURE1D;
+		rtvDesc.Texture1D.MipSlice = mipLevel;
+		break;
+	case TextureType::D1Array:
+		rtvDesc.ViewDimension				   = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+		rtvDesc.Texture1DArray.MipSlice		   = mipLevel;
+		rtvDesc.Texture1DArray.FirstArraySlice = 0;
+		rtvDesc.Texture1DArray.ArraySize	   = 1;
+		break;
+	case TextureType::D2:
+		rtvDesc.ViewDimension	   = D3D12_RTV_DIMENSION_TEXTURE2D;
+		rtvDesc.Texture2D.MipSlice = 0;
+		break;
+	case TextureType::D2Array:
+	case TextureType::DCube:
+		rtvDesc.ViewDimension				   = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+		rtvDesc.Texture2DArray.MipSlice		   = mipLevel;
+		rtvDesc.Texture2DArray.FirstArraySlice = 0;
+		rtvDesc.Texture2DArray.ArraySize	   = (GetTextureType() == TextureType::DCube) ? 6 : 1;
+		break;
+	case TextureType::D3:
+		Log::Critical("3D depth stencil textures are not supported in D3D12");
+		return;
+	default:
+		Log::Critical("Invalid texture type");
+		return;
+	}
+	
+	device->CreateRenderTargetView(DxTexture::GetResource(), &rtvDesc, handle);
 }

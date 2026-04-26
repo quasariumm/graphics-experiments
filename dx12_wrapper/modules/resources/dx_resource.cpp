@@ -3,8 +3,6 @@
 #include <d3d12.h>
 #include <d3dx12.h>
 
-#include <ResourceUploadBatch.h>
-
 module dx_wrapper.resources.dx_resource;
 import dx_wrapper.core.dx_device;
 
@@ -16,7 +14,7 @@ void DxResource::Transition(ID3D12GraphicsCommandList* commandList, const D3D12_
 	m_currentState = newState;
 }
 
-void DxResource::Upload(DirectX::ResourceUploadBatch& resourceUpload, ID3D12CommandQueue* commandQueue,
+void DxResource::Upload(DxResourceUpload& resourceUpload, ID3D12CommandQueue* commandQueue,
 						ID3D12GraphicsCommandList* commandList)
 {
 	if (!m_cpuData)

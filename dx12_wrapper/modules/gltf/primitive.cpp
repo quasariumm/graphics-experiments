@@ -1,15 +1,14 @@
 ﻿module;
 
 #include <d3dx12.h>
-#include <mikktspace.h>
 #include <fastgltf/core.hpp>
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
-
-#include <BufferHelpers.h>
+#include <mikktspace.h>
 
 module dx_wrapper.gltf.primitive;
 import dx_wrapper.core.log;
+import dx_wrapper.helpers.dx_buffer_helpers;
 
 GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
 							 const fastgltf::Primitive& primitive)
@@ -28,7 +27,7 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 	}
 
 	ProcessVerticesIndices(asset, primitive);
-	
+
 	// Material
 	if (!primitive.materialIndex.has_value())
 		m_material = std::nullopt;
@@ -36,30 +35,23 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 		m_material = GltfMaterial{device, modelPath, asset, asset.materials[*primitive.materialIndex]};
 
 	// Make DX12 buffers
-	device.GetResourceUpload().Begin();
-
-	CheckHR(DirectX::CreateStaticBuffer(device.GetDXDevice(),
-										device.GetResourceUpload(),
-										m_vertices,
-										D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-										&m_vertexBuffer));
+	CheckHR(CreateStaticBuffer(device,
+							   m_vertices,
+							   D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+							   m_vertexBuffer));
 
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.SizeInBytes	  = m_vertices.size() * sizeof(Vertex);
 	m_vertexBufferView.StrideInBytes  = sizeof(Vertex);
 
-	CheckHR(DirectX::CreateStaticBuffer(device.GetDXDevice(),
-										device.GetResourceUpload(),
-										m_indices,
-										D3D12_RESOURCE_STATE_INDEX_BUFFER,
-										&m_indexBuffer));
+	CheckHR(CreateStaticBuffer(device,
+							   m_indices,
+							   D3D12_RESOURCE_STATE_INDEX_BUFFER,
+							   m_indexBuffer));
 
 	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.SizeInBytes	 = m_indices.size() * sizeof(uint32_t);
 	m_indexBufferView.Format		 = DXGI_FORMAT_R32_UINT;
-
-	const auto finish = device.GetResourceUpload().End(device.GetDXDirectComQueue());
-	finish.wait();
 }
 
 const std::vector<Vertex>&		   GltfPrimitive::GetVertices() const { return m_vertices; }

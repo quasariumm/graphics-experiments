@@ -3,22 +3,20 @@
 #include <algorithm>
 #include <ranges>
 #include <stdexcept>
-
-#include <DescriptorHeap.h>
-#include <../Src/PlatformHelpers.h>
+#include <d3d12.h>
 
 module dx_wrapper.rendering.dx_descriptor_pile;
-import dx_wrapper.core.dx_device;
+import dx_wrapper.core;
 
 DxDescriptorPile::DxDescriptorPile(ID3D12DescriptorHeap* existingHeap, const IndexType reserve)
-	: DescriptorHeap{existingHeap}, m_top{reserve}
+	: DxDescriptorHeap{existingHeap}, m_top{reserve}
 {
 	if (reserve > 0 && m_top >= Count())
 		throw std::out_of_range("Reserve descriptor range is too large");
 }
 
 DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc, const IndexType reserve)
-	: DescriptorHeap{device, desc}, m_top(reserve)
+	: DxDescriptorHeap{device, desc}, m_top(reserve)
 {
 	if (reserve > 0 && m_top >= Count())
 		throw std::out_of_range("Reserve descriptor range is too large");
@@ -26,7 +24,7 @@ DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR
 
 DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
 								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const size_t capacity, const IndexType reserve)
-	: DescriptorHeap{device, type, flags, capacity}, m_top{reserve}
+	: DxDescriptorHeap{device, type, flags, capacity}, m_top{reserve}
 {
 	if (reserve > 0 && m_top >= Count())
 		throw std::out_of_range("Reserve descriptor range is too large");
@@ -84,7 +82,7 @@ void DxDescriptorPile::AllocateRange(const size_t numDescriptors, IndexType& sta
 	// make sure we have enough room
 	if (m_top > Count())
 	{
-		DirectX::DebugTrace("DescriptorPile has %zu of %zu descriptors; failed request for %zu more\n",
+		Log::Error("DescriptorPile has %zu of %zu descriptors; failed request for %zu more\n",
 							start,
 							Count(),
 							numDescriptors);

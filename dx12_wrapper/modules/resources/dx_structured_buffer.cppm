@@ -88,7 +88,7 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 		m_resource.Get(),
 		m_counterResource.Get(),
 		&uavDesc,
-		device.GetShaderDescriptorPile().GetCpuHandle(m_uavHeapIndex)
+		device.GetShaderDescriptorPile().GetCpuHandleAt(m_uavHeapIndex)
 	);
 	
 	// Upload

@@ -3,10 +3,9 @@
 #include <cstdint>
 #include <d3d12.h>
 
-#include <ResourceUploadBatch.h>
-
 export module dx_wrapper.resources.dx_resource;
 import dx_wrapper.core.dx_common;
+import dx_wrapper.helpers.dx_resource_upload;
 
 export using ::ID3D12Resource;
 
@@ -35,14 +34,14 @@ public:
 	 * Data
 	 */
 
-	virtual void Upload(DirectX::ResourceUploadBatch& resourceUpload, ID3D12CommandQueue* commandQueue,
+	virtual void Upload(DxResourceUpload& resourceUpload, ID3D12CommandQueue* commandQueue,
 						ID3D12GraphicsCommandList* commandList);
 
 protected:
 
 	// API for inherited classes
 
-	void SetData(void* data, const size_t size)
+	void SetData(const void* data, const size_t size)
 	{
 		m_cpuData	  = data;
 		m_cpuDataSize = size;
@@ -52,8 +51,8 @@ protected:
 
 private:
 
-	void*  m_cpuData	 = nullptr;
-	size_t m_cpuDataSize = 0;
+	const void* m_cpuData	  = nullptr;
+	size_t		m_cpuDataSize = 0;
 
 	DXGI_FORMAT			  m_format		 = DXGI_FORMAT_UNKNOWN;
 	D3D12_RESOURCE_STATES m_currentState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;

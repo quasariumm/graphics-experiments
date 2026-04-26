@@ -1,15 +1,15 @@
 ﻿module;
 
-#include <DescriptorHeap.h>
+#include <d3d12.h>
 #include <vector>
 
 export module dx_wrapper.rendering.dx_descriptor_pile;
+import dx_wrapper.rendering.dx_descriptor_heap;
 
 /**
- * A class that stores a set number of descriptors for use in shaders.\n
- * This class is an extension upon DirectXTK12's DescriptorPile, adding a Free function
+ * A class that stores a set number of descriptors for use in shaders.
  */
-export class DxDescriptorPile : public DirectX::DescriptorHeap
+export class DxDescriptorPile : public DxDescriptorHeap
 {
 
 public:

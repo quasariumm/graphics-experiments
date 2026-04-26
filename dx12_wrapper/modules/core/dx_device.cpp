@@ -1,12 +1,10 @@
 ﻿module;
 
+#include <bitset>
 #include <chrono>
 #include <d3dx12.h>
 #include <filesystem>
 #include <memory>
-
-#include <ResourceUploadBatch.h>
-#include <bitset>
 
 /*
  * DX Device
@@ -146,7 +144,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 	m_deviceResources.CreateDeviceResources();
 	m_deviceResources.CreateWindowSizeDependentResources();
 
-	m_resourceUpload = std::make_unique<DirectX::ResourceUploadBatch>(m_deviceResources.GetD3DDevice());
+	m_resourceUpload = std::make_unique<DxResourceUpload>(m_deviceResources.GetD3DDevice());
 	m_descriptorPile = std::make_unique<DxDescriptorPile>(GetDXDevice(), max_shader_descriptors);
 	m_resourceBank = std::make_unique<ResourceBank>();
 	
