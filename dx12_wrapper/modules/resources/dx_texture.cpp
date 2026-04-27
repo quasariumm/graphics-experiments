@@ -70,16 +70,18 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 
 	DirectX::ScratchImage image;
 	DirectX::TexMetadata  metadata;
+	
+	const auto extension = path.extension();
 
-	if (path.extension() == ".dds" || path.extension() == ".dxg")
-	{
+	if (extension == ".hdr")
+		CheckHR(DirectX::LoadFromHDRFile(path.c_str(), &metadata, image));
+	else if (extension == ".exr")
+		CheckHR(DirectX::LoadFromEXRFile(path.c_str(), &metadata, image));
+	else if (extension == ".dds" || extension == ".dxg")
 		CheckHR(DirectX::LoadFromDDSFile(path.c_str(), DirectX::DDS_FLAGS_NONE, &metadata, image));
-		isCubemap = metadata.IsCubemap();
-	}
 	else
-	{
 		CheckHR(DirectX::LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, image));
-	}
+	isCubemap = metadata.IsCubemap();
 
 	if (generateMips && image.GetMetadata().mipLevels == 1)
 	{
@@ -208,21 +210,23 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const size_t size, const bool generateMips,
 					 const bool _internal)
 {
+	const bool isHdr = size >= 2 && *reinterpret_cast<const uint16_t*>(data) == 0x3f23;
+	const bool isExr = size >= 4 && *reinterpret_cast<const uint32_t*>(data) == 0x01312f76;
 	const bool isDds = size >= 4 && *reinterpret_cast<const uint32_t*>(data) == 0x20534444;
 
 	bool				  isCubemap = false;
 	DirectX::ScratchImage image;
 	DirectX::TexMetadata  metadata;
 
-	if (isDds)
-	{
+	if (isHdr)
+		CheckHR(DirectX::LoadFromHDRMemory(data, size, &metadata, image));
+	else if (isExr)
+		CheckHR(DirectX::LoadFromEXRMemory(reinterpret_cast<const uint8_t*>(data), size, &metadata, image));
+	else if (isDds)
 		CheckHR(DirectX::LoadFromDDSMemory(data, size, DirectX::DDS_FLAGS_NONE, &metadata, image));
-		isCubemap = metadata.IsCubemap();
-	}
 	else
-	{
 		CheckHR(DirectX::LoadFromWICMemory(data, size, DirectX::WIC_FLAGS_NONE, &metadata, image));
-	}
+	isCubemap = metadata.IsCubemap();
 
 	if (generateMips && image.GetMetadata().mipLevels == 1)
 	{
