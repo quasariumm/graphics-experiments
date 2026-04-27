@@ -1,11 +1,9 @@
 ﻿module;
 
-#include <d3d12.h>
-#include <d3dcompiler.h>
-#include <d3dx12.h>
 #include <filesystem>
 #include <format>
 #include <variant>
+#include "macros.hpp"
 
 module dx_wrapper.rendering.dx_pipelinestate;
 import dx_wrapper.core.dx_common;
@@ -26,7 +24,7 @@ void GetShaderBlob(const std::filesystem::path& path, const std::string& type, c
 	if (!RuntimeCompileShader(path, type, shaderModel, outDirExtension))
 		return;
 
-	const auto csoPath = fs::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
+	const auto csoPath = Filesystem::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
 	const auto data	   = ReadFileBinary(csoPath);
 
 	CheckHR(D3DCreateBlob(data.size(), &outBlob));
@@ -217,9 +215,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 							 psoDesc.BlendState.RenderTarget[0].SrcBlend			  = D3D12_BLEND_SRC_ALPHA;
 							 psoDesc.BlendState.RenderTarget[0].DestBlend			  = D3D12_BLEND_INV_SRC_ALPHA;
 							 psoDesc.BlendState.RenderTarget[0].BlendOp				  = D3D12_BLEND_OP_ADD;
-							 psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_RED |
-																						D3D12_COLOR_WRITE_ENABLE_GREEN |
-																						D3D12_COLOR_WRITE_ENABLE_BLUE;
+							 psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 						 }
 
 						 psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC{D3D12_DEFAULT};
@@ -281,7 +277,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 
 	if (!name.empty())
 	{
-		std::wstring wname = fs::path{name}.wstring();
+		std::wstring wname = Filesystem::path{name}.wstring();
 		CheckHR(m_pipelineState->SetName(wname.c_str()));
 	}
 

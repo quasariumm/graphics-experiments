@@ -1,13 +1,10 @@
 ﻿module;
 
 #include <cstdint>
-#include <d3d12.h>
 
 export module dx_wrapper.resources.dx_resource;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.helpers.dx_resource_upload;
-
-export using ::ID3D12Resource;
 
 export class DxResource
 {

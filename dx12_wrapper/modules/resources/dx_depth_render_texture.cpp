@@ -1,9 +1,9 @@
 ﻿module;
 
-#include <d3d12.h>
 #include <filesystem>
 
 module dx_wrapper.resources.dx_depth_render_texture;
+import dx_wrapper.external.directx12;
 import dx_wrapper.core.log;
 
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips,

@@ -1,11 +1,10 @@
 ﻿module;
 
-#include <d3d12.h>
 #include <filesystem>
-
-#include "d3dx12_root_signature.h"
+#include "macros.hpp"
 
 module dx_wrapper.rendering.dx_rootsignature;
+import dx_wrapper.external.directx12;
 import dx_wrapper.core.log;
 
 DxRootSignature& DxRootSignature::Add32BitConstants(const uint32_t shaderRegister, const uint32_t sizeBytes,

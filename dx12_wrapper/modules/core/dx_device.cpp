@@ -2,7 +2,6 @@
 
 #include <bitset>
 #include <chrono>
-#include <d3dx12.h>
 #include <filesystem>
 #include <memory>
 
@@ -11,7 +10,11 @@
  */
 
 module dx_wrapper.core.dx_device;
+
 import dx_wrapper.external.device_resources;
+import dx_wrapper.external.win32;
+import dx_wrapper.external.directx12;
+
 import dx_wrapper.core;
 import dx_wrapper.rendering;
 
@@ -33,65 +36,65 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 	/*
 	 * Window
 	 */
-	case WM_DESTROY:
+	case WM::Destroy:
 		PostQuitMessage(0);
 		device->m_shouldClose = true;
 		break;
-	case WM_SIZE:
+	case WM::Size:
 		device->SetWindowSize(LOWORD(lp), HIWORD(lp));
 		break;
 	/*
 	 * Keyboard
 	 */
-	case WM_KEYDOWN:
+	case WM::KeyDown:
 		current_input_state.set(LOWORD(wp), true);
 		break;
-	case WM_KEYUP:
+	case WM::KeyUp:
 		current_input_state.set(LOWORD(wp), false);
 		break;
 	/*
 	 * Mouse
 	 */
-	case WM_LBUTTONDOWN:
+	case WM::LButtonDown:
 		current_input_state.set(static_cast<size_t>(MouseButton::Left), true);
 		SetCapture(hwnd);
 		break;
-	case WM_RBUTTONDOWN:
+	case WM::RButtonDown:
 		current_input_state.set(static_cast<size_t>(MouseButton::Right), true);
 		break;
-	case WM_MBUTTONDOWN:
+	case WM::MButtonDown:
 		current_input_state.set(static_cast<size_t>(MouseButton::Middle), true);
 		break;
-	case WM_XBUTTONDOWN:
+	case WM::XButtonDown:
 	{
 		const UINT button = GET_XBUTTON_WPARAM(wp);
 		current_input_state.set(static_cast<size_t>(button == XBUTTON1 ? MouseButton::X1 : MouseButton::X2), true);
 		break;
 	}
-	case WM_LBUTTONUP:
+	case WM::LButtonUp:
 		current_input_state.set(static_cast<size_t>(MouseButton::Left), false);
 		ReleaseCapture();
 		break;
-	case WM_RBUTTONUP:
+	case WM::RButtonUp:
 		current_input_state.set(static_cast<size_t>(MouseButton::Right), false);
 		break;
-	case WM_MBUTTONUP:
+	case WM::MButtonUp:
 		current_input_state.set(static_cast<size_t>(MouseButton::Middle), false);
 		break;
-	case WM_XBUTTONUP:
+	case WM::XButtonUp:
 	{
 		const UINT button = GET_XBUTTON_WPARAM(wp);
 		current_input_state.set(static_cast<size_t>(button == XBUTTON1 ? MouseButton::X1 : MouseButton::X2), false);
 		break;
 	}
-	case WM_MOUSEMOVE:
+	case WM::MouseMove:
 		current_mouse_pos.x = static_cast<float>(LOWORD(lp)) / dpi;
 		current_mouse_pos.y = static_cast<float>(HIWORD(lp)) / dpi;
 		break;
-	case WM_MOUSEWHEEL:
+	case WM::MouseWheel:
 		current_scroll_delta.y = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wp)) / 120.0f;
 		break;
-	case WM_MOUSEHWHEEL:
+	case WM::MouseHWheel:
 		current_scroll_delta.x = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wp)) / 120.0f;
 		break;
 	default:
@@ -212,8 +215,8 @@ void DxDevice::SetWindowIcon(const std::filesystem::path& filename) const
 	if (!hIconBig || !hIconSmall)
 		return;
 
-	::SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIconSmall);
-	::SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIconBig);
+	::SendMessage(hwnd, WM::SetIcon, ICON_SMALL, (LPARAM)hIconSmall);
+	::SendMessage(hwnd, WM::SetIcon, ICON_BIG, (LPARAM)hIconBig);
 }
 
 void DxDevice::SetWindowCursorState(bool active) const
@@ -270,7 +273,7 @@ void DxDevice::EndFrame()
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
 
-	if (msg.message == WM_QUIT)
+	if (msg.message == WM::Quit)
 	{
 		m_shouldClose = true;
 		return;

@@ -1,16 +1,14 @@
 ﻿module;
 
-#include <d3dx12.h>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <wrl/client.h>
 
 export module dx_wrapper.core.dx_common;
 import dx_wrapper.core.log;
-
-export using Microsoft::WRL::ComPtr;
+export import dx_wrapper.external.win32;
+export import dx_wrapper.external.directx12;
 
 export inline constexpr uint32_t max_shader_descriptors = 16384;
 
@@ -21,7 +19,7 @@ export void CheckHR(HRESULT hr)
 		CHAR  errMsgBuf[256];
 		DWORD errMsgLen = 0;
 
-		errMsgLen = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		errMsgLen = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 								   nullptr,
 								   hr,
 								   0,

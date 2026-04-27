@@ -19,8 +19,6 @@ import dx_wrapper.core.dx_common;
 
 using namespace DirectX;
 
-using Microsoft::WRL::ComPtr;
-
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wcovered-switch-default"
 #pragma clang diagnostic ignored "-Wswitch-enum"

@@ -1,28 +1,27 @@
 ﻿module;
 
-#include <d3d12.h>
-#include <dxcapi.h>
 #include <filesystem>
 #include <fstream>
-#include <windows.h>
+#include "macros.hpp"
 
 module dx_wrapper.rendering.dx_shader_utils;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.core.log;
+import dx_wrapper.external.dxc;
 
-namespace fs = std::filesystem;
+namespace Filesystem = std::filesystem;
 
-bool RuntimeCompileShader(const fs::path& path, const std::string& type, const std::string& shaderModel,
+bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type, const std::string& shaderModel,
 						  const std::string& outDirExtension)
 {
-	const auto csoPath = fs::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
+	const auto csoPath = Filesystem::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
 
-	if (fs::exists(csoPath) && fs::last_write_time(csoPath) >= fs::last_write_time(path))
+	if (Filesystem::exists(csoPath) && Filesystem::last_write_time(csoPath) >= Filesystem::last_write_time(path))
 		return true;
 
-	HMODULE hDxc				= LoadLibraryW(L"dxcompiler.dll");
+	HMODULE hDxc				= LoadLibrary("dxcompiler.dll");
 	auto*	pDxcCreateInstance	= (DxcCreateInstanceProc)(void*)GetProcAddress(hDxc, "DxcCreateInstance");
-	HMODULE hDxil				= LoadLibraryW(L"dxil.dll");
+	HMODULE hDxil				= LoadLibrary("dxil.dll");
 	auto*	pDxilCreateInstance = (DxcCreateInstanceProc)(void*)GetProcAddress(hDxil, "DxcCreateInstance");
 
 	ComPtr<IDxcCompiler3> compiler;
@@ -48,7 +47,7 @@ bool RuntimeCompileShader(const fs::path& path, const std::string& type, const s
 	auto includeDir = path.parent_path().wstring();
 
 	// Note: I skip validation to do it manually later. Better error handling then
-	std::wstring shaderType = fs::path{std::format("{}_{}", type, shaderModel)}.wstring();
+	std::wstring shaderType = Filesystem::path{std::format("{}_{}", type, shaderModel)}.wstring();
 	std::vector	 arguments	= {L"-T", shaderType.c_str(), L"-no-warnings", L"-Vd", L"-I", includeDir.c_str()};
 
 	// Compile
@@ -84,7 +83,7 @@ bool RuntimeCompileShader(const fs::path& path, const std::string& type, const s
 	{
 		// Validate
 		ComPtr<IDxcOperationResult> valResult;
-		CheckHR(validator->Validate(shaderOutput.Get(), DxcValidatorFlags_InPlaceEdit, &valResult));
+		CheckHR(validator->Validate(shaderOutput.Get(), DxcValidatorFlagsInPlaceEdit, &valResult));
 
 		HRESULT valStatus = 0;
 		valResult->GetStatus(&valStatus);
@@ -105,7 +104,7 @@ bool RuntimeCompileShader(const fs::path& path, const std::string& type, const s
 		}
 
 		// Write to disk
-		fs::create_directories(csoPath.parent_path());
+		Filesystem::create_directories(csoPath.parent_path());
 		std::ofstream file(csoPath, std::ios::out | std::ios::binary | std::ios::trunc);
 		file.write(static_cast<const char*>(shaderOutput->GetBufferPointer()), shaderOutput->GetBufferSize());
 	}

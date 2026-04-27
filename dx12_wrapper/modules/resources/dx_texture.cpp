@@ -1,15 +1,12 @@
 ﻿module;
 
-#include <d3d12.h>
-#include <d3dx12.h>
 #include <filesystem>
-#include <wincodec.h>
-
-#include <DirectXTex.h>
+#include "macros.hpp"
 
 module dx_wrapper.resources.dx_texture;
 import dx_wrapper.rendering.dx_descriptor_pile;
 import dx_wrapper.core;
+import dx_wrapper.external.directxtex;
 import dx_wrapper.helpers.dx_format_helpers;
 
 inline TextureType DxToTextureType(const D3D12_RESOURCE_DIMENSION dim, const UINT depthOrArraySize)
@@ -100,7 +97,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
-	
+
 	device.GetResourceUpload().Begin();
 	device.GetResourceUpload().Upload(m_resource.Get(), 0, subresources.data(), subresources.size());
 	device.GetResourceUpload().End(device.GetDXDirectComQueue());
@@ -120,18 +117,18 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 {
 	m_textureType = type;
 
-	const bool is3D  = TextureTypeToDx(type) == D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+	const bool is3D	  = TextureTypeToDx(type) == D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 	const bool isCube = type == TextureType::DCube;
 
 	DirectX::TexMetadata metadata{};
-	metadata.width      = width;
-	metadata.height     = height;
-	metadata.depth      = is3D ? depth : 1;
-	metadata.arraySize  = is3D ? 1 : depth;
-	metadata.mipLevels  = 1;
-	metadata.format     = format;
-	metadata.dimension  = TextureTypeToDxTex(type);
-	metadata.miscFlags  = isCube ? DirectX::TEX_MISC_TEXTURECUBE : 0;
+	metadata.width	   = width;
+	metadata.height	   = height;
+	metadata.depth	   = is3D ? depth : 1;
+	metadata.arraySize = is3D ? 1 : depth;
+	metadata.mipLevels = 1;
+	metadata.format	   = format;
+	metadata.dimension = TextureTypeToDxTex(type);
+	metadata.miscFlags = isCube ? DirectX::TEX_MISC_TEXTURECUBE : 0;
 
 	DirectX::ScratchImage image;
 	CheckHR(image.Initialize(metadata));
@@ -141,19 +138,28 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 	{
 		DirectX::ScratchImage mipChain;
 		if (is3D)
-			CheckHR(DirectX::GenerateMipMaps3D(image.GetImages(), image.GetImageCount(), metadata, DirectX::TEX_FILTER_DEFAULT, 0, mipChain));
+			CheckHR(DirectX::GenerateMipMaps3D(image.GetImages(),
+											   image.GetImageCount(),
+											   metadata,
+											   DirectX::TEX_FILTER_DEFAULT,
+											   0,
+											   mipChain));
 		else
-			CheckHR(DirectX::GenerateMipMaps(image.GetImages(), image.GetImageCount(), metadata, DirectX::TEX_FILTER_DEFAULT, 0, mipChain));
-		image    = std::move(mipChain);
+			CheckHR(DirectX::GenerateMipMaps(image.GetImages(),
+											 image.GetImageCount(),
+											 metadata,
+											 DirectX::TEX_FILTER_DEFAULT,
+											 0,
+											 mipChain));
+		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
 
-	CheckHR(DirectX::CreateTextureEx(
-		*device,
-		metadata,
-		D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
-		DirectX::CREATETEX_DEFAULT,
-		m_resource.GetAddressOf()));
+	CheckHR(DirectX::CreateTextureEx(*device,
+									 metadata,
+									 D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+									 DirectX::CREATETEX_DEFAULT,
+									 m_resource.GetAddressOf()));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
@@ -174,7 +180,7 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 {
 	size_t mips = 1;
 	DirectX::CalculateMipLevels(width, height, mips);
-	
+
 	D3D12_RESOURCE_DESC texDesc{};
 	texDesc.Dimension		 = TextureTypeToDx(type);
 	texDesc.Width			 = width;
@@ -182,7 +188,7 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 	texDesc.DepthOrArraySize = depth;
 	texDesc.Format			 = format;
 	texDesc.Flags			 = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	texDesc.Layout			 = D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE;
+	texDesc.Layout			 = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	texDesc.MipLevels		 = allocateMips ? mips : 1;
 	texDesc.Alignment		 = 0;
 
@@ -193,7 +199,7 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 											&texDesc,
 											D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
 											nullptr,
-											IID_PPV_ARGS(&m_resource)));
+											IID_PPV_ARGS(m_resource.GetAddressOf())));
 
 	if (!_internal)
 		GenerateDescriptors(device, true, type == TextureType::DCube);
@@ -234,7 +240,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const size_t
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
-	
+
 	device.GetResourceUpload().Begin();
 	device.GetResourceUpload().Upload(m_resource.Get(), 0, subresources.data(), subresources.size());
 	device.GetResourceUpload().End(device.GetDXDirectComQueue());

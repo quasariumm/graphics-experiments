@@ -1,6 +1,5 @@
 ﻿module;
 
-#include <d3d12.h>
 #include <vector>
 
 export module dx_wrapper.resources.dx_const_buffer;

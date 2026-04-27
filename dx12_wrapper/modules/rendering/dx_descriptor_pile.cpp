@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <ranges>
 #include <stdexcept>
-#include <d3d12.h>
 
 module dx_wrapper.rendering.dx_descriptor_pile;
 import dx_wrapper.core;

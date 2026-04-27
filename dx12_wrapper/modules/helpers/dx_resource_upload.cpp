@@ -1,12 +1,11 @@
 ﻿module;
 
-#include <d3d12.h>
-#include <d3dx12.h>
 #include <future>
+#include "macros.hpp"
 
 module dx_wrapper.helpers.dx_resource_upload;
 import dx_wrapper.helpers.dx_format_helpers;
-import dx_wrapper.core.log;
+import dx_wrapper.core;
 
 DxResourceUpload::DxResourceUpload(ID3D12Device2* device)
 	: m_device{device}, m_commandListType{D3D12_COMMAND_LIST_TYPE_DIRECT}, m_began{false}

@@ -1,9 +1,9 @@
 ﻿module;
 
-#include <d3d12.h>
 #include <filesystem>
 
 module dx_wrapper.resources.dx_render_texture;
+import dx_wrapper.external.directx12;
 import dx_wrapper.core.log;
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips, bool generateSrv)

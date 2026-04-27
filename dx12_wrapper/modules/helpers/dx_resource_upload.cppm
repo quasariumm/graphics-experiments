@@ -1,7 +1,6 @@
 ﻿module;
 
 #include <cstdint>
-#include <d3d12.h>
 #include <future>
 
 export module dx_wrapper.helpers.dx_resource_upload;

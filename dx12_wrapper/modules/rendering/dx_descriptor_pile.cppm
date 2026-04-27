@@ -1,9 +1,9 @@
 ﻿module;
 
-#include <d3d12.h>
 #include <vector>
 
 export module dx_wrapper.rendering.dx_descriptor_pile;
+import dx_wrapper.external.directx12;
 import dx_wrapper.rendering.dx_descriptor_heap;
 
 /**

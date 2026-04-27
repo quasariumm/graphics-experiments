@@ -1,7 +1,7 @@
 ﻿module;
 
-#include <d3dx12.h>
 #include <vector>
+#include "macros.hpp"
 
 export module dx_wrapper.resources.dx_structured_buffer;
 import dx_wrapper.resources.dx_resource;
@@ -60,7 +60,7 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 											&bufferDesc,
 											D3D12_RESOURCE_STATE_COMMON,
 											nullptr,
-											IID_PPV_ARGS(&m_resource)));
+											IID_PPV_ARGS(m_resource.GetAddressOf())));
 
 	// Counter
 	const CD3DX12_RESOURCE_DESC counterBufferDesc =
@@ -71,7 +71,7 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 											&counterBufferDesc,
 											D3D12_RESOURCE_STATE_COMMON,
 											nullptr,
-											IID_PPV_ARGS(&m_counterResource)));
+											IID_PPV_ARGS(m_counterResource.GetAddressOf())));
 	
 	// UAV
 	m_uavHeapIndex = device.GetShaderDescriptorPile().Allocate();

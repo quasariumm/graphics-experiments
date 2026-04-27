@@ -1,16 +1,14 @@
 ﻿module;
 
-#include <d3d12.h>
 #include <filesystem>
 #include <variant>
-#include <wrl/client.h>
 
 export module dx_wrapper.rendering.dx_pipelinestate;
 export import dx_wrapper.rendering.dx_rootsignature;
+import dx_wrapper.external.directx12;
 import dx_wrapper.core.dx_device;
 
-namespace fs = std::filesystem;
-using Microsoft::WRL::ComPtr;
+namespace Filesystem = std::filesystem;
 
 export class DxPipelineState
 {
@@ -67,21 +65,21 @@ private:
 
 	struct GraphicsPipeline
 	{
-		fs::path m_vertexShader;
-		fs::path m_domainShader;
-		fs::path m_hullShader;
-		fs::path m_geometryShader;
-		fs::path m_pixelShader;
+		Filesystem::path m_vertexShader;
+		Filesystem::path m_domainShader;
+		Filesystem::path m_hullShader;
+		Filesystem::path m_geometryShader;
+		Filesystem::path m_pixelShader;
 	};
 
 	struct MeshPipeline
 	{
-		fs::path m_amplificationShader;
-		fs::path m_meshShader;
-		fs::path m_pixelShader;
+		Filesystem::path m_amplificationShader;
+		Filesystem::path m_meshShader;
+		Filesystem::path m_pixelShader;
 	};
 
-	using ComputePipeline = fs::path;
+	using ComputePipeline = Filesystem::path;
 
 	std::variant<GraphicsPipeline, ComputePipeline, MeshPipeline> m_shaders;
 

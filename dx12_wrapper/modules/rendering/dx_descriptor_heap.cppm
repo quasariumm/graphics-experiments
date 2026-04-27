@@ -1,7 +1,6 @@
 ﻿module;
 
 #include <cstdint>
-#include <d3d12.h>
 
 export module dx_wrapper.rendering.dx_descriptor_heap;
 import dx_wrapper.core.dx_common;
@@ -24,15 +23,15 @@ public:
 		: DxDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, count)
 	{}
 
-	D3D12_GPU_DESCRIPTOR_HANDLE WriteDescriptors(ID3D12Device* device, uint32_t offsetIntoHeap, uint32_t totalDescriptorCount,
+	D3D12_GPU_DESCRIPTOR_HANDLE WriteDescriptors(ID3D12Device2* device, uint32_t offsetIntoHeap, uint32_t totalDescriptorCount,
 												 const D3D12_CPU_DESCRIPTOR_HANDLE* descriptorRangeStarts,
 												 const uint32_t* descriptorRangeSizes, uint32_t descriptorRangeCount) const;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE WriteDescriptors(ID3D12Device* device, uint32_t offsetIntoHeap,
+	D3D12_GPU_DESCRIPTOR_HANDLE WriteDescriptors(ID3D12Device2* device, uint32_t offsetIntoHeap,
 												 const D3D12_CPU_DESCRIPTOR_HANDLE* descriptorRangeStarts,
 												 const uint32_t* descriptorRangeSizes, uint32_t descriptorRangeCount) const;
 
-	D3D12_GPU_DESCRIPTOR_HANDLE WriteDescriptors(ID3D12Device* device, uint32_t offsetIntoHeap,
+	D3D12_GPU_DESCRIPTOR_HANDLE WriteDescriptors(ID3D12Device2* device, uint32_t offsetIntoHeap,
 												 const D3D12_CPU_DESCRIPTOR_HANDLE* pDescriptors, uint32_t descriptorCount) const;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GetFirstGpuHandle() const noexcept;
@@ -55,7 +54,7 @@ public:
 
 private:
 
-	void Create(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc);
+	void Create(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc);
 
 	ComPtr<ID3D12DescriptorHeap> m_heap;
 	D3D12_DESCRIPTOR_HEAP_DESC	 m_heapDesc;

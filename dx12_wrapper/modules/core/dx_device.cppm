@@ -4,18 +4,19 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
-#include <windef.h>
-#include <winuser.h>
-
-#include <d3dx12.h>
 
 /*
  * DX Device
  */
 
 export module dx_wrapper.core.dx_device;
+
 import dx_wrapper.external.device_resources;
+import dx_wrapper.external.win32;
+import dx_wrapper.external.directx12;
+
 import dx_wrapper.core.input;
+
 import dx_wrapper.rendering.dx_descriptor_pile;
 import dx_wrapper.resources.resource_bank;
 import dx_wrapper.helpers.dx_resource_upload;

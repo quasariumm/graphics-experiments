@@ -1,12 +1,10 @@
 ﻿module;
 
-#include <d3d12.h>
-#include <d3dx12.h>
 #include <vector>
+#include "macros.hpp"
 
 export module dx_wrapper.helpers.dx_buffer_helpers;
-import dx_wrapper.core.dx_common;
-import dx_wrapper.core.dx_device;
+import dx_wrapper.core;
 
 export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const size_t size,
 								  const D3D12_RESOURCE_STATES initialState, ComPtr<ID3D12Resource>& buffer)
@@ -20,7 +18,7 @@ export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const size
 														   &resourceDesc,
 														   D3D12_RESOURCE_STATE_COMMON,
 														   nullptr,
-														   IID_PPV_ARGS(&buffer));
+														   IID_PPV_ARGS(buffer.GetAddressOf()));
 
 	if (FAILED(result))
 		return result;

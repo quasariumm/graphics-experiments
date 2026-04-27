@@ -1,10 +1,7 @@
 ﻿module;
 
-#include <d3d12.h>
-#include <d3dx12.h>
-
 module dx_wrapper.resources.dx_resource;
-import dx_wrapper.core.dx_device;
+import dx_wrapper.core;
 
 void DxResource::Transition(ID3D12GraphicsCommandList* commandList, const D3D12_RESOURCE_STATES newState)
 {
