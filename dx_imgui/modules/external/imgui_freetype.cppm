@@ -1,0 +1,35 @@
+// NOLINTBEGIN
+module;
+
+#include <misc/freetype/imgui_freetype.h>
+
+export module dx_imgui.external.imgui_freetype;
+export import dx_imgui.external.imgui;
+
+export {
+    // ----- Enums -----
+
+    using ::ImGuiFreeTypeLoaderFlags_;
+    using ::ImGuiFreeTypeLoaderFlags_NoHinting;
+    using ::ImGuiFreeTypeLoaderFlags_NoAutoHint;
+    using ::ImGuiFreeTypeLoaderFlags_ForceAutoHint;
+    using ::ImGuiFreeTypeLoaderFlags_LightHinting;
+    using ::ImGuiFreeTypeLoaderFlags_MonoHinting;
+    using ::ImGuiFreeTypeLoaderFlags_Bold;
+    using ::ImGuiFreeTypeLoaderFlags_Oblique;
+    using ::ImGuiFreeTypeLoaderFlags_Monochrome;
+    using ::ImGuiFreeTypeLoaderFlags_LoadColor;
+    using ::ImGuiFreeTypeLoaderFlags_Bitmap;
+
+    // ----- Type aliases -----
+
+    using ::ImGuiFreeTypeLoaderFlags;
+
+    // ----- Functions -----
+
+namespace ImGuiFreeType {
+    using ImGuiFreeType::GetFontLoader;
+    using ImGuiFreeType::SetAllocatorFunctions;
+    using ImGuiFreeType::DebugEditFontLoaderFlags;
+}
+}
