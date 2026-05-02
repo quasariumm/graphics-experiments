@@ -179,7 +179,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 const ComPtr<IDxcBlob> dsBlob =
 								 RuntimeCompileShader(shaders.m_domainShader, "ds", "6_6", outDirExtension).value_or(nullptr);
 						 const ComPtr<IDxcBlob> gsBlob =
-								 RuntimeCompileShader(shaders.m_geometryShader, "hs", "6_6", outDirExtension).value_or(nullptr);
+								 RuntimeCompileShader(shaders.m_geometryShader, "gs", "6_6", outDirExtension).value_or(nullptr);
 						 const ComPtr<IDxcBlob> psBlob =
 								 RuntimeCompileShader(shaders.m_pixelShader, "ps", "6_6", outDirExtension).value_or(nullptr);
 
@@ -250,7 +250,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 const ComPtr<IDxcBlob> msBlob =
 								 RuntimeCompileShader(shaders.m_meshShader, "ms", "6_6", outDirExtension).value_or(nullptr);
 						 const ComPtr<IDxcBlob> psBlob =
-								 RuntimeCompileShader(shaders.m_pixelShader, "hs", "6_6", outDirExtension).value_or(nullptr);
+								 RuntimeCompileShader(shaders.m_pixelShader, "ps", "6_6", outDirExtension).value_or(nullptr);
 
 						 D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc{};
 

@@ -29,7 +29,7 @@ DxRenderer::DxRenderer(DxDevice* device)
 			.AddVertexInput("UV_SEC", DXGI_FORMAT_R32G32_FLOAT)
 			.AddVertexInput("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
 			.AddVertexInput("TANGENT", DXGI_FORMAT_R32G32B32A32_FLOAT)
-			.Finalize(*m_device, m_renderRootSignature, "Main Render Pipeline", "dx12_wrapper");
+			.Finalize(*m_device, m_renderRootSignature, "Main Render Pipeline", "dx_wrapper");
 
 	m_camera = Camera{m_device};
 	m_camera.GetTransform().SetPosition(glm::vec3{0, 0, 4});

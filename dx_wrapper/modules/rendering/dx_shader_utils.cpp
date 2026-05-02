@@ -31,8 +31,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 		CheckHR(pDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.GetAddressOf())));
 
 		ComPtr<IDxcBlobEncoding> blobEncoding;
-		CheckHR(utils->CreateBlobFromPinned(data.data(), data.size(), DXC_CP_ACP, blobEncoding.GetAddressOf()));
-		memcpy(blobEncoding->GetBufferPointer(), data.data(), data.size());
+		CheckHR(utils->CreateBlob(data.data(), data.size(), DXC_CP_ACP, blobEncoding.GetAddressOf()));
 		return blobEncoding;
 	}
 

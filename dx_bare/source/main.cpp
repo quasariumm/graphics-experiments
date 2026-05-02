@@ -22,7 +22,7 @@ int main()
 
 void Demo::Run()
 {
-	m_renderer.AddModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
+	m_renderer.AddModel("assets/DamagedHelmet/DamagedHelmet.gltf");
 	
 	while (!m_device.ShouldClose())
 	{
