@@ -140,7 +140,6 @@ target_link_libraries(dx_wrapper PUBLIC
 		d3d12
 		dxgi
 		dxguid
-		d3dcompiler
 		Microsoft::DirectX-Headers
 		Microsoft::DirectX-Guids
 		DirectXMath
@@ -162,8 +161,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	target_compile_definitions(dx_wrapper PUBLIC _AMD64_)
 endif ()
 
-add_custom_command(TARGET dx_wrapper POST_BUILD
+set(DXC_SOURCE_DIR ${dxc_SOURCE_DIR} CACHE PATH "" FORCE)
+function(copy_dxc_dlls target)
+add_custom_command(TARGET ${target} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		${dxc_SOURCE_DIR}/bin/x64/dxcompiler.dll
-		${dxc_SOURCE_DIR}/bin/x64/dxil.dll
-		$<TARGET_FILE_DIR:${PROJECT_NAME}>)
+		${DXC_SOURCE_DIR}/bin/x64/dxcompiler.dll
+		${DXC_SOURCE_DIR}/bin/x64/dxil.dll
+		$<TARGET_FILE_DIR:${target}>)
+endfunction()

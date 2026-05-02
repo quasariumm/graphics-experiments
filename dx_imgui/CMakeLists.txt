@@ -26,10 +26,13 @@ FetchContent_MakeAvailable(imgui)
 
 add_executable(dx_imgui)
 
+target_compile_definitions(dx_imgui PUBLIC TESTPLATE_HAS_IMGUI)
+
 target_link_libraries(dx_imgui PRIVATE dx_wrapper)
 target_compile_options(dx_imgui PUBLIC -march=native)
 
 include(../common/cmake/setup_sources.cmake)
+copy_dxc_dlls(dx_imgui)
 
 #
 # ImGUI

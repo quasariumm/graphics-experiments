@@ -17,6 +17,7 @@ module;
 #undef CreateWindowEx
 #undef FormatMessage
 #undef LoadLibrary
+#undef UnregisterClass
 #undef LOWORD
 #undef HIWORD
 #undef LOBYTE
@@ -25,8 +26,6 @@ module;
 #undef GET_Y_PARAM
 #undef GET_XBUTTON_WPARAM
 #undef GET_WHEEL_DELTA_WPARAM
-#undef TRUE
-#undef FALSE
 
 #ifdef UNICODE
 	#define REDEF_FUNC(ret, name, params, args)                                                                                \
@@ -38,9 +37,6 @@ module;
 
 export module dx_wrapper.external.win32;
 export import dx_wrapper.external.win32_dx_common;
-
-export constexpr int FALSE = 0;
-export constexpr int TRUE  = 1;
 
 // Numerical
 export using ::BYTE;
@@ -102,6 +98,7 @@ export using ::GetWindowPlacement;
 export using ::SetWindowPlacement;
 export using ::ShowWindow;
 export using ::AdjustWindowRect;
+export using ::DestroyWindow;
 
 export inline WORD LOWORD(DWORD_PTR l) { return static_cast<WORD>(l & 0xffff); }
 export inline WORD HIWORD(DWORD_PTR l) { return static_cast<WORD>((l >> 16) & 0xffff); }
@@ -251,6 +248,7 @@ REDEF_FUNC(DWORD, FormatMessage,
 		   (DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId, LPSTR lpBuffer, DWORD nSize,
 			va_list* Arguments),
 		   (dwFlags, lpSource, dwMessageId, dwLanguageId, lpBuffer, nSize, Arguments))
+REDEF_FUNC(BOOL, UnregisterClass, (LPCSTR lpClassName, HINSTANCE lpModuleName), (lpClassName, lpModuleName))
 
 export using ::GetDpiForWindow;
 export using ::PostQuitMessage;

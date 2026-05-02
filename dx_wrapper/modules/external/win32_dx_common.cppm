@@ -4,6 +4,8 @@
 #undef FAILED
 #undef SUCCEEDED
 #undef CreateEventEx
+#undef TRUE
+#undef FALSE
 
 #ifdef UNICODE
 #define REDEF_FUNC(ret, name, params, args)                                                                                \
@@ -14,6 +16,9 @@ export inline ret name params { return name##A args; }
 #endif
 
 export module dx_wrapper.external.win32_dx_common;
+
+export constexpr int FALSE = 0;
+export constexpr int TRUE  = 1;
 
 export using ::HRESULT;
 

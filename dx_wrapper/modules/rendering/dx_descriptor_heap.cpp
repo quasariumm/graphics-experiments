@@ -126,6 +126,16 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetCpuHandleAt(const size_t index)
 	return handle;
 }
 
+size_t DxDescriptorHeap::GetIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) const
+{
+	return static_cast<uint32_t>((handle.ptr - GetFirstCpuHandle().ptr) / m_increment);
+}
+
+size_t DxDescriptorHeap::GetIndexFromHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) const
+{
+	return static_cast<uint32_t>((handle.ptr - GetFirstGpuHandle().ptr) / m_increment);
+}
+
 void DxDescriptorHeap::DefaultDesc(const D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_DESC* desc) noexcept
 {
 	if (type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV || type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)

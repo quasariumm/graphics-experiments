@@ -2,7 +2,6 @@
 module;
 
 #include <d3d12.h>
-#include <d3dcompiler.h>
 #include <d3dx12.h>
 #include <dxgi1_6.h>
 #include <wrl/client.h>
@@ -100,7 +99,6 @@ export using ::D3D12_DEPTH_STENCIL_DESC;
 export using ::CD3DX12_DEPTH_STENCIL_DESC;
 
 export using ID3DBlob = ::ID3D10Blob;
-export using ::D3DCreateBlob;
 
 export using ::D3D12_GRAPHICS_PIPELINE_STATE_DESC;
 export using ::D3D12_COMPUTE_PIPELINE_STATE_DESC;

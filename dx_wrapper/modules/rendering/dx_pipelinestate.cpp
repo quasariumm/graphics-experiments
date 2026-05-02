@@ -8,6 +8,7 @@
 module dx_wrapper.rendering.dx_pipelinestate;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.rendering.dx_shader_utils;
+import dx_wrapper.external.dxc;
 
 template <class... Ts>
 struct Overload : Ts...
@@ -15,20 +16,11 @@ struct Overload : Ts...
 	using Ts::operator()...;
 };
 
-void GetShaderBlob(const std::filesystem::path& path, const std::string& type, const std::string& shaderModel,
-				   ComPtr<ID3DBlob>& outBlob, const std::string& outDirExtension = "")
+D3D12_SHADER_BYTECODE GetBytecode(const ComPtr<IDxcBlob>& blob)
 {
-	if (path.empty())
-		return;
-
-	if (!RuntimeCompileShader(path, type, shaderModel, outDirExtension))
-		return;
-
-	const auto csoPath = Filesystem::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
-	const auto data	   = ReadFileBinary(csoPath);
-
-	CheckHR(D3DCreateBlob(data.size(), &outBlob));
-	memcpy(outBlob->GetBufferPointer(), data.data(), data.size());
+	if (!blob)
+		return CD3DX12_SHADER_BYTECODE{};
+	return CD3DX12_SHADER_BYTECODE{blob->GetBufferPointer(), blob->GetBufferSize()};
 }
 
 DxPipelineState& DxPipelineState::SetVertexShader(const std::filesystem::path& path)
@@ -180,16 +172,16 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 	std::visit(
 			Overload{[&](const GraphicsPipeline& shaders)
 					 {
-						 ComPtr<ID3DBlob> vsBlob = nullptr;
-						 GetShaderBlob(shaders.m_vertexShader, "vs", "6_6", vsBlob, outDirExtension);
-						 ComPtr<ID3DBlob> hsBlob = nullptr;
-						 GetShaderBlob(shaders.m_hullShader, "hs", "6_6", hsBlob, outDirExtension);
-						 ComPtr<ID3DBlob> dsBlob = nullptr;
-						 GetShaderBlob(shaders.m_domainShader, "ds", "6_6", dsBlob, outDirExtension);
-						 ComPtr<ID3DBlob> gsBlob = nullptr;
-						 GetShaderBlob(shaders.m_geometryShader, "hs", "6_6", gsBlob, outDirExtension);
-						 ComPtr<ID3DBlob> psBlob = nullptr;
-						 GetShaderBlob(shaders.m_pixelShader, "ps", "6_6", psBlob, outDirExtension);
+						 const ComPtr<IDxcBlob> vsBlob =
+								 RuntimeCompileShader(shaders.m_vertexShader, "vs", "6_6", outDirExtension).value_or(nullptr);
+						 const ComPtr<IDxcBlob> hsBlob =
+								 RuntimeCompileShader(shaders.m_hullShader, "hs", "6_6", outDirExtension).value_or(nullptr);
+						 const ComPtr<IDxcBlob> dsBlob =
+								 RuntimeCompileShader(shaders.m_domainShader, "ds", "6_6", outDirExtension).value_or(nullptr);
+						 const ComPtr<IDxcBlob> gsBlob =
+								 RuntimeCompileShader(shaders.m_geometryShader, "hs", "6_6", outDirExtension).value_or(nullptr);
+						 const ComPtr<IDxcBlob> psBlob =
+								 RuntimeCompileShader(shaders.m_pixelShader, "ps", "6_6", outDirExtension).value_or(nullptr);
 
 						 // Graphics pipeline (Vertex -> [Hull] -> [Domain] -> [Geometry] -> [Pixel])
 						 D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
@@ -197,11 +189,11 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 psoDesc.InputLayout	= {inputLayout.data(), static_cast<UINT>(inputLayout.size())};
 
 						 // Shaders
-						 psoDesc.VS = vsBlob ? CD3DX12_SHADER_BYTECODE(vsBlob.Get()) : D3D12_SHADER_BYTECODE{};
-						 psoDesc.HS = hsBlob ? CD3DX12_SHADER_BYTECODE(hsBlob.Get()) : D3D12_SHADER_BYTECODE{};
-						 psoDesc.DS = dsBlob ? CD3DX12_SHADER_BYTECODE(dsBlob.Get()) : D3D12_SHADER_BYTECODE{};
-						 psoDesc.GS = gsBlob ? CD3DX12_SHADER_BYTECODE(gsBlob.Get()) : D3D12_SHADER_BYTECODE{};
-						 psoDesc.PS = psBlob ? CD3DX12_SHADER_BYTECODE(psBlob.Get()) : D3D12_SHADER_BYTECODE{};
+						 psoDesc.VS = GetBytecode(vsBlob);
+						 psoDesc.HS = GetBytecode(hsBlob);
+						 psoDesc.DS = GetBytecode(dsBlob);
+						 psoDesc.GS = GetBytecode(gsBlob);
+						 psoDesc.PS = GetBytecode(psBlob);
 						 // Other
 						 psoDesc.RasterizerState		  = CD3DX12_RASTERIZER_DESC{D3D12_DEFAULT};
 						 psoDesc.RasterizerState.CullMode = m_params.m_cullMode;
@@ -239,12 +231,12 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 					 },
 					 [&](const ComputePipeline& shader)
 					 {
-						 ComPtr<ID3DBlob> csBlob;
-						 GetShaderBlob(shader, "cs", "6_6", csBlob, outDirExtension);
+						 const ComPtr<IDxcBlob> csBlob =
+								 RuntimeCompileShader(shader, "cs", "6_6", outDirExtension).value_or(nullptr);
 
 						 D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc{};
 						 psoDesc.pRootSignature = *rootSignature;
-						 psoDesc.CS				= CD3DX12_SHADER_BYTECODE{csBlob.Get()};
+						 psoDesc.CS				= GetBytecode(csBlob);
 
 						 CheckHR(device.GetDXDevice()->CreateComputePipelineState(
 								 &psoDesc,
@@ -252,19 +244,20 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 					 },
 					 [&](const MeshPipeline& shaders)
 					 {
-						 ComPtr<ID3DBlob> asBlob = nullptr;
-						 GetShaderBlob(shaders.m_amplificationShader, "as", "6_6", asBlob, outDirExtension);
-						 ComPtr<ID3DBlob> msBlob = nullptr;
-						 GetShaderBlob(shaders.m_meshShader, "ms", "6_6", msBlob, outDirExtension);
-						 ComPtr<ID3DBlob> psBlob = nullptr;
-						 GetShaderBlob(shaders.m_pixelShader, "hs", "6_6", psBlob, outDirExtension);
+						 const ComPtr<IDxcBlob> asBlob =
+								 RuntimeCompileShader(shaders.m_amplificationShader, "as", "6_6", outDirExtension)
+										 .value_or(nullptr);
+						 const ComPtr<IDxcBlob> msBlob =
+								 RuntimeCompileShader(shaders.m_meshShader, "ms", "6_6", outDirExtension).value_or(nullptr);
+						 const ComPtr<IDxcBlob> psBlob =
+								 RuntimeCompileShader(shaders.m_pixelShader, "hs", "6_6", outDirExtension).value_or(nullptr);
 
 						 D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc{};
 
 						 psoDesc.pRootSignature = *rootSignature;
-						 psoDesc.AS				= asBlob ? CD3DX12_SHADER_BYTECODE(asBlob.Get()) : D3D12_SHADER_BYTECODE{};
-						 psoDesc.MS				= msBlob ? CD3DX12_SHADER_BYTECODE(msBlob.Get()) : D3D12_SHADER_BYTECODE{};
-						 psoDesc.PS				= psBlob ? CD3DX12_SHADER_BYTECODE(psBlob.Get()) : D3D12_SHADER_BYTECODE{};
+						 psoDesc.AS				= GetBytecode(asBlob);
+						 psoDesc.MS				= GetBytecode(msBlob);
+						 psoDesc.PS				= GetBytecode(psBlob);
 
 						 D3D12_PIPELINE_STATE_STREAM_DESC streamDesc = {};
 						 streamDesc.SizeInBytes						 = sizeof(psoDesc);

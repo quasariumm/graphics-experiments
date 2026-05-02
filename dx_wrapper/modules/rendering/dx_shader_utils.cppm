@@ -4,6 +4,7 @@
 
 export module dx_wrapper.rendering.dx_shader_utils;
 import dx_wrapper.core.dx_common;
+import dx_wrapper.external.dxc;
 
 /**
  * @brief Runtime compiles a shader to a .cso file and a blob. \n
@@ -13,7 +14,8 @@ import dx_wrapper.core.dx_common;
  * @param shaderModel The shader model to use (e.g. "6_6")
  * @param outDirExtension [optional, default = ""] Defines whether the shader needs to be placed in a subdirectory of the output
  * dir
- * @returns Whether it was successful or was skipped
+ * @returns A blob of the shader output
  */
-export bool RuntimeCompileShader(const std::filesystem::path& path, const std::string& type, const std::string& shaderModel,
-								 const std::string& outDirExtension = "");
+export std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const std::filesystem::path& path, const std::string& type,
+															const std::string& shaderModel,
+															const std::string& outDirExtension = "");

@@ -38,6 +38,9 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE GetFirstCpuHandle() const noexcept;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandleAt(size_t index) const;
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandleAt(size_t index) const;
+	
+	size_t GetIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) const;
+	size_t GetIndexFromHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) const;
 
 	size_t						Count() const noexcept { return m_heapDesc.NumDescriptors; }
 	D3D12_DESCRIPTOR_HEAP_FLAGS Flags() const noexcept { return m_heapDesc.Flags; }

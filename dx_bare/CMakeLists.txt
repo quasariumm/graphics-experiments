@@ -10,3 +10,4 @@ add_executable(dx_bare)
 target_link_libraries(dx_bare PRIVATE dx_wrapper)
 
 include(../common/cmake/setup_sources.cmake)
+copy_dxc_dlls(dx_bare)

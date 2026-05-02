@@ -62,6 +62,7 @@ public:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE GetDSV() const { return m_deviceResources.GetDepthStencilView(); }
 	UINT						  GetCurBackBufferIndex() const { return m_deviceResources.GetCurrentFrameIndex(); }
 	float						  GetDeltaTime() const { return m_deltaTime; }
+	HWND						  GetWindow() const { return m_deviceResources.GetWindow(); }
 
 	void BeginFrame();
 	void EndFrame();
@@ -84,6 +85,8 @@ private:
 	int m_windowWidth;
 	int m_windowHeight;
 
+	// Win32 stuff
+	WNDCLASSEX m_windowClass;
 	WINDOWPLACEMENT m_windowedPlacement;
 
 	bool m_shouldClose		 = false;

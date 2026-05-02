@@ -11,13 +11,30 @@ import dx_wrapper.external.dxc;
 
 namespace Filesystem = std::filesystem;
 
-bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type, const std::string& shaderModel,
-						  const std::string& outDirExtension)
+std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& path, const std::string& type,
+													 const std::string& shaderModel, const std::string& outDirExtension)
 {
-	const auto csoPath = Filesystem::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
+	if (path.empty())
+		return std::nullopt;
+
+	const auto csoPath =
+			Filesystem::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
 
 	if (Filesystem::exists(csoPath) && Filesystem::last_write_time(csoPath) >= Filesystem::last_write_time(path))
-		return true;
+	{
+		const auto data = ReadFileBinary(csoPath);
+
+		HMODULE hDxc			   = LoadLibrary("dxcompiler.dll");
+		auto*	pDxcCreateInstance = (DxcCreateInstanceProc)(void*)GetProcAddress(hDxc, "DxcCreateInstance");
+
+		ComPtr<IDxcUtils> utils;
+		CheckHR(pDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.GetAddressOf())));
+
+		ComPtr<IDxcBlobEncoding> blobEncoding;
+		CheckHR(utils->CreateBlobFromPinned(data.data(), data.size(), DXC_CP_ACP, blobEncoding.GetAddressOf()));
+		memcpy(blobEncoding->GetBufferPointer(), data.data(), data.size());
+		return blobEncoding;
+	}
 
 	HMODULE hDxc				= LoadLibrary("dxcompiler.dll");
 	auto*	pDxcCreateInstance	= (DxcCreateInstanceProc)(void*)GetProcAddress(hDxc, "DxcCreateInstance");
@@ -52,7 +69,7 @@ bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type,
 
 	// Compile
 	ComPtr<IDxcIncludeHandler> includeHandler;
-	utils->CreateDefaultIncludeHandler(&includeHandler);
+	CheckHR(utils->CreateDefaultIncludeHandler(&includeHandler));
 
 	ComPtr<IDxcResult> result;
 	CheckHR(compiler->Compile(&sourceBuffer,
@@ -72,7 +89,7 @@ bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type,
 		std::string		   line;
 		while (std::getline(stream, line))
 			Log::Error("{}", line);
-		return false;
+		return std::nullopt;
 	}
 
 	// Get the output and write to file
@@ -86,11 +103,11 @@ bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type,
 		CheckHR(validator->Validate(shaderOutput.Get(), DxcValidatorFlagsInPlaceEdit, &valResult));
 
 		HRESULT valStatus = 0;
-		valResult->GetStatus(&valStatus);
+		CheckHR(valResult->GetStatus(&valStatus));
 		if (FAILED(valStatus))
 		{
 			ComPtr<IDxcBlobEncoding> valErrors;
-			valResult->GetErrorBuffer(&valErrors);
+			CheckHR(valResult->GetErrorBuffer(&valErrors));
 			if (valErrors && valErrors->GetBufferSize() > 0)
 			{
 				Log::Error("Validation failed for {}:", path.string());
@@ -100,7 +117,7 @@ bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type,
 				while (std::getline(stream, line))
 					Log::Error("{}", line);
 			}
-			return false;
+			return std::nullopt;
 		}
 
 		// Write to disk
@@ -110,5 +127,5 @@ bool RuntimeCompileShader(const Filesystem::path& path, const std::string& type,
 	}
 	fflush(stdout);
 
-	return true;
+	return shaderOutput;
 }

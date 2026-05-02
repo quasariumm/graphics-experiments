@@ -24,5 +24,13 @@ export {
 	using ::ImGui_ImplDX12_RenderDrawData;
 	using ::ImGui_ImplDX12_Shutdown;
 	using ::ImGui_ImplDX12_UpdateTexture;
+	
+	using ::ImGui_ImplWin32_Init;
+	using ::ImGui_ImplWin32_Shutdown;
+	using ::ImGui_ImplWin32_NewFrame;
+	using ::ImGui_ImplWin32_EnableDpiAwareness;
+	using ::ImGui_ImplWin32_GetDpiScaleForHwnd;
+	using ::ImGui_ImplWin32_GetDpiScaleForMonitor;
+	using ::ImGui_ImplWin32_EnableAlphaCompositing;
 }
 // NOLINTEND

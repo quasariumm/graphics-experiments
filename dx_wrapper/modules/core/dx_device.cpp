@@ -18,17 +18,26 @@ import dx_wrapper.external.directx12;
 import dx_wrapper.core;
 import dx_wrapper.rendering;
 
-std::bitset<0xff> current_input_state{}; // NOLINT
-glm::vec2 current_mouse_pos{}; // NOLINT
-glm::vec2 current_scroll_delta{}; // NOLINT
+std::bitset<0xff> current_input_state{};  // NOLINT
+glm::vec2		  current_mouse_pos{};	  // NOLINT
+glm::vec2		  current_scroll_delta{}; // NOLINT
+
+#ifdef TESTPLATE_HAS_IMGUI
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
 
 LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 {
 	if (!registered_devices.contains(hwnd))
 		return DefWindowProc(hwnd, msg, wp, lp);
 
+#ifdef TESTPLATE_HAS_IMGUI
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wp, lp))
+		return true;
+#endif
+
 	DxDevice* device = registered_devices.at(hwnd);
-	
+
 	float dpi = GetDpiForWindow(hwnd) / 96.0f;
 
 	switch (msg)
@@ -104,20 +113,19 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
-	: m_windowWidth(width), m_windowHeight(height)
+DxDevice::DxDevice(const int width, const int height, const LPCSTR title) : m_windowWidth(width), m_windowHeight(height)
 {
 	// Needed for WIC textures
 	CheckHR(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
-	
-	// Create the window
-	WNDCLASSEX wc = {sizeof(wc)};
 
-	wc.lpfnWndProc	 = WindowProc;
-	wc.hInstance	 = GetModuleHandle(nullptr);
-	wc.lpszClassName = "DX Wrapper Window";
-	wc.hCursor		 = LoadCursor(nullptr, IDC_ARROW);
-	::RegisterClassEx(&wc);
+	// Create the window
+	m_windowClass = {sizeof(m_windowClass)};
+
+	m_windowClass.lpfnWndProc	= WindowProc;
+	m_windowClass.hInstance		= GetModuleHandle(nullptr);
+	m_windowClass.lpszClassName = "DX Wrapper Window";
+	m_windowClass.hCursor		= LoadCursor(nullptr, IDC_ARROW);
+	::RegisterClassEx(&m_windowClass);
 
 	RECT rc{0, 0, width, height};
 	::AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
@@ -132,7 +140,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 								   rc.bottom - rc.top,
 								   nullptr,
 								   nullptr,
-								   wc.hInstance,
+								   m_windowClass.hInstance,
 								   nullptr);
 	registered_devices.emplace(window, this);
 
@@ -149,17 +157,22 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title)
 
 	m_resourceUpload = std::make_unique<DxResourceUpload>(m_deviceResources.GetD3DDevice());
 	m_descriptorPile = std::make_unique<DxDescriptorPile>(GetDXDevice(), max_shader_descriptors);
-	m_resourceBank = std::make_unique<ResourceBank>();
-	
+	m_resourceBank	 = std::make_unique<ResourceBank>();
+
 	// Open the command list for any initialisers
 	m_deviceResources.Prepare();
 	ID3D12DescriptorHeap* const heaps[1] = {m_descriptorPile->GetHeap()};
 	GetDXDirectComList()->SetDescriptorHeaps(1, heaps);
-	
+
 	m_commandListOpened = true;
 }
 
-DxDevice::~DxDevice() { m_deviceResources.WaitForGpu(); }
+DxDevice::~DxDevice()
+{
+	m_deviceResources.WaitForGpu();
+	::DestroyWindow(m_deviceResources.GetWindow());
+	::UnregisterClass(m_windowClass.lpszClassName, m_windowClass.hInstance);
+}
 
 void DxDevice::SetWindowTitle(const std::string& title) const { SetWindowText(m_deviceResources.GetWindow(), title.c_str()); }
 
@@ -244,9 +257,9 @@ void DxDevice::BeginFrame()
 		m_deviceResources.Present();
 		m_commandListOpened = false;
 	}
-	
+
 	m_lastFrameTime = Clock::now();
-	
+
 	m_deviceResources.Prepare();
 
 	auto*	   commandList = m_deviceResources.GetCommandList();
@@ -269,7 +282,7 @@ void DxDevice::EndFrame()
 	{
 		m_deviceResources.HandleDeviceLost();
 	}
-	
+
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
 
@@ -281,7 +294,7 @@ void DxDevice::EndFrame()
 
 	::TranslateMessage(&msg);
 	::DispatchMessage(&msg);
-	
+
 	m_input.Update();
 	m_deltaTime = std::chrono::duration<float>(Clock::now() - m_lastFrameTime).count();
 }

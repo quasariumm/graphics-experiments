@@ -19,8 +19,8 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_renderRootSignature.Finalize(*m_device, "Main Render Root Signature", true);
 
 	m_renderPipeline = DxPipelineState{};
-	m_renderPipeline.SetVertexShader("../shaders/main_vertex.hlsl")
-			.SetPixelShader("../shaders/main_pixel.hlsl")
+	m_renderPipeline.SetVertexShader("shaders/main_vertex.hlsl")
+			.SetPixelShader("shaders/main_pixel.hlsl")
 			.AddRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
 			.SetDepthRenderTarget(DXGI_FORMAT_D32_FLOAT)
 			.SetCullMode(D3D12_CULL_MODE_NONE)
