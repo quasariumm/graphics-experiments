@@ -1,6 +1,8 @@
 ﻿// NOLINTBEGIN
 module;
 
+#define IMGUI_IMPL_API extern "C++"
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 #include <backends/imgui_impl_dx12.h>
 #include <backends/imgui_impl_win32.h>
 
@@ -32,5 +34,7 @@ export {
 	using ::ImGui_ImplWin32_GetDpiScaleForHwnd;
 	using ::ImGui_ImplWin32_GetDpiScaleForMonitor;
 	using ::ImGui_ImplWin32_EnableAlphaCompositing;
+	
+	extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 }
 // NOLINTEND

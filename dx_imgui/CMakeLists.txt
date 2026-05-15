@@ -28,7 +28,7 @@ add_executable(dx_imgui)
 setup_common_compiler_args(dx_imgui)
 target_compile_definitions(dx_imgui PUBLIC TESTPLATE_HAS_IMGUI)
 
-target_link_libraries(dx_imgui PRIVATE dx_wrapper)
+target_link_libraries(dx_imgui PRIVATE dx_wrapper d3dcompiler dwmapi)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
 copy_dxc_dlls(dx_imgui)
@@ -46,6 +46,6 @@ target_sources(dx_imgui
 		${imgui_SOURCE_DIR}/imgui_draw.cpp
 		${imgui_SOURCE_DIR}/imgui_tables.cpp
 		${imgui_SOURCE_DIR}/imgui_widgets.cpp
-		${imgui_SOURCE_DIR}/backends/imgui_impl_dx12.cpp
+		external/patched_imgui_impl_dx12.cpp
 		${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
 )

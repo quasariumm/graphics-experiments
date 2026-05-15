@@ -16,7 +16,7 @@ import dx_wrapper.core;
 import dx_wrapper.rendering;
 
 #ifdef TESTPLATE_HAS_IMGUI
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+extern "C++" LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam); // NOLINT
 #endif
 
 extern "C" LRESULT InputWindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp);
