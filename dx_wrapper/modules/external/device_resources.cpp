@@ -110,7 +110,7 @@ void DeviceResources::CreateDeviceResources()
 	}
 #endif
 
-	CheckHR(CreateDXGIFactory2(m_dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
+	CheckHR(CreateDXGIFactory2(m_dxgiFactoryFlags, IID_IDXGIFactory4, GetPPV(m_dxgiFactory.ReleaseAndGetAddressOf())));
 
 	// Determines whether tearing support is available for fullscreen borderless windows.
 	if (m_options & c_AllowTearing)
@@ -229,7 +229,8 @@ void DeviceResources::CreateDeviceResources()
 	for (UINT n = 0; n < m_backBufferCount; n++)
 	{
 		CheckHR(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-													IID_PPV_ARGS(m_commandAllocators[n].ReleaseAndGetAddressOf())));
+													IID_ID3D12CommandAllocator,
+													GetPPV(m_commandAllocators[n].ReleaseAndGetAddressOf())));
 
 		wchar_t name[25] = {};
 		swprintf_s(name, L"Render target %u", n);
@@ -241,7 +242,8 @@ void DeviceResources::CreateDeviceResources()
 										   D3D12_COMMAND_LIST_TYPE_DIRECT,
 										   m_commandAllocators[0].Get(),
 										   nullptr,
-										   IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
+										   IID_ID3D12CommandList,
+										   GetPPV(m_commandList.ReleaseAndGetAddressOf())));
 	CheckHR(m_commandList->Close());
 
 	m_commandList->SetName(L"DeviceResources");
@@ -249,7 +251,8 @@ void DeviceResources::CreateDeviceResources()
 	// Create a fence for tracking GPU execution progress.
 	CheckHR(m_d3dDevice->CreateFence(m_fenceValues[m_backBufferIndex],
 									 D3D12_FENCE_FLAG_NONE,
-									 IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
+									 IID_ID3D12Fence,
+									 GetPPV(m_fence.ReleaseAndGetAddressOf())));
 	m_fenceValues[m_backBufferIndex]++;
 
 	m_fence->SetName(L"DeviceResources");
@@ -359,7 +362,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 	// and create render target views for each of them.
 	for (UINT n = 0; n < m_backBufferCount; n++)
 	{
-		CheckHR(m_swapChain->GetBuffer(n, IID_PPV_ARGS(m_renderTargets[n].GetAddressOf())));
+		CheckHR(m_swapChain->GetBuffer(n, IID_ID3D12Resource, GetPPV(m_renderTargets[n].GetAddressOf())));
 
 		wchar_t name[25] = {};
 		swprintf_s(name, L"Render target %u", n);
@@ -404,7 +407,8 @@ void DeviceResources::CreateWindowSizeDependentResources()
 													 &depthStencilDesc,
 													 D3D12_RESOURCE_STATE_DEPTH_WRITE,
 													 &depthOptimizedClearValue,
-													 IID_PPV_ARGS(m_depthStencil.ReleaseAndGetAddressOf())));
+													 IID_ID3D12Resource,
+													 GetPPV(m_depthStencil.ReleaseAndGetAddressOf())));
 
 		m_depthStencil->SetName(L"Depth stencil");
 
@@ -640,7 +644,8 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
 		for (UINT adapterIndex = 0;
 			 SUCCEEDED(factory6->EnumAdapterByGpuPreference(adapterIndex,
 															DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-															IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf())));
+															IID_IDXGIAdapter1,
+															GetPPV(adapter.ReleaseAndGetAddressOf())));
 			 adapterIndex++)
 		{
 			DXGI_ADAPTER_DESC1 desc;
@@ -653,7 +658,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
 			}
 
 			// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
+			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, IID_ID3D12Device, nullptr)))
 			{
 #ifdef _DEBUG
 				wchar_t buff[256] = {};
@@ -685,7 +690,7 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
 			}
 
 			// Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
+			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, IID_ID3D12Device, nullptr)))
 			{
 #ifdef _DEBUG
 				wchar_t buff[256] = {};
@@ -732,7 +737,7 @@ void DeviceResources::UpdateColorSpace()
 	if (!m_dxgiFactory->IsCurrent())
 	{
 		// Output information is cached on the DXGI Factory. If it is stale we need to create a new factory.
-		CheckHR(CreateDXGIFactory2(m_dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
+		CheckHR(CreateDXGIFactory2(m_dxgiFactoryFlags, IID_IDXGIFactory4, GetPPV(m_dxgiFactory.ReleaseAndGetAddressOf())));
 	}
 
 	DXGI_COLOR_SPACE_TYPE colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
