@@ -1,11 +1,10 @@
 ﻿module;
 
-#include <cstdint>
-
 export module dx_wrapper.helpers.dx_format_helpers;
+import std;
 import dx_wrapper.external.directx12;
 
-export uint8_t GetChannelCount(const DXGI_FORMAT fmt)
+export std::uint8_t GetChannelCount(const DXGI_FORMAT fmt)
 {
 	switch (fmt)
 	{
@@ -153,7 +152,7 @@ export uint8_t GetChannelCount(const DXGI_FORMAT fmt)
 	}
 }
 
-export size_t BitsPerPixel(const DXGI_FORMAT format)
+export std::size_t BitsPerPixel(const DXGI_FORMAT format)
 {
 	switch (format)
 	{
@@ -361,7 +360,7 @@ export bool IsUAVCompatible(ID3D12Device2* device, const bool typedUAVLoadAdditi
 			D3D12_FEATURE_DATA_FORMAT_SUPPORT formatSupport = {format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
 			if (SUCCEEDED(device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &formatSupport, sizeof(formatSupport))))
 			{
-				const uint32_t mask = D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD | D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE;
+				const std::uint32_t mask = D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD | D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE;
 				return ((formatSupport.Support2 & mask) == mask);
 			}
 		}

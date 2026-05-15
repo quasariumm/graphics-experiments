@@ -9,6 +9,20 @@ module;
 export module dx_wrapper.external.directx12;
 export import dx_wrapper.external.win32_dx_common;
 
+export template <typename T>
+FORCEINLINE void** GetPPV(Microsoft::WRL::ComPtr<T>& v) { return reinterpret_cast<void**>(v.GetAddressOf()); }
+
+export template <typename T>
+FORCEINLINE void** GetPPV(T** ppv) { return reinterpret_cast<void**>(ppv); }
+
+/*
+ * IID
+ * Note that this is really messy
+ */
+#define REGISTER_IID(Type) \
+export FORCEINLINE const GUID& GetIID(const Microsoft::WRL::ComPtr<Type>&) { return IID_##Type; }\
+export FORCEINLINE const GUID& GetIID(Type**) { return IID_##Type; }
+
 export using ::Microsoft::WRL::ComPtr;
 
 #pragma region Common
@@ -25,6 +39,16 @@ export using ::ID3D12Fence;
 export using ::ID3D12Fence1;
 export using ::ID3D12DescriptorHeap;
 export using ::CD3DX12_RESOURCE_BARRIER;
+
+REGISTER_IID(ID3D12Device2);
+REGISTER_IID(ID3D12GraphicsCommandList);
+REGISTER_IID(ID3D12CommandList);
+REGISTER_IID(ID3D12CommandAllocator);
+REGISTER_IID(ID3D12CommandQueue);
+REGISTER_IID(ID3D12CommandSignature);
+REGISTER_IID(ID3D12Fence);
+REGISTER_IID(ID3D12Fence1);
+REGISTER_IID(ID3D12DescriptorHeap);
 
 static constexpr float D3D12_FLOAT32_MAX_val = D3D12_FLOAT32_MAX;
 #undef D3D12_FLOAT32_MAX
@@ -64,6 +88,8 @@ export using ::D3D12_FENCE_FLAG_SHARED_CROSS_ADAPTER;
 // =========================================================================================================
 export using ::ID3D12RootSignature;
 
+REGISTER_IID(ID3D12RootSignature);
+
 export using ::D3D12_STATIC_SAMPLER_DESC;
 export using ::D3D12_ROOT_PARAMETER;
 export using ::D3D12_ROOT_PARAMETER1;
@@ -84,6 +110,8 @@ export inline void operator|=(D3D12_ROOT_SIGNATURE_FLAGS& a, const D3D12_ROOT_SI
 // Pipeline State
 // =========================================================================================================
 export using ::ID3D12PipelineState;
+
+REGISTER_IID(ID3D12PipelineState);
 
 export using ::D3D12_INPUT_ELEMENT_DESC;
 export using ::D3D12_SHADER_BYTECODE;
@@ -352,6 +380,8 @@ export using ::CD3DX12_RESOURCE_DESC;
 export using ::D3D12_CLEAR_VALUE;
 export using ::CD3DX12_CLEAR_VALUE;
 export using ::D3D12_SUBRESOURCE_DATA;
+
+REGISTER_IID(ID3D12Resource);
 
 // =========================================================================================================
 // Enums

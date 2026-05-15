@@ -1,12 +1,10 @@
 ﻿module;
 
-#include <memory>
-#include <type_traits>
-
 export module dx_wrapper.core.transform;
+import std;
 export import dx_wrapper.external.glm;
 
-export enum class TransformSpace : uint8_t {
+export enum class TransformSpace : std::uint8_t {
 	Local, // Call function in local space
 	World  // Call function in world space
 };

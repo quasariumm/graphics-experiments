@@ -1,10 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-#include <fstream>
-#include "macros.hpp"
-
 module dx_wrapper.rendering.dx_shader_utils;
+import std;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.core.log;
 import dx_wrapper.external.dxc;
@@ -28,7 +25,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 		auto*	pDxcCreateInstance = (DxcCreateInstanceProc)(void*)GetProcAddress(hDxc, "DxcCreateInstance");
 
 		ComPtr<IDxcUtils> utils;
-		CheckHR(pDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.GetAddressOf())));
+		CheckHR(pDxcCreateInstance(dxc::CLSID_DxcUtils, GetIID(utils), GetPPV(utils)));
 
 		ComPtr<IDxcBlobEncoding> blobEncoding;
 		CheckHR(utils->CreateBlob(data.data(), data.size(), DXC_CP_ACP, blobEncoding.GetAddressOf()));
@@ -41,11 +38,11 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 	auto*	pDxilCreateInstance = (DxcCreateInstanceProc)(void*)GetProcAddress(hDxil, "DxcCreateInstance");
 
 	ComPtr<IDxcCompiler3> compiler;
-	CheckHR(pDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(compiler.GetAddressOf())));
+	CheckHR(pDxcCreateInstance(dxc::CLSID_DxcCompiler, GetIID(compiler), GetPPV(compiler)));
 	ComPtr<IDxcUtils> utils;
-	CheckHR(pDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(utils.GetAddressOf())));
+	CheckHR(pDxcCreateInstance(dxc::CLSID_DxcUtils, GetIID(utils), GetPPV(utils)));
 	ComPtr<IDxcValidator> validator;
-	CheckHR(pDxilCreateInstance(CLSID_DxcValidator, IID_PPV_ARGS(validator.GetAddressOf())));
+	CheckHR(pDxilCreateInstance(dxc::CLSID_DxcValidator, GetIID(validator), GetPPV(validator)));
 
 	// Load the shader from disk
 	const auto shaderBytes = ReadFileBinary(path);
@@ -75,11 +72,11 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 							  arguments.data(),
 							  (UINT32)arguments.size(),
 							  includeHandler.Get(),
-							  IID_PPV_ARGS(result.GetAddressOf())));
+							  GetIID(result), GetPPV(result)));
 
 	// Error Handling. Note that this will also include warnings unless disabled.
 	ComPtr<IDxcBlobUtf8> pErrors;
-	CheckHR(result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddressOf()), nullptr));
+	CheckHR(result->GetOutput(DXC_OUT_ERRORS, GetIID(pErrors), GetPPV(pErrors), nullptr));
 	if (pErrors && pErrors->GetStringLength() > 0)
 	{
 		Log::Error("Error(s) while runtime compiling {}:", path.string());
@@ -93,7 +90,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 
 	// Get the output and write to file
 	ComPtr<IDxcBlob> shaderOutput;
-	CheckHR(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(shaderOutput.GetAddressOf()), nullptr));
+	CheckHR(result->GetOutput(DXC_OUT_OBJECT, GetIID(shaderOutput), GetPPV(shaderOutput), nullptr));
 
 	if (shaderOutput && shaderOutput->GetBufferSize() > 0)
 	{
@@ -124,7 +121,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 		std::ofstream file(csoPath, std::ios::out | std::ios::binary | std::ios::trunc);
 		file.write(static_cast<const char*>(shaderOutput->GetBufferPointer()), shaderOutput->GetBufferSize());
 	}
-	fflush(stdout);
+	std::cout.flush();
 
 	return shaderOutput;
 }

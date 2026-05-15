@@ -1,11 +1,10 @@
 ﻿cmake_minimum_required(VERSION 3.28)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_cxx.cmake)
+
 project(dx_imgui)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
-
-add_compile_options(-march=native)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_testplate.cmake)
 
 #
 # External modules
@@ -26,12 +25,12 @@ FetchContent_MakeAvailable(imgui)
 
 add_executable(dx_imgui)
 
+setup_common_compiler_args(dx_imgui)
 target_compile_definitions(dx_imgui PUBLIC TESTPLATE_HAS_IMGUI)
 
 target_link_libraries(dx_imgui PRIVATE dx_wrapper)
-target_compile_options(dx_imgui PUBLIC -march=native)
 
-include(../common/cmake/setup_sources.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
 copy_dxc_dlls(dx_imgui)
 
 #

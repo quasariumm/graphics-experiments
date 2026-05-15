@@ -1,10 +1,8 @@
 ﻿module;
 
-#include <d3d12.h>
-
-#include <filesystem>
-
 export module dx_wrapper.resources.dx_render_texture;
+import std;
+import dx_wrapper.external.directx12;
 import dx_wrapper.core.dx_device;
 import dx_wrapper.resources.dx_texture;
 import dx_wrapper.rendering.dx_descriptor_heap;
@@ -38,8 +36,9 @@ public:
 	 * @attention This function determines the data size from the width, height and format. If your data is not big enough, this
 	 * will break. Use with caution.
 	 */
-	explicit DxRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, uint32_t width,
-							 uint32_t height = 1, uint32_t depth = 1, bool generateMips = true, bool generateSrv = false);
+	explicit DxRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format,
+							 std::uint32_t width, std::uint32_t height = 1, std::uint32_t depth = 1, bool generateMips = true,
+							 bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new empty texture
@@ -52,8 +51,9 @@ public:
 	 * @param allocateMips [optional, default = true] Whether to generate mipmaps
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
 	 */
-	explicit DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width, uint32_t height = 1,
-							 uint32_t depth = 1, bool allocateMips = true, bool generateSrv = false);
+	explicit DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width,
+							 std::uint32_t height = 1, std::uint32_t depth = 1, bool allocateMips = true,
+							 bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new texture from encoded data
@@ -64,7 +64,7 @@ public:
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
 	 * @attention If you already loaded the data through STB or aky akin library, please use the other data-based constructor
 	 */
-	explicit DxRenderTexture(const DxDevice& device, const std::byte* data, size_t size, bool generateMips = true,
+	explicit DxRenderTexture(const DxDevice& device, const std::byte* data, std::size_t size, bool generateMips = true,
 							 bool generateSrv = false);
 
 	~DxRenderTexture() override = default;
@@ -72,8 +72,8 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE GetRtv() const { return m_rtv; }
 
 private:
-	
-	void CreateRenderTargetView(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t mipLevel) const;
+
+	void CreateRenderTargetView(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle, std::uint32_t mipLevel) const;
 
 	DxDescriptorHeap			m_rtvHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_rtv{};

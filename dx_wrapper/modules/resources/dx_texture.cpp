@@ -1,9 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-#include "macros.hpp"
-
 module dx_wrapper.resources.dx_texture;
+import std;
 import dx_wrapper.rendering.dx_descriptor_pile;
 import dx_wrapper.core;
 import dx_wrapper.external.directxtex;
@@ -70,7 +68,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 
 	DirectX::ScratchImage image;
 	DirectX::TexMetadata  metadata;
-	
+
 	const auto extension = path.extension();
 
 	if (extension == ".hdr")
@@ -107,15 +105,21 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 	SetState(D3D12_RESOURCE_STATE_COPY_DEST);
 	Transition(device.GetDXDirectComList(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
+#ifdef _MSC_VER
 	const D3D12_RESOURCE_DESC desc = m_resource->GetDesc();
-	m_textureType				   = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+#endif
+	m_textureType = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
 
 	if (!_internal)
 		GenerateDescriptors(device, true, isCubemap);
 }
 
 DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const TextureType type, const DXGI_FORMAT format,
-					 const uint32_t width, const uint32_t height, const uint32_t depth, bool generateMips, const bool _internal)
+					 const std::uint32_t width, const std::uint32_t height, const std::uint32_t depth, bool generateMips,
+					 const bool _internal)
 {
 	m_textureType = type;
 
@@ -167,7 +171,10 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
 
 	device.GetResourceUpload().Begin();
-	device.GetResourceUpload().Upload(m_resource.Get(), 0, subresources.data(), static_cast<uint32_t>(subresources.size()));
+	device.GetResourceUpload().Upload(m_resource.Get(),
+									  0,
+									  subresources.data(),
+									  static_cast<std::uint32_t>(subresources.size()));
 	device.GetResourceUpload().End(device.GetDXDirectComQueue());
 
 	SetState(D3D12_RESOURCE_STATE_COPY_DEST);
@@ -177,10 +184,10 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 		GenerateDescriptors(device, true, isCube);
 }
 
-DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width, uint32_t height,
-					 uint32_t depth, bool allocateMips, const bool _internal)
+DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width, std::uint32_t height,
+					 std::uint32_t depth, bool allocateMips, const bool _internal)
 {
-	size_t mips = 1;
+	std::size_t mips = 1;
 	DirectX::CalculateMipLevels(width, height, mips);
 
 	D3D12_RESOURCE_DESC texDesc{};
@@ -201,18 +208,19 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 											&texDesc,
 											D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
 											nullptr,
-											IID_PPV_ARGS(m_resource.GetAddressOf())));
+											GetIID(m_resource),
+											GetPPV(m_resource)));
 
 	if (!_internal)
 		GenerateDescriptors(device, true, type == TextureType::DCube);
 }
 
-DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const size_t size, const bool generateMips,
+DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::size_t size, const bool generateMips,
 					 const bool _internal)
 {
-	const bool isHdr = size >= 2 && *reinterpret_cast<const uint16_t*>(data) == 0x3f23;
-	const bool isExr = size >= 4 && *reinterpret_cast<const uint32_t*>(data) == 0x01312f76;
-	const bool isDds = size >= 4 && *reinterpret_cast<const uint32_t*>(data) == 0x20534444;
+	const bool isHdr = size >= 2 && *reinterpret_cast<const std::uint16_t*>(data) == 0x3f23;
+	const bool isExr = size >= 4 && *reinterpret_cast<const std::uint32_t*>(data) == 0x01312f76;
+	const bool isDds = size >= 4 && *reinterpret_cast<const std::uint32_t*>(data) == 0x20534444;
 
 	bool				  isCubemap = false;
 	DirectX::ScratchImage image;
@@ -221,7 +229,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const size_t
 	if (isHdr)
 		CheckHR(DirectX::LoadFromHDRMemory(data, size, &metadata, image));
 	else if (isExr)
-		CheckHR(DirectX::LoadFromEXRMemory(reinterpret_cast<const uint8_t*>(data), size, &metadata, image));
+		CheckHR(DirectX::LoadFromEXRMemory(reinterpret_cast<const std::uint8_t*>(data), size, &metadata, image));
 	else if (isDds)
 		CheckHR(DirectX::LoadFromDDSMemory(data, size, DirectX::DDS_FLAGS_NONE, &metadata, image));
 	else
@@ -252,8 +260,13 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const size_t
 	SetState(D3D12_RESOURCE_STATE_COPY_DEST);
 	Transition(device.GetDXDirectComList(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
+#ifdef _MSC_VER
 	const D3D12_RESOURCE_DESC desc = m_resource->GetDesc();
-	m_textureType				   = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+#endif
+	m_textureType = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
 
 	if (!_internal)
 		GenerateDescriptors(device, true, isCubemap);
@@ -273,13 +286,62 @@ ID3D12Resource* DxTexture::GetResource() const { return m_resource.Get(); }
 ID3D12Resource* DxTexture::operator*() const { return m_resource.Get(); }
 ID3D12Resource* DxTexture::operator->() const { return m_resource.Get(); }
 
-size_t	 DxTexture::GetWidth() const { return m_resource->GetDesc().Width; }
-size_t	 DxTexture::GetHeight() const { return m_resource->GetDesc().Height; }
-size_t	 DxTexture::GetDepthOrArraySize() const { return m_resource->GetDesc().DepthOrArraySize; }
-uint8_t	 DxTexture::GetNumChannels() const { return GetChannelCount(m_resource->GetDesc().Format); }
-uint32_t DxTexture::GetNumMips() const { return m_resource->GetDesc().MipLevels; }
+std::size_t DxTexture::GetWidth() const
+{
+#ifdef _MSC_VER
+	return m_resource->GetDesc().Width;
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+	return desc.Width;
+#endif
+}
 
-void DxTexture::CreateUAV(const DxDevice& device, uint32_t mip, uint32_t sliceMin, uint32_t sliceMax)
+std::size_t DxTexture::GetHeight() const
+{
+#ifdef _MSC_VER
+	return m_resource->GetDesc().Height;
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+	return desc.Height;
+#endif
+}
+
+std::size_t DxTexture::GetDepthOrArraySize() const
+{
+#ifdef _MSC_VER
+	return m_resource->GetDesc().DepthOrArraySize;
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+	return desc.DepthOrArraySize;
+#endif
+}
+
+std::uint8_t DxTexture::GetNumChannels() const
+{
+#ifdef _MSC_VER
+	return GetChannelCount(m_resource->GetDesc().Format);
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+	return GetChannelCount(desc.Format);
+#endif
+}
+
+std::uint32_t DxTexture::GetNumMips() const
+{
+#ifdef _MSC_VER
+	return m_resource->GetDesc().MipLevels;
+#else
+	D3D12_RESOURCE_DESC desc;
+	m_resource->GetDesc(&desc);
+	return desc.MipLevels;
+#endif
+}
+
+void DxTexture::CreateUAV(const DxDevice& device, std::uint32_t mip, std::uint32_t sliceMin, std::uint32_t sliceMax)
 {
 	// If no UAV was generated for mip 0, the proper flags are not set. This is not supported
 	if (m_uavHeapIndices.empty())
@@ -320,9 +382,9 @@ void DxTexture::CreateUAV(const DxDevice& device, uint32_t mip, uint32_t sliceMi
 	device->CreateUnorderedAccessView(GetResource(), nullptr, &uavDesc, uav);
 }
 
-int32_t DxTexture::GetSrvHeapIndex() const { return m_srvHeapIndex; }
-int32_t DxTexture::GetUavHeapIndex(const uint32_t idx) const { return m_uavHeapIndices.at(idx); }
-bool	DxTexture::IsValid() const { return m_resource.Get() != nullptr && m_textureType != TextureType::Invalid; }
+std::int32_t DxTexture::GetSrvHeapIndex() const { return m_srvHeapIndex; }
+std::int32_t DxTexture::GetUavHeapIndex(const std::uint32_t idx) const { return m_uavHeapIndices.at(idx); }
+bool		 DxTexture::IsValid() const { return m_resource.Get() != nullptr && m_textureType != TextureType::Invalid; }
 
 void DxTexture::GenerateDescriptors(const DxDevice& device, const bool generateSrv, const bool isCubemap)
 {

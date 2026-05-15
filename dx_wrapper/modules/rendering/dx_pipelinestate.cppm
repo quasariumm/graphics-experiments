@@ -1,9 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-#include <variant>
-
 export module dx_wrapper.rendering.dx_pipelinestate;
+import std;
 export import dx_wrapper.rendering.dx_rootsignature;
 import dx_wrapper.external.directx12;
 import dx_wrapper.core.dx_device;
@@ -41,10 +39,10 @@ public:
 	 * Input / Output
 	 */
 
-	DxPipelineState& AddVertexInput(const std::string& semantic, DXGI_FORMAT format, uint32_t semanticIndex = 0,
-									uint32_t				   inputSlot		= 0,
+	DxPipelineState& AddVertexInput(const std::string& semantic, DXGI_FORMAT format, std::uint32_t semanticIndex = 0,
+									std::uint32_t			   inputSlot		= 0,
 									D3D12_INPUT_CLASSIFICATION classification	= D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-									uint32_t				   instanceStepRate = 0);
+									std::uint32_t			   instanceStepRate = 0);
 
 	DxPipelineState& AddRenderTarget(DXGI_FORMAT format);
 	DxPipelineState& SetDepthRenderTarget(DXGI_FORMAT format);
@@ -87,10 +85,10 @@ private:
 	{
 		std::string				   m_semantic;
 		DXGI_FORMAT				   m_format;
-		uint32_t				   m_semanticIndex;
-		uint32_t				   m_inputSlot;
+		std::uint32_t			   m_semanticIndex;
+		std::uint32_t			   m_inputSlot;
 		D3D12_INPUT_CLASSIFICATION m_classification;
-		uint32_t				   m_instanceStepRate;
+		std::uint32_t			   m_instanceStepRate;
 	};
 	std::vector<VertexInput> m_vertexInputs{};
 

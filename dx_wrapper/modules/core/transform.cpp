@@ -1,7 +1,5 @@
 ﻿module;
 
-#include <glm/gtx/matrix_decompose.hpp>
-
 module dx_wrapper.core.transform;
 
 void Transform::SetMatrix(const glm::mat4& matrix)

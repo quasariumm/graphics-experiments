@@ -1,8 +1,7 @@
 ﻿module;
 
-#include <cstdint>
-
 export module dx_wrapper.resources.dx_resource;
+import std;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.helpers.dx_resource_upload;
 
@@ -38,7 +37,7 @@ protected:
 
 	// API for inherited classes
 
-	void SetData(const void* data, const size_t size)
+	void SetData(const void* data, const std::size_t size)
 	{
 		m_cpuData	  = data;
 		m_cpuDataSize = size;
@@ -49,7 +48,7 @@ protected:
 private:
 
 	const void* m_cpuData	  = nullptr;
-	size_t		m_cpuDataSize = 0;
+	std::size_t m_cpuDataSize = 0;
 
 	DXGI_FORMAT			  m_format		 = DXGI_FORMAT_UNKNOWN;
 	D3D12_RESOURCE_STATES m_currentState = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;

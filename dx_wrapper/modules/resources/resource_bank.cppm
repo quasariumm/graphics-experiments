@@ -1,11 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-#include <memory>
-#include <string>
-#include <unordered_map>
-
 export module dx_wrapper.resources.resource_bank;
+import std;
 import dx_wrapper.resources.dx_resource;
 import dx_wrapper.core.dx_common;
 
@@ -32,15 +28,15 @@ std::shared_ptr<T> ResourceBank::GetOrCreateResource(const std::string& identifi
 	// Get
 	if (m_resources.contains(identifier))
 		return std::reinterpret_pointer_cast<T>(m_resources.at(identifier));
-	
+
 	// Create
-	std::shared_ptr<T> res = std::make_shared<T>(std::forward<Args>(args)...);
+	std::shared_ptr<T>			res		 = std::make_shared<T>(std::forward<Args>(args)...);
 	std::shared_ptr<DxResource> resource = std::reinterpret_pointer_cast<DxResource>(res);
-	
+
 	// Set resource name
 	std::wstring widentifier = std::filesystem::path{identifier}.wstring();
 	CheckHR(resource->GetResource()->SetName(widentifier.c_str()));
-	
+
 	m_resources.emplace(identifier, resource);
 	return res;
 }

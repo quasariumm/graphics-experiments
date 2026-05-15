@@ -1,14 +1,12 @@
 ﻿module;
 
-#include <filesystem>
-#include "macros.hpp"
-
 module dx_wrapper.rendering.dx_rootsignature;
+import std;
 import dx_wrapper.external.directx12;
 import dx_wrapper.core.log;
 
-DxRootSignature& DxRootSignature::Add32BitConstants(const uint32_t shaderRegister, const uint32_t sizeBytes,
-													const D3D12_SHADER_VISIBILITY visibility, const uint32_t space)
+DxRootSignature& DxRootSignature::Add32BitConstants(const std::uint32_t shaderRegister, const std::uint32_t sizeBytes,
+													const D3D12_SHADER_VISIBILITY visibility, const std::uint32_t space)
 {
 	D3D12_ROOT_PARAMETER1 param{};
 	param.ParameterType			   = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
@@ -22,8 +20,8 @@ DxRootSignature& DxRootSignature::Add32BitConstants(const uint32_t shaderRegiste
 	return *this;
 }
 
-DxRootSignature& DxRootSignature::AddConstantBuffer(const uint32_t shaderRegister, const D3D12_SHADER_VISIBILITY visibility,
-													const uint32_t space)
+DxRootSignature& DxRootSignature::AddConstantBuffer(const std::uint32_t			  shaderRegister,
+													const D3D12_SHADER_VISIBILITY visibility, const std::uint32_t space)
 {
 	D3D12_ROOT_PARAMETER1 param{};
 	param.ParameterType				= D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -36,8 +34,8 @@ DxRootSignature& DxRootSignature::AddConstantBuffer(const uint32_t shaderRegiste
 	return *this;
 }
 
-DxRootSignature& DxRootSignature::AddBufferSRV(const uint32_t shaderRegister, const D3D12_SHADER_VISIBILITY visibility,
-											   const uint32_t space)
+DxRootSignature& DxRootSignature::AddBufferSRV(const std::uint32_t shaderRegister, const D3D12_SHADER_VISIBILITY visibility,
+											   const std::uint32_t space)
 {
 	D3D12_ROOT_PARAMETER1 param{};
 	param.ParameterType				= D3D12_ROOT_PARAMETER_TYPE_SRV;
@@ -50,8 +48,8 @@ DxRootSignature& DxRootSignature::AddBufferSRV(const uint32_t shaderRegister, co
 	return *this;
 }
 
-DxRootSignature& DxRootSignature::AddBufferUAV(const uint32_t shaderRegister, const D3D12_SHADER_VISIBILITY visibility,
-											   const uint32_t space)
+DxRootSignature& DxRootSignature::AddBufferUAV(const std::uint32_t shaderRegister, const D3D12_SHADER_VISIBILITY visibility,
+											   const std::uint32_t space)
 {
 	D3D12_ROOT_PARAMETER1 param{};
 	param.ParameterType				= D3D12_ROOT_PARAMETER_TYPE_UAV;
@@ -64,9 +62,9 @@ DxRootSignature& DxRootSignature::AddBufferUAV(const uint32_t shaderRegister, co
 	return *this;
 }
 
-DxRootSignature& DxRootSignature::AddDescriptorRange(const D3D12_DESCRIPTOR_RANGE_TYPE type, const uint32_t shaderRegister,
-													 const uint32_t count, const D3D12_SHADER_VISIBILITY visibility,
-													 const uint32_t space)
+DxRootSignature& DxRootSignature::AddDescriptorRange(const D3D12_DESCRIPTOR_RANGE_TYPE type, const std::uint32_t shaderRegister,
+													 const std::uint32_t count, const D3D12_SHADER_VISIBILITY visibility,
+													 const std::uint32_t space)
 {
 	auto* range				  = new D3D12_DESCRIPTOR_RANGE1;
 	range->RangeType		  = type;
@@ -178,7 +176,8 @@ void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const 
 	CheckHR(device->CreateRootSignature(0,
 										rootSignatureBlob->GetBufferPointer(),
 										rootSignatureBlob->GetBufferSize(),
-										IID_PPV_ARGS(m_rootSignature.GetAddressOf())));
+										GetIID(m_rootSignature),
+										GetPPV(m_rootSignature)));
 
 	if (!name.empty())
 	{
@@ -189,6 +188,6 @@ void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const 
 	// Clear temporary storage vectors
 	m_samplers.clear();
 	m_rootParameters.clear();
-	
+
 	m_finalized = true;
 }

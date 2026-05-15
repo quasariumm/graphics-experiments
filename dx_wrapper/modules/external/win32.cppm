@@ -65,7 +65,6 @@ export using ::WPARAM;
 // Handle
 export using ::HWND;
 export using ::HANDLE;
-export using ::HANDLE64;
 export using ::HINSTANCE;
 export using ::HMODULE;
 export using ::HICON;

@@ -1,15 +1,12 @@
 ﻿module;
 
-#include <chrono>
-#include <filesystem>
-#include <string>
-#include <unordered_map>
-
 /*
  * DX Device
  */
 
 export module dx_wrapper.core.dx_device;
+
+import std;
 
 import dx_wrapper.external.device_resources;
 import dx_wrapper.external.win32;

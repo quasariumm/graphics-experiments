@@ -1,9 +1,7 @@
 ﻿module;
 
-#include <string>
-#include <vector>
-
 export module dx_wrapper.rendering.dx_rootsignature;
+import std;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.core.dx_device;
 
@@ -19,19 +17,22 @@ public:
 	/*
 	 * Root Signature entries
 	 */
-	DxRootSignature& Add32BitConstants(uint32_t shaderRegister, uint32_t sizeBytes,
-									   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, uint32_t space = 0);
+	DxRootSignature& Add32BitConstants(std::uint32_t shaderRegister, std::uint32_t sizeBytes,
+									   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL,
+									   std::uint32_t		   space	  = 0);
 
-	DxRootSignature& AddConstantBuffer(uint32_t				   shaderRegister,
-									   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, uint32_t space = 0);
+	DxRootSignature& AddConstantBuffer(std::uint32_t		   shaderRegister,
+									   D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL,
+									   std::uint32_t		   space	  = 0);
 
-	DxRootSignature& AddBufferSRV(uint32_t shaderRegister, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL,
-								  uint32_t space = 0);
-	DxRootSignature& AddBufferUAV(uint32_t shaderRegister, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL,
-								  uint32_t space = 0);
+	DxRootSignature& AddBufferSRV(std::uint32_t			  shaderRegister,
+								  D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, std::uint32_t space = 0);
+	DxRootSignature& AddBufferUAV(std::uint32_t			  shaderRegister,
+								  D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, std::uint32_t space = 0);
 
-	DxRootSignature& AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE type, uint32_t shaderRegister, uint32_t count,
-										D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, uint32_t space = 0);
+	DxRootSignature& AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE type, std::uint32_t shaderRegister, std::uint32_t count,
+										D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL,
+										std::uint32_t			space	   = 0);
 
 	/*
 	 * Samplers
@@ -48,7 +49,7 @@ public:
 
 
 	void Finalize(DxDevice& device, const std::string& name, bool heapDirectlyIndexed = false);
-	
+
 	bool IsFinalized() const { return m_finalized; }
 
 private:
@@ -57,6 +58,6 @@ private:
 
 	std::vector<D3D12_STATIC_SAMPLER_DESC> m_samplers;
 	std::vector<D3D12_ROOT_PARAMETER1>	   m_rootParameters;
-	
+
 	bool m_finalized = false;
 };

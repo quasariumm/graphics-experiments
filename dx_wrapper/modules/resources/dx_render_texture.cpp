@@ -1,8 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-
 module dx_wrapper.resources.dx_render_texture;
+import std;
 import dx_wrapper.external.directx12;
 import dx_wrapper.core.log;
 
@@ -17,8 +16,9 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::
 	CreateRenderTargetView(device, m_rtv, 0);
 }
 
-DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, uint32_t width,
-								 uint32_t height, uint32_t depth, bool generateMips, bool generateSrv)
+DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format,
+								 std::uint32_t width, std::uint32_t height, std::uint32_t depth, bool generateMips,
+								 bool generateSrv)
 	: DxTexture{device, data, type, format, width, height, depth, generateMips, true},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
@@ -29,8 +29,8 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, 
 	CreateRenderTargetView(device, m_rtv, 0);
 }
 
-DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width, uint32_t height,
-								 uint32_t depth, bool allocateMips, bool generateSrv)
+DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width,
+								 std::uint32_t height, std::uint32_t depth, bool allocateMips, bool generateSrv)
 	: DxTexture{device, type, format, width, height, depth, allocateMips, true},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
@@ -41,7 +41,8 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_
 	CreateRenderTargetView(device, m_rtv, 0);
 }
 
-DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, size_t size, bool generateMips, bool generateSrv)
+DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, std::size_t size, bool generateMips,
+								 bool generateSrv)
 	: DxTexture{device, data, size, generateMips, true},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
@@ -52,11 +53,12 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, 
 	CreateRenderTargetView(device, m_rtv, 0);
 }
 
-void DxRenderTexture::CreateRenderTargetView(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t mipLevel) const
+void DxRenderTexture::CreateRenderTargetView(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle,
+											 std::uint32_t mipLevel) const
 {
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.Format = GetFormat();
-	
+
 	switch (GetTextureType())
 	{
 	case TextureType::D1:
@@ -87,6 +89,6 @@ void DxRenderTexture::CreateRenderTargetView(const DxDevice& device, D3D12_CPU_D
 		Log::Critical("Invalid texture type");
 		return;
 	}
-	
+
 	device->CreateRenderTargetView(DxTexture::GetResource(), &rtvDesc, handle);
 }

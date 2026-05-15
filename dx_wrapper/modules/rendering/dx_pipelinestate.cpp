@@ -1,11 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-#include <format>
-#include <variant>
-#include "macros.hpp"
-
 module dx_wrapper.rendering.dx_pipelinestate;
+import std;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.rendering.dx_shader_utils;
 import dx_wrapper.external.dxc;
@@ -104,9 +100,9 @@ DxPipelineState& DxPipelineState::SetMeshPixelShader(const std::filesystem::path
 	return *this;
 }
 
-DxPipelineState& DxPipelineState::AddVertexInput(const std::string& semantic, DXGI_FORMAT format, uint32_t semanticIndex,
-												 uint32_t inputSlot, D3D12_INPUT_CLASSIFICATION classification,
-												 uint32_t instanceStepRate)
+DxPipelineState& DxPipelineState::AddVertexInput(const std::string& semantic, DXGI_FORMAT format, std::uint32_t semanticIndex,
+												 std::uint32_t inputSlot, D3D12_INPUT_CLASSIFICATION classification,
+												 std::uint32_t instanceStepRate)
 {
 	m_vertexInputs.emplace_back(semantic, format, semanticIndex, inputSlot, classification, instanceStepRate);
 	return *this;
@@ -215,19 +211,21 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 if (!m_params.m_depthTesting)
 							 psoDesc.DepthStencilState.DepthEnable = FALSE;
 
-						 psoDesc.SampleMask			   = UINT_MAX;
+						 psoDesc.SampleMask			   = std::numeric_limits<std::uint32_t>::max();
 						 psoDesc.PrimitiveTopologyType = m_params.m_primitiveTopology;
 
 						 psoDesc.NumRenderTargets = static_cast<UINT>(m_renderTargets.size());
-						 memcpy(&psoDesc.RTVFormats[0], m_renderTargets.data(), m_renderTargets.size() * sizeof(DXGI_FORMAT));
+						 std::memcpy(&psoDesc.RTVFormats[0],
+									 m_renderTargets.data(),
+									 m_renderTargets.size() * sizeof(DXGI_FORMAT));
 
 						 psoDesc.DSVFormat			= m_depthFormat;
 						 psoDesc.SampleDesc.Count	= 1;
 						 psoDesc.SampleDesc.Quality = 0;
 
-						 CheckHR(device.GetDXDevice()->CreateGraphicsPipelineState(
-								 &psoDesc,
-								 IID_PPV_ARGS(m_pipelineState.GetAddressOf())));
+						 CheckHR(device.GetDXDevice()->CreateGraphicsPipelineState(&psoDesc,
+																				   GetIID(m_pipelineState),
+																				   GetPPV(m_pipelineState)));
 					 },
 					 [&](const ComputePipeline& shader)
 					 {
@@ -238,9 +236,9 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 psoDesc.pRootSignature = *rootSignature;
 						 psoDesc.CS				= GetBytecode(csBlob);
 
-						 CheckHR(device.GetDXDevice()->CreateComputePipelineState(
-								 &psoDesc,
-								 IID_PPV_ARGS(m_pipelineState.GetAddressOf())));
+						 CheckHR(device.GetDXDevice()->CreateComputePipelineState(&psoDesc,
+																				  GetIID(m_pipelineState),
+																				  GetPPV(m_pipelineState)));
 					 },
 					 [&](const MeshPipeline& shaders)
 					 {
@@ -264,7 +262,8 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 streamDesc.pPipelineStateSubobjectStream	 = &psoDesc;
 
 						 CheckHR(device.GetDXDevice()->CreatePipelineState(&streamDesc,
-																		   IID_PPV_ARGS(m_pipelineState.GetAddressOf())));
+																		   GetIID(m_pipelineState),
+																		   GetPPV(m_pipelineState)));
 					 }},
 			m_shaders);
 

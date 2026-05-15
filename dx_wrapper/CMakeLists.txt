@@ -1,11 +1,11 @@
 ﻿cmake_minimum_required(VERSION 3.28)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_cxx.cmake)
+
 project(dx_wrapper)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
-
-set(BUILD_SHARED_LIBS OFF)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_testplate.cmake)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
 
 #
 # Fetch Repos
@@ -13,7 +13,9 @@ set(BUILD_SHARED_LIBS OFF)
 
 include(FetchContent)
 
-add_compile_options(-march=native)
+#
+# DirectX Compiler
+#
 
 FetchContent_Declare(
 		dxc
@@ -24,19 +26,36 @@ FetchContent_MakeAvailable(dxc)
 
 set(DIRECTX_DXC_TOOL "${dxc_SOURCE_DIR}/bin/x64/dxc.exe" CACHE PATH "" FORCE)
 
+#
+# DirectX Headers
+#
+
 FetchContent_Declare(
 		DirectX-Headers
 		GIT_REPOSITORY https://github.com/microsoft/DirectX-Headers.git
 		GIT_TAG v1.619.1
 		GIT_SHALLOW TRUE
+		OVERRIDE_FIND_PACKAGE
 )
+FetchContent_MakeAvailable(DirectX-Headers)
+
+#
+# DirectX Math (for DirectXTex)
+#
 
 FetchContent_Declare(
 		DirectXMath
 		GIT_REPOSITORY https://github.com/microsoft/DirectXMath.git
 		GIT_TAG apr2025
 		GIT_SHALLOW TRUE
+		OVERRIDE_FIND_PACKAGE
 )
+FetchContent_MakeAvailable(DirectXMath)
+add_library(Microsoft::DirectXMath ALIAS DirectXMath)
+
+#
+# IMath (for OpenEXR)
+#
 
 FetchContent_Declare(
 		IMath
@@ -45,7 +64,11 @@ FetchContent_Declare(
 		GIT_SHALLOW TRUE
 		OVERRIDE_FIND_PACKAGE
 )
+FetchContent_MakeAvailable(IMath)
 
+#
+# OpenEXR
+#
 FetchContent_Declare(
 		OpenEXR
 		GIT_REPOSITORY https://github.com/AcademySoftwareFoundation/openexr.git
@@ -53,12 +76,40 @@ FetchContent_Declare(
 		GIT_SHALLOW TRUE
 )
 
+set(OPENEXR_BUILD_LIBS ON)
+set(OPENEXR_BUILD_TOOLS OFF)
+set(OPENEXR_BUILD_EXAMPLES OFF)
+
+FetchContent_MakeAvailable(OpenEXR)
+
+#
+# DirectXTex
+#
+
 FetchContent_Declare(
 		DirectXTex
 		GIT_REPOSITORY https://github.com/microsoft/DirectXTex.git
 		GIT_TAG mar2026
 		GIT_SHALLOW TRUE
+		OVERRIDE_FIND_PACKAGE
 )
+
+set(BUILD_TOOLS OFF)
+set(BUILD_SAMPLE OFF)
+set(BUILD_DX11 OFF)
+set(ENABLE_OPENEXR_SUPPORT ON)
+set(BUILD_TESTING OFF)
+
+set(directxmath_DIR ${directxmath_BINARY_DIR} CACHE PATH "" FORCE)
+
+# Fuck you Microsoft
+set(CMAKE_SKIP_INSTALL_RULES ON)
+FetchContent_MakeAvailable(DirectXTex)
+set(CMAKE_SKIP_INSTALL_RULES OFF)
+
+#
+# FastGLTF
+#
 
 FetchContent_Declare(
 		fastgltf
@@ -67,6 +118,14 @@ FetchContent_Declare(
 		GIT_SHALLOW TRUE
 )
 
+set(FASTGLTF_COMPILE_AS_CPP20 ON)
+
+FetchContent_MakeAvailable(fastgltf)
+
+#
+# GLM
+#
+
 FetchContent_Declare(
 		glm
 		GIT_REPOSITORY https://github.com/g-truc/glm.git
@@ -74,43 +133,22 @@ FetchContent_Declare(
 		GIT_SHALLOW TRUE
 )
 
+set(GLM_ENABLE_CXX_20 ON)
+set(GLM_ENABLE_SIMD_AVX2 ON)
+
+FetchContent_MakeAvailable(glm)
+
+#
+# MikkTSpace
+#
+
 FetchContent_Declare(
 		mikktspace
 		GIT_REPOSITORY https://github.com/mmikk/MikkTSpace.git
 		GIT_TAG 3e895b4
 		GIT_SHALLOW TRUE
 )
-
-#
-# OpenEXR
-#
-set(OPENEXR_BUILD_LIBS ON)
-set(OPENEXR_BUILD_TOOLS OFF)
-set(OPENEXR_BUILD_EXAMPLES OFF)
-
-#
-# DirectXTex
-#
-set(BUILD_TOOLS OFF)
-set(BUILD_SAMPLE OFF)
-set(BUILD_DX11 OFF)
-set(ENABLE_OPENEXR_SUPPORT ON)
-
-#
-# fastgltf
-#
-
-set(FASTGLTF_COMPILE_AS_CPP20 ON)
-
-#
-# GLM
-#
-
-set(GLM_ENABLE_CXX_20 ON)
-set(GLM_ENABLE_SIMD_AVX2 ON)
-
-set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
-FetchContent_MakeAvailable(DirectX-Headers DirectXMath IMath OpenEXR DirectXTex fastgltf mikktspace glm)
+FetchContent_MakeAvailable(mikktspace)
 
 add_library(mikktspace STATIC
 		${mikktspace_SOURCE_DIR}/mikktspace.c
@@ -124,15 +162,19 @@ target_include_directories(mikktspace PUBLIC ${mikktspace_SOURCE_DIR})
 
 add_library(dx_wrapper STATIC)
 
-target_compile_definitions(dx_wrapper PUBLIC DX_WRAPPER_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
-target_compile_options(dx_wrapper PUBLIC -march=native)
+setup_common_compiler_args(dx_wrapper)
 
-include(../common/cmake/setup_sources.cmake)
+target_compile_definitions(dx_wrapper PUBLIC DX_WRAPPER_PATH="${CMAKE_CURRENT_SOURCE_DIR}/")
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
 
 target_include_directories(dx_wrapper PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		../external
-		${dxc_SOURCE_DIR}/
+)
+# This makes these have higher precedence over the system's headers
+target_include_directories(dx_wrapper BEFORE PUBLIC
+		${dxc_SOURCE_DIR}/inc
 		${DirectX-Headers_SOURCE_DIR}/include/directx
 )
 
@@ -151,13 +193,11 @@ target_link_libraries(dx_wrapper PUBLIC
 
 target_compile_definitions(dx_wrapper PUBLIC BIN_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 
-target_compile_definitions(dx_wrapper PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
-
-target_compile_definitions(dx_wrapper PUBLIC GLM_ENABLE_EXPERIMENTAL GLM_FORCE_SWIZZLE)
+target_compile_definitions(dx_wrapper PUBLIC GLM_ENABLE_EXPERIMENTAL)
 target_compile_options(DirectXMath INTERFACE -Wno-defaulted-function-deleted)
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	set(CMAKE_CXX_COMPILER_TARGET x86_64-pc-windows-msvc)
+if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	set(CMAKE_CXX_COMPILER_TARGET x86_64-pc-windows-gnu)
 	target_compile_definitions(dx_wrapper PUBLIC _AMD64_)
 endif ()
 

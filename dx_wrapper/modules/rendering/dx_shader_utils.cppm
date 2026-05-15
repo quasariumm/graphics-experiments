@@ -1,8 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-
 export module dx_wrapper.rendering.dx_shader_utils;
+import std;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.external.dxc;
 

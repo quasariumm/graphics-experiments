@@ -1,11 +1,11 @@
 ﻿module;
 
-#include <cstdint>
 #include <windows.h>
 
 export module dx_wrapper.core.input_enums;
+import std;
 
-export enum class MouseButton : uint8_t {
+export enum class MouseButton : std::uint8_t {
 	Left   = VK_LBUTTON,  // 0x01
 	Right  = VK_RBUTTON,  // 0x02
 	Middle = VK_MBUTTON,  // 0x04
@@ -13,7 +13,7 @@ export enum class MouseButton : uint8_t {
 	X2	   = VK_XBUTTON2, // 0x06
 };
 
-export enum class GamepadButton : uint8_t {
+export enum class GamepadButton : std::uint8_t {
 	A				= VK_GAMEPAD_A,						  // 0xC3
 	B				= VK_GAMEPAD_B,						  // 0xC4
 	X				= VK_GAMEPAD_X,						  // 0xC5
@@ -40,7 +40,7 @@ export enum class GamepadButton : uint8_t {
 	RightThumbLeft	= VK_GAMEPAD_RIGHT_THUMBSTICK_LEFT,	  // 0xDA
 };
 
-export enum class Key : uint8_t {
+export enum class Key : std::uint8_t {
 	// Control
 	Backspace	= VK_BACK,	   // 0x08
 	Tab			= VK_TAB,	   // 0x09

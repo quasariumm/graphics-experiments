@@ -1,8 +1,7 @@
 ﻿module;
 
-#include <filesystem>
-
 export module dx_wrapper.resources.dx_depth_render_texture;
+import std;
 import dx_wrapper.external.directx12;
 import dx_wrapper.core.dx_device;
 import dx_wrapper.resources.dx_texture;
@@ -39,8 +38,8 @@ public:
 	 * will break. Use with caution.
 	 */
 	explicit DxDepthRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format,
-								  uint32_t width, uint32_t height = 1, uint32_t depth = 1, bool generateMips = true,
-								  bool generateSrv = false);
+								  std::uint32_t width, std::uint32_t height = 1, std::uint32_t depth = 1,
+								  bool generateMips = true, bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new empty texture
@@ -53,8 +52,9 @@ public:
 	 * @param allocateMips [optional, default = true] Whether to generate mipmaps
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
 	 */
-	explicit DxDepthRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width,
-								  uint32_t height = 1, uint32_t depth = 1, bool allocateMips = true, bool generateSrv = false);
+	explicit DxDepthRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width,
+								  std::uint32_t height = 1, std::uint32_t depth = 1, bool allocateMips = true,
+								  bool generateSrv = false);
 
 	/**
 	 * @brief Constructs a new texture from encoded data
@@ -65,7 +65,7 @@ public:
 	 * @param generateSrv [optional, default = false] Whether to create an SRV descriptor for this render target
 	 * @attention If you already loaded the data through STB or aky akin library, please use the other data-based constructor
 	 */
-	explicit DxDepthRenderTexture(const DxDevice& device, const std::byte* data, size_t size, bool generateMips = true,
+	explicit DxDepthRenderTexture(const DxDevice& device, const std::byte* data, std::size_t size, bool generateMips = true,
 								  bool generateSrv = false);
 
 	~DxDepthRenderTexture() override = default;
@@ -74,7 +74,7 @@ public:
 
 private:
 
-	void CreateDsv(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t depth);
+	void CreateDsv(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t depth);
 
 	DxDescriptorHeap			m_dsvHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_dsv{};

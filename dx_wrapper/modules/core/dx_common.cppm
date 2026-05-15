@@ -1,16 +1,12 @@
 ﻿module;
 
-#include <filesystem>
-#include <fstream>
-#include <string>
-#include <vector>
-
 export module dx_wrapper.core.dx_common;
+import std;
 import dx_wrapper.core.log;
 export import dx_wrapper.external.win32;
 export import dx_wrapper.external.directx12;
 
-export inline constexpr uint32_t max_shader_descriptors = 16384;
+export inline constexpr std::uint32_t max_shader_descriptors = 16384;
 
 export void CheckHR(HRESULT hr)
 {

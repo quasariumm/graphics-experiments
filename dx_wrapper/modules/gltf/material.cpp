@@ -3,6 +3,7 @@
 #include <fastgltf/types.hpp>
 
 module dx_wrapper.gltf.material;
+import std;
 import dx_wrapper.resources.resource_bank;
 
 inline glm::vec2 ToGlm(fastgltf::math::nvec2 v) { return {v.x(), v.y()}; }

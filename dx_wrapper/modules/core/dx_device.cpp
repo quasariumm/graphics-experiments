@@ -1,15 +1,12 @@
 ﻿module;
 
-#include <bitset>
-#include <chrono>
-#include <filesystem>
-#include <memory>
-
 /*
  * DX Device
  */
 
 module dx_wrapper.core.dx_device;
+
+import std;
 
 import dx_wrapper.external.device_resources;
 import dx_wrapper.external.win32;
@@ -18,13 +15,11 @@ import dx_wrapper.external.directx12;
 import dx_wrapper.core;
 import dx_wrapper.rendering;
 
-std::bitset<0xff> current_input_state{};  // NOLINT
-glm::vec2		  current_mouse_pos{};	  // NOLINT
-glm::vec2		  current_scroll_delta{}; // NOLINT
-
 #ifdef TESTPLATE_HAS_IMGUI
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
+
+extern "C" LRESULT InputWindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp);
 
 LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 {
@@ -38,8 +33,6 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 
 	DxDevice* device = registered_devices.at(hwnd);
 
-	float dpi = GetDpiForWindow(hwnd) / 96.0f;
-
 	switch (msg)
 	{
 	/*
@@ -52,63 +45,11 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 	case WM::Size:
 		device->SetWindowSize(LOWORD(lp), HIWORD(lp));
 		break;
-	/*
-	 * Keyboard
-	 */
-	case WM::KeyDown:
-		current_input_state.set(LOWORD(wp), true);
-		break;
-	case WM::KeyUp:
-		current_input_state.set(LOWORD(wp), false);
-		break;
-	/*
-	 * Mouse
-	 */
-	case WM::LButtonDown:
-		current_input_state.set(static_cast<size_t>(MouseButton::Left), true);
-		SetCapture(hwnd);
-		break;
-	case WM::RButtonDown:
-		current_input_state.set(static_cast<size_t>(MouseButton::Right), true);
-		break;
-	case WM::MButtonDown:
-		current_input_state.set(static_cast<size_t>(MouseButton::Middle), true);
-		break;
-	case WM::XButtonDown:
-	{
-		const UINT button = GET_XBUTTON_WPARAM(wp);
-		current_input_state.set(static_cast<size_t>(button == XBUTTON1 ? MouseButton::X1 : MouseButton::X2), true);
-		break;
-	}
-	case WM::LButtonUp:
-		current_input_state.set(static_cast<size_t>(MouseButton::Left), false);
-		ReleaseCapture();
-		break;
-	case WM::RButtonUp:
-		current_input_state.set(static_cast<size_t>(MouseButton::Right), false);
-		break;
-	case WM::MButtonUp:
-		current_input_state.set(static_cast<size_t>(MouseButton::Middle), false);
-		break;
-	case WM::XButtonUp:
-	{
-		const UINT button = GET_XBUTTON_WPARAM(wp);
-		current_input_state.set(static_cast<size_t>(button == XBUTTON1 ? MouseButton::X1 : MouseButton::X2), false);
-		break;
-	}
-	case WM::MouseMove:
-		current_mouse_pos.x = static_cast<float>(LOWORD(lp)) / dpi;
-		current_mouse_pos.y = static_cast<float>(HIWORD(lp)) / dpi;
-		break;
-	case WM::MouseWheel:
-		current_scroll_delta.y = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wp)) / 120.0f;
-		break;
-	case WM::MouseHWheel:
-		current_scroll_delta.x = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wp)) / 120.0f;
-		break;
 	default:
 		break;
 	}
+	
+	InputWindowProc(hwnd, msg, wp, lp);
 
 	return DefWindowProc(hwnd, msg, wp, lp);
 }

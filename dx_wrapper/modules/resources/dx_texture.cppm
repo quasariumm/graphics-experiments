@@ -1,9 +1,7 @@
 ﻿module;
 
-#include <d3dx12.h>
-#include <filesystem>
-
 export module dx_wrapper.resources.dx_texture;
+import std;
 import dx_wrapper.core;
 import dx_wrapper.resources.dx_resource;
 
@@ -47,8 +45,8 @@ public:
 	 * @attention This function determines the data size from the width, height and format. If your data is not big enough, this
 	 * will break. Use with caution.
 	 */
-	explicit DxTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, uint32_t width,
-					   uint32_t height = 1, uint32_t depth = 1, bool generateMips = true, bool _internal = false);
+	explicit DxTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, std::uint32_t width,
+					   std::uint32_t height = 1, std::uint32_t depth = 1, bool generateMips = true, bool _internal = false);
 
 	/**
 	 * @brief Constructs a new empty texture
@@ -61,8 +59,8 @@ public:
 	 * @param allocateMips [optional, default = true] Whether to generate mipmaps
 	 * generate ones for other mips/slices
 	 */
-	explicit DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, uint32_t width, uint32_t height = 1,
-					   uint32_t depth = 1, bool allocateMips = true, bool _internal = false);
+	explicit DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width,
+					   std::uint32_t height = 1, std::uint32_t depth = 1, bool allocateMips = true, bool _internal = false);
 
 	/**
 	 * @brief Constructs a new texture from encoded data
@@ -73,7 +71,8 @@ public:
 	 * generate ones for other mips/slices
 	 * @attention If you already loaded the data through STB or aky akin library, please use the other data-based constructor
 	 */
-	explicit DxTexture(const DxDevice& device, const std::byte* data, size_t size, bool generateMips = true, bool _internal = false);
+	explicit DxTexture(const DxDevice& device, const std::byte* data, std::size_t size, bool generateMips = true,
+					   bool _internal = false);
 
 	~DxTexture() override;
 
@@ -85,11 +84,11 @@ public:
 	 * Getters via the RESOURCE_DESC
 	 */
 
-	size_t	 GetWidth() const;
-	size_t	 GetHeight() const;
-	size_t	 GetDepthOrArraySize() const;
-	uint8_t	 GetNumChannels() const;
-	uint32_t GetNumMips() const;
+	std::size_t	  GetWidth() const;
+	std::size_t	  GetHeight() const;
+	std::size_t	  GetDepthOrArraySize() const;
+	std::uint8_t  GetNumChannels() const;
+	std::uint32_t GetNumMips() const;
 
 	/**
 	 * @brief Creates a UAV for a specified mip or slice
@@ -98,19 +97,19 @@ public:
 	 * @param sliceMin [optional, default = 0] The slice to create the UAV for. Only used for Array textures
 	 * @param sliceMax [optional, default = 0] The slice to create the UAV for. Only used for Array textures
 	 */
-	void CreateUAV(const DxDevice& device, uint32_t mip, uint32_t sliceMin = 0, uint32_t sliceMax = 0);
+	void CreateUAV(const DxDevice& device, std::uint32_t mip, std::uint32_t sliceMin = 0, std::uint32_t sliceMax = 0);
 
 	/**
 	 * @brief Gets the index on the DescriptorPile of the SRV
 	 */
-	int32_t GetSrvHeapIndex() const;
+	std::int32_t GetSrvHeapIndex() const;
 
 	/**
 	 * @brief Gets a UAV from the list of UAVs bound to this texture
 	 * @param idx [optional, default = 0] The index of which you created the UAV
 	 * @return The index on the DescriptorPile of the UAV
 	 */
-	int32_t GetUavHeapIndex(uint32_t idx = 0) const;
+	std::int32_t GetUavHeapIndex(std::uint32_t idx = 0) const;
 
 	TextureType GetTextureType() const { return m_textureType; }
 
@@ -127,7 +126,7 @@ private:
 
 	TextureType m_textureType = TextureType::Invalid;
 
-	ComPtr<ID3D12Resource> m_resource;
-	int32_t				   m_srvHeapIndex = -1;
-	std::vector<int32_t>   m_uavHeapIndices{};
+	ComPtr<ID3D12Resource>	  m_resource;
+	std::int32_t			  m_srvHeapIndex = -1;
+	std::vector<std::int32_t> m_uavHeapIndices{};
 };

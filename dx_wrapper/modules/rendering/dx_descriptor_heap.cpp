@@ -1,22 +1,25 @@
 ﻿module;
 
-#include <climits>
-#include <cstdint>
-#include "macros.hpp"
-
 module dx_wrapper.rendering.dx_descriptor_heap;
+import std;
 import dx_wrapper.external.directx12;
 
 // Code from https://github.com/microsoft/DirectXTK12/blob/main/Src/DescriptorHeap.cpp
 
 DxDescriptorHeap::DxDescriptorHeap(ID3D12DescriptorHeap* existingHeap) : m_heap{existingHeap}
 {
+#ifdef _MSC_VER
 	m_cpuHandle = existingHeap->GetCPUDescriptorHandleForHeapStart();
 	m_gpuHandle = existingHeap->GetGPUDescriptorHandleForHeapStart();
 	m_heapDesc	= existingHeap->GetDesc();
+#else
+	existingHeap->GetCPUDescriptorHandleForHeapStart(&m_cpuHandle);
+	existingHeap->GetGPUDescriptorHandleForHeapStart(&m_gpuHandle);
+	existingHeap->GetDesc(&m_heapDesc);
+#endif
 
 	ComPtr<ID3D12Device2> device;
-	CheckHR(existingHeap->GetDevice(IID_PPV_ARGS(device.GetAddressOf())));
+	CheckHR(existingHeap->GetDevice(GetIID(device), GetPPV(device)));
 
 	m_increment = device->GetDescriptorHandleIncrementSize(m_heapDesc.Type);
 }
@@ -26,10 +29,10 @@ DxDescriptorHeap::DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR
 { Create(device, desc); }
 
 DxDescriptorHeap::DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
-								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const size_t count)
+								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const std::size_t count)
 	: m_heapDesc{}, m_cpuHandle{}, m_gpuHandle{}, m_increment{0}
 {
-	if (count > UINT_MAX)
+	if (count > std::numeric_limits<std::uint32_t>::max())
 		Log::Critical("Too many descriptors");
 
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
@@ -39,14 +42,14 @@ DxDescriptorHeap::DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR
 	Create(device, &desc);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const uint32_t offsetIntoHeap,
-															   const uint32_t					  totalDescriptorCount,
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const std::uint32_t offsetIntoHeap,
+															   const std::uint32_t				  totalDescriptorCount,
 															   const D3D12_CPU_DESCRIPTOR_HANDLE* descriptorRangeStarts,
-															   const uint32_t*					  descriptorRangeSizes,
-															   const uint32_t					  descriptorRangeCount) const
+															   const std::uint32_t*				  descriptorRangeSizes,
+															   const std::uint32_t				  descriptorRangeCount) const
 {
-	if (static_cast<size_t>(offsetIntoHeap) + static_cast<size_t>(totalDescriptorCount) >
-		static_cast<size_t>(m_heapDesc.NumDescriptors))
+	if (static_cast<std::size_t>(offsetIntoHeap) + static_cast<std::size_t>(totalDescriptorCount) >
+		static_cast<std::size_t>(m_heapDesc.NumDescriptors))
 		Log::Critical("Descriptor write would go outside writable range");
 
 	const D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetCpuHandleAt(offsetIntoHeap);
@@ -62,13 +65,13 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* de
 	return GetGpuHandleAt(offsetIntoHeap);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const uint32_t offsetIntoHeap,
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const std::uint32_t offsetIntoHeap,
 															   const D3D12_CPU_DESCRIPTOR_HANDLE* descriptorRangeStarts,
-															   const uint32_t*					  descriptorRangeSizes,
-															   const uint32_t					  descriptorRangeCount) const
+															   const std::uint32_t*				  descriptorRangeSizes,
+															   const std::uint32_t				  descriptorRangeCount) const
 {
-	uint32_t totalDescriptorCount = 0;
-	for (uint32_t i = 0; i < descriptorRangeCount; ++i)
+	std::uint32_t totalDescriptorCount = 0;
+	for (std::uint32_t i = 0; i < descriptorRangeCount; ++i)
 		totalDescriptorCount += descriptorRangeSizes[i];
 
 	return WriteDescriptors(device,
@@ -79,9 +82,9 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* de
 							descriptorRangeCount);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const uint32_t offsetIntoHeap,
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const std::uint32_t offsetIntoHeap,
 															   const D3D12_CPU_DESCRIPTOR_HANDLE* pDescriptors,
-															   const uint32_t					  descriptorCount) const
+															   const std::uint32_t				  descriptorCount) const
 { return WriteDescriptors(device, offsetIntoHeap, descriptorCount, pDescriptors, &descriptorCount, 1); }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetFirstGpuHandle() const noexcept
@@ -100,7 +103,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetFirstCpuHandle() const noexcept
 	return m_cpuHandle;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetGpuHandleAt(const size_t index) const
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetGpuHandleAt(const std::size_t index) const
 {
 	if (m_heap == nullptr)
 		Log::Critical("Heap is not initialised");
@@ -114,7 +117,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetGpuHandleAt(const size_t index)
 	return handle;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetCpuHandleAt(const size_t index) const
+D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetCpuHandleAt(const std::size_t index) const
 {
 	if (m_heap == nullptr)
 		Log::Critical("Heap is not initialised");
@@ -126,15 +129,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE DxDescriptorHeap::GetCpuHandleAt(const size_t index)
 	return handle;
 }
 
-size_t DxDescriptorHeap::GetIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) const
-{
-	return static_cast<uint32_t>((handle.ptr - GetFirstCpuHandle().ptr) / m_increment);
-}
+std::size_t DxDescriptorHeap::GetIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) const
+{ return static_cast<std::uint32_t>((handle.ptr - GetFirstCpuHandle().ptr) / m_increment); }
 
-size_t DxDescriptorHeap::GetIndexFromHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) const
-{
-	return static_cast<uint32_t>((handle.ptr - GetFirstGpuHandle().ptr) / m_increment);
-}
+std::size_t DxDescriptorHeap::GetIndexFromHandle(D3D12_GPU_DESCRIPTOR_HANDLE handle) const
+{ return static_cast<std::uint32_t>((handle.ptr - GetFirstGpuHandle().ptr) / m_increment); }
 
 void DxDescriptorHeap::DefaultDesc(const D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_DESC* desc) noexcept
 {
@@ -164,11 +163,18 @@ void DxDescriptorHeap::Create(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP
 	}
 	else
 	{
-		CheckHR(device->CreateDescriptorHeap(desc, IID_PPV_ARGS(m_heap.ReleaseAndGetAddressOf())));
+		auto** heap = m_heap.ReleaseAndGetAddressOf();
+		CheckHR(device->CreateDescriptorHeap(desc, GetIID(heap), GetPPV(heap)));
 		CheckHR(m_heap->SetName(L"DescriptorHeap"));
 
+#ifdef _MSC_VER
 		m_cpuHandle = m_heap->GetCPUDescriptorHandleForHeapStart();
 		if (desc->Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
 			m_gpuHandle = m_heap->GetGPUDescriptorHandleForHeapStart();
+#else
+		m_heap->GetCPUDescriptorHandleForHeapStart(&m_cpuHandle);
+		if (desc->Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+			m_heap->GetGPUDescriptorHandleForHeapStart(&m_gpuHandle);
+#endif
 	}
 }

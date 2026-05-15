@@ -1,10 +1,7 @@
 ﻿module;
 
-#include <algorithm>
-#include <ranges>
-#include <stdexcept>
-
 module dx_wrapper.rendering.dx_descriptor_pile;
+import std;
 import dx_wrapper.core;
 
 DxDescriptorPile::DxDescriptorPile(ID3D12DescriptorHeap* existingHeap, const IndexType reserve)
@@ -22,14 +19,14 @@ DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR
 }
 
 DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
-								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const size_t capacity, const IndexType reserve)
+								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const std::size_t capacity, const IndexType reserve)
 	: DxDescriptorHeap{device, type, flags, capacity}, m_top{reserve}
 {
 	if (reserve > 0 && m_top >= Count())
 		throw std::out_of_range("Reserve descriptor range is too large");
 }
 
-DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const size_t count, const IndexType reserve)
+DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const std::size_t count, const IndexType reserve)
 	: DxDescriptorPile{
 			  device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, count, reserve}
 {}
@@ -49,12 +46,12 @@ DxDescriptorPile::IndexType DxDescriptorPile::Allocate()
 	return start;
 }
 
-void DxDescriptorPile::AllocateRange(const size_t numDescriptors, IndexType& start, IndexType& end)
+void DxDescriptorPile::AllocateRange(const std::size_t numDescriptors, IndexType& start, IndexType& end)
 {
 	std::ranges::sort(m_freeIndices);
 
-	const size_t count = numDescriptors;
-	for (size_t i = 0; i + count <= m_freeIndices.size(); ++i)
+	const std::size_t count = numDescriptors;
+	for (std::size_t i = 0; i + count <= m_freeIndices.size(); ++i)
 	{
 		if (m_freeIndices[i + count - 1] == m_freeIndices[i] + count - 1)
 		{
@@ -89,7 +86,7 @@ void DxDescriptorPile::AllocateRange(const size_t numDescriptors, IndexType& sta
 	}
 }
 
-void DxDescriptorPile::Free(IndexType index, const size_t numDescriptors)
+void DxDescriptorPile::Free(IndexType index, const std::size_t numDescriptors)
 {
 	if (index == invalid) return;
 	

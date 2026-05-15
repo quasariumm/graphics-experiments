@@ -1,9 +1,7 @@
 ﻿module;
 
-#include <future>
-#include "macros.hpp"
-
 module dx_wrapper.helpers.dx_resource_upload;
+import std;
 import dx_wrapper.helpers.dx_format_helpers;
 import dx_wrapper.core;
 
@@ -40,22 +38,20 @@ void DxResourceUpload::Begin(const D3D12_COMMAND_LIST_TYPE commandType)
 		Log::Critical("DxResourceUpload only supports Direct, Compute, and Copy command queues\n");
 	}
 
-	CheckHR(m_device->CreateCommandAllocator(commandType, IID_PPV_ARGS(m_commandAllocator.ReleaseAndGetAddressOf())));
+	auto** ca = m_commandAllocator.ReleaseAndGetAddressOf();
+	CheckHR(m_device->CreateCommandAllocator(commandType, GetIID(ca), GetPPV(ca)));
 	CheckHR(m_commandAllocator->SetName(L"DxResourceUpload Command Allocator"));
 
-	CheckHR(m_device->CreateCommandList(1,
-										commandType,
-										m_commandAllocator.Get(),
-										nullptr,
-										IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
+	auto** cl = m_commandList.ReleaseAndGetAddressOf();
+	CheckHR(m_device->CreateCommandList(1, commandType, m_commandAllocator.Get(), nullptr, GetIID(cl), GetPPV(cl)));
 	CheckHR(m_commandList->SetName(L"DxResourceUpload Command List"));
 
 	m_commandListType = commandType;
 	m_began			  = true;
 }
 
-void DxResourceUpload::Upload(ID3D12Resource* resource, uint32_t subresourceIndexStart, const D3D12_SUBRESOURCE_DATA* subRes,
-							  uint32_t numSubresources)
+void DxResourceUpload::Upload(ID3D12Resource* resource, std::uint32_t subresourceIndexStart, const D3D12_SUBRESOURCE_DATA* subRes,
+							  std::uint32_t numSubresources)
 {
 	if (!m_began)
 		Log::Critical("Can't call Upload on a closed DxResourceUpload.");
@@ -75,7 +71,8 @@ void DxResourceUpload::Upload(ID3D12Resource* resource, uint32_t subresourceInde
 											  &resDesc,
 											  D3D12_RESOURCE_STATE_GENERIC_READ,
 											  nullptr,
-											  IID_PPV_ARGS(scratchResource.GetAddressOf())));
+											  GetIID(scratchResource),
+											  GetPPV(scratchResource)));
 	CheckHR(scratchResource->SetName(L"DxResourceUpload scratchResource"));
 
 	// Submit resource copy to command list
@@ -99,7 +96,7 @@ std::future<void> DxResourceUpload::End(ID3D12CommandQueue* commandQueue)
 	commandQueue->ExecuteCommandLists(1, lists);
 
 	ComPtr<ID3D12Fence> fence;
-	CheckHR(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf())));
+	CheckHR(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, GetIID(fence), GetPPV(fence)));
 	CheckHR(fence->SetName(L"DxResourceUpload Fence"));
 
 	const HANDLE gpuCompletedEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);

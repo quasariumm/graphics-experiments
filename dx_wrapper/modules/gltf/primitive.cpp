@@ -2,13 +2,13 @@
 
 #include <d3dx12.h>
 #include <fastgltf/core.hpp>
-#include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
 #include <mikktspace.h>
 
 module dx_wrapper.gltf.primitive;
 import dx_wrapper.core.log;
 import dx_wrapper.helpers.dx_buffer_helpers;
+import dx_wrapper.external.glm;
 
 GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
 							 const fastgltf::Primitive& primitive)
