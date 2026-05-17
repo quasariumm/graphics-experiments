@@ -1,9 +1,9 @@
 ﻿module;
 
-export module dx_wrapper.gltf.mesh;
+export module dx_meshlets.gltf.mesh;
 import std;
 import dx_wrapper.external.fastgltf;
-import dx_wrapper.gltf.primitive;
+import dx_meshlets.gltf.primitive;
 import dx_wrapper.core.dx_device;
 
 export struct GltfMesh

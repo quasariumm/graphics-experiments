@@ -58,6 +58,10 @@ private:
 
 	std::vector<D3D12_STATIC_SAMPLER_DESC> m_samplers;
 	std::vector<D3D12_ROOT_PARAMETER1>	   m_rootParameters;
+	
+	// Slots check cache
+	std::vector<std::pair<std::string, std::size_t>> m_slotOccupancy{};
+	std::size_t m_occupiedSlots = 0;
 
 	bool m_finalized = false;
 };

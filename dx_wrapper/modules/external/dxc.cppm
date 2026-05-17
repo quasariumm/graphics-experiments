@@ -65,7 +65,7 @@ static constexpr int DXC_CP_ACP_val = DXC_CP_ACP;
 export constexpr int DXC_CP_ACP = DXC_CP_ACP_val;
 
 #define REGISTER_IID(Type, ...) \
-	static constexpr GUID IID_##Type = {__VA_ARGS__};\
+	inline constexpr GUID IID_##Type = {__VA_ARGS__};\
 	export FORCEINLINE const GUID& GetIID(const Microsoft::WRL::ComPtr<Type>&) { return IID_##Type; }\
 	export FORCEINLINE const GUID& GetIID(Type**) { return IID_##Type; }
 

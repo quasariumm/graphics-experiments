@@ -1,34 +1,28 @@
 ﻿module;
 
-module dx_bare.rendering.dx_render;
-import std;
+module dx_meshlets.rendering.dx_renderer;
 import dx_wrapper.external.directx12;
-import dx_bare.core.camera;
-import dx_wrapper.external.glm;
+import dx_wrapper.external.win32;
 
-DxRenderer::DxRenderer(DxDevice* device)
+DxRenderer::DxRenderer(DxDevice* device) : m_device{device}
 {
-	m_device = device;
-
 	m_renderRootSignature = DxRootSignature{};
-	m_renderRootSignature.AddConstantBuffer(0);
+	// In this order: Meshlets, Meshlet Vertices, Meshlet Triangles, Primitive Vertices
+	m_renderRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 4);
+	m_renderRootSignature.AddConstantBuffer(0); // Camera Const buffer
 	m_renderRootSignature.Add32BitConstants(1, sizeof(ShaderMaterial));
 	m_renderRootSignature.Add32BitConstants(2, sizeof(ShaderTransform));
 	m_renderRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR);
-	m_renderRootSignature.Finalize(*m_device, "Main Render Root Signature", true);
+	m_renderRootSignature.Finalize(*m_device, "Meshlet Render Root Signature", true);
 
 	m_renderPipeline = DxPipelineState{};
-	m_renderPipeline.SetVertexShader("shaders/main_vertex.hlsl")
-			.SetPixelShader("shaders/main_pixel.hlsl")
+	m_renderPipeline.SetAmplificationShader("shaders/meshlet_amplification.hlsl")
+			.SetMeshShader("shaders/meshlet_mesh.hlsl")
+			.SetMeshPixelShader("shaders/meshlet_pixel.hlsl")
 			.AddRenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
 			.SetDepthRenderTarget(DXGI_FORMAT_D32_FLOAT)
 			.SetCullMode(D3D12_CULL_MODE_NONE)
-			.AddVertexInput("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
-			.AddVertexInput("UV_PRIM", DXGI_FORMAT_R32G32_FLOAT)
-			.AddVertexInput("UV_SEC", DXGI_FORMAT_R32G32_FLOAT)
-			.AddVertexInput("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
-			.AddVertexInput("TANGENT", DXGI_FORMAT_R32G32B32A32_FLOAT)
-			.Finalize(*m_device, m_renderRootSignature, "Main Render Pipeline", "dx_wrapper");
+			.Finalize(*m_device, m_renderRootSignature, "Meshlet Pipeline");
 
 	m_camera = Camera{m_device};
 	m_camera.GetTransform().SetPosition(glm::vec3{0, 0, 4});
@@ -54,12 +48,10 @@ void DxRenderer::Render()
 
 	commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 
-	commandList->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	m_camera.UpdateShaderCamera();
 	CameraConstBuffer cameraCb = {m_camera.GetShaderCamera(), {glm::vec4{0.f}}};
 
-	m_cameraConstBuffer.Bind(*m_device, &cameraCb, 0);
+	m_cameraConstBuffer.Bind(*m_device, &cameraCb, MainRootParams::CameraCB);
 
 	for (const auto& model : m_models)
 	{
@@ -71,22 +63,30 @@ void DxRenderer::Render()
 			const auto& mesh = node->m_mesh;
 			for (const auto& primitive : mesh->m_primitives)
 			{
-				primitive.Bind(*m_device, 0);
+				primitive.Bind(*m_device, MainRootParams::PrimitiveSRVs);
 
 				const auto& material = primitive.GetMaterial();
 				if (material)
 				{
 					ShaderMaterial shaderMaterial;
 					CompileShaderMaterial(*material, shaderMaterial);
-					commandList->SetGraphicsRoot32BitConstants(1, sizeof(ShaderMaterial) / sizeof(DWORD32), &shaderMaterial, 0);
+					commandList->SetGraphicsRoot32BitConstants(MainRootParams::Material32C,
+															   sizeof(ShaderMaterial) / sizeof(DWORD32),
+															   &shaderMaterial,
+															   0);
 				}
-				
+
 				ShaderTransform shaderTransform;
 				shaderTransform.m_worldMatrix = node->m_transform.GetWorldTransform();
-				shaderTransform.m_normalMatrix = glm::mat4{glm::mat3{glm::transpose(glm::inverse(shaderTransform.m_worldMatrix))}};
-				commandList->SetGraphicsRoot32BitConstants(2, sizeof(ShaderTransform) / sizeof(DWORD32), &shaderTransform, 0);
+				shaderTransform.m_normalMatrix =
+						glm::mat4{glm::mat3{glm::transpose(glm::inverse(shaderTransform.m_worldMatrix))}};
+				commandList->SetGraphicsRoot32BitConstants(MainRootParams::Transform32C,
+														   sizeof(ShaderTransform) / sizeof(DWORD32),
+														   &shaderTransform,
+														   0);
 
-				commandList->DrawIndexedInstanced(primitive.GetIndices().size(), 1, 0, 0, 0);
+				std::uint32_t threads = static_cast<std::uint32_t>((primitive.GetMeshletCount() / 32) + 1);
+				commandList->DispatchMesh(threads, 1, 1);
 			}
 		}
 	}

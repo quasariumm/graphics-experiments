@@ -17,6 +17,9 @@ DxRootSignature& DxRootSignature::Add32BitConstants(const std::uint32_t shaderRe
 
 	m_rootParameters.push_back(param);
 
+	m_slotOccupancy.emplace_back("32-bit constants", param.Constants.Num32BitValues);
+	m_occupiedSlots += param.Constants.Num32BitValues;
+
 	return *this;
 }
 
@@ -30,6 +33,9 @@ DxRootSignature& DxRootSignature::AddConstantBuffer(const std::uint32_t			  shad
 	param.Descriptor.RegisterSpace	= space;
 
 	m_rootParameters.push_back(param);
+
+	m_slotOccupancy.emplace_back("Constant Buffer", 2);
+	m_occupiedSlots += 2;
 
 	return *this;
 }
@@ -45,6 +51,9 @@ DxRootSignature& DxRootSignature::AddBufferSRV(const std::uint32_t shaderRegiste
 
 	m_rootParameters.push_back(param);
 
+	m_slotOccupancy.emplace_back("Shader Resource View", 2);
+	m_occupiedSlots += 2;
+
 	return *this;
 }
 
@@ -59,6 +68,9 @@ DxRootSignature& DxRootSignature::AddBufferUAV(const std::uint32_t shaderRegiste
 
 	m_rootParameters.push_back(param);
 
+	m_slotOccupancy.emplace_back("Unordered Access View", 2);
+	m_occupiedSlots += 2;
+
 	return *this;
 }
 
@@ -66,11 +78,13 @@ DxRootSignature& DxRootSignature::AddDescriptorRange(const D3D12_DESCRIPTOR_RANG
 													 const std::uint32_t count, const D3D12_SHADER_VISIBILITY visibility,
 													 const std::uint32_t space)
 {
-	auto* range				  = new D3D12_DESCRIPTOR_RANGE1;
-	range->RangeType		  = type;
-	range->NumDescriptors	  = count;
-	range->BaseShaderRegister = shaderRegister;
-	range->RegisterSpace	  = space;
+	auto* range								 = new D3D12_DESCRIPTOR_RANGE1;
+	range->RangeType						 = type;
+	range->NumDescriptors					 = count;
+	range->BaseShaderRegister				 = shaderRegister;
+	range->RegisterSpace					 = space;
+	range->Flags							 = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+	range->OffsetInDescriptorsFromTableStart = 0;
 
 	D3D12_ROOT_PARAMETER1 param{};
 	param.ParameterType						  = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
@@ -79,6 +93,9 @@ DxRootSignature& DxRootSignature::AddDescriptorRange(const D3D12_DESCRIPTOR_RANG
 	param.DescriptorTable.pDescriptorRanges	  = range;
 
 	m_rootParameters.push_back(param);
+
+	m_slotOccupancy.emplace_back("Descriptor Table", 1);
+	m_occupiedSlots += 1;
 
 	return *this;
 }
@@ -136,6 +153,15 @@ DxRootSignature& DxRootSignature::AddComparisonSampler(const D3D12_FILTER filter
 
 void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const bool heapDirectlyIndexed)
 {
+	if (m_occupiedSlots > 64)
+	{
+		Log::Error("Root signature {} occupied more than the 64 max slots. Costs:", name);
+		uint32_t idx = 0;
+		for (const auto& [paramType, cost] : m_slotOccupancy)
+			Log::Error("{:2} | {:21} | {:2}", idx++, paramType, cost);
+		std::cout.flush();
+	}
+
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 	featureData.HighestVersion					  = D3D_ROOT_SIGNATURE_VERSION_1_1;
 	if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))

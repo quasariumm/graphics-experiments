@@ -1,10 +1,10 @@
 ﻿module;
 
-export module dx_wrapper.gltf.model;
+export module dx_meshlets.gltf.model;
 import std;
 import dx_wrapper.core.dx_device;
-import dx_wrapper.gltf.node;
-import dx_wrapper.gltf.mesh;
+import dx_meshlets.gltf.node;
+import dx_meshlets.gltf.mesh;
 
 export class GltfModel
 {

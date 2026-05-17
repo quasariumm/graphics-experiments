@@ -23,7 +23,8 @@ export class DxDevice
 
 public:
 
-	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window");
+	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window",
+					  D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0);
 	~DxDevice();
 
 	Input& GetInput() { return m_input; }
@@ -51,7 +52,7 @@ public:
 	ID3D12Device2*				  operator*() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12Device2*				  operator->() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12Device2*				  GetDXDevice() const { return m_deviceResources.GetD3DDevice(); }
-	ID3D12GraphicsCommandList*	  GetDXDirectComList() const { return m_deviceResources.GetCommandList(); }
+	ID3D12GraphicsCommandList6*	  GetDXDirectComList() const { return m_deviceResources.GetCommandList(); }
 	ID3D12CommandQueue*			  GetDXDirectComQueue() const { return m_deviceResources.GetCommandQueue(); }
 	ID3D12Resource*				  GetRenderTarget() const { return m_deviceResources.GetRenderTarget(); }
 	ID3D12Resource*				  GetDepthTarget() const { return m_deviceResources.GetDepthStencil(); }
@@ -83,11 +84,9 @@ private:
 	int m_windowHeight;
 
 	// Win32 stuff
-	WNDCLASSEX m_windowClass;
+	WNDCLASSEX		m_windowClass;
 	WINDOWPLACEMENT m_windowedPlacement;
 
 	bool m_shouldClose		 = false;
 	bool m_commandListOpened = false;
 };
-
-inline std::unordered_map<HWND, DxDevice*> registered_devices = {}; // NOLINT

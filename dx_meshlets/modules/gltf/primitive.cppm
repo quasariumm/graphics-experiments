@@ -1,12 +1,15 @@
 ﻿module;
 
-export module dx_wrapper.gltf.primitive;
+export module dx_meshlets.gltf.primitive;
 import std;
 import dx_wrapper.external.fastgltf;
 import dx_wrapper.external.directx12;
+import dx_meshlets.external.meshopt_meshlets;
 import dx_wrapper.gltf.material;
 import dx_wrapper.external.glm;
 import dx_wrapper.core;
+import dx_wrapper.rendering.dx_descriptor_heap;
+import dx_wrapper.rendering.dx_descriptor_pile;
 
 export struct Vertex
 {
@@ -27,15 +30,11 @@ public:
 
 	const std::vector<Vertex>&		  GetVertices() const;
 	const std::vector<std::uint32_t>& GetIndices() const;
+	std::size_t						  GetMeshletCount() const { return m_meshlets.size(); }
 
 	const std::optional<GltfMaterial>& GetMaterial() const;
 
-	/**
-	 * @brief Binds the primitive vertex and index buffers to the Input Assembler
-	 * @param device The device (used for getting the command list)
-	 * @param vertexBufferSlot The slot to bind the vertex buffer to
-	 */
-	void Bind(const DxDevice& device, std::uint32_t vertexBufferSlot) const;
+	void Bind(const DxDevice& device, std::uint32_t descTableRootSigParam) const;
 
 private:
 
@@ -45,9 +44,22 @@ private:
 
 	ComPtr<ID3D12Resource>	 m_vertexBuffer{};
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};
-	ComPtr<ID3D12Resource>	 m_indexBuffer{};
-	D3D12_INDEX_BUFFER_VIEW	 m_indexBufferView{};
+
+	// Meshlets
+	std::vector<Meshopt::Meshlet> m_meshlets{};
+	std::vector<std::uint32_t>	  m_meshletVertices{};
+	std::vector<std::uint8_t>	  m_meshletTriangles{};
+
+	DxDescriptorHeap m_descriptorHeap{};
+	
+	ComPtr<ID3D12Resource> m_meshletsBuffer{};
+	ComPtr<ID3D12Resource> m_meshletVerticesBuffer{};
+	ComPtr<ID3D12Resource> m_meshletTrianglesBuffer{};
+	
+	DxDescriptorPile::IndexType m_descriptorTableHeapIndex{};
+	D3D12_GPU_DESCRIPTOR_HANDLE m_descriptorTableGpuHandle{};
 
 	void ProcessVerticesIndices(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive);
+	void CreateMeshlets();
 	void CalculateTangents();
 };

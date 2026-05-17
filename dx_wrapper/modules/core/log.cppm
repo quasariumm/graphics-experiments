@@ -25,18 +25,21 @@ struct DebugLog
 	bool operator==(const DebugLog& rhs) const { return m_message == rhs.m_message; }
 };
 
-static constexpr auto MAGENTA = "\033[35m";
-static constexpr auto GREEN	  = "\033[32m";
-static constexpr auto RED	  = "\033[31m";
-static constexpr auto RESET	  = "\033[0m";
+namespace
+{
+	inline constexpr auto magenta = "\033[35m";
+	inline constexpr auto green	  = "\033[32m";
+	inline constexpr auto red	  = "\033[31m";
+	inline constexpr auto reset	  = "\033[0m";
+} // namespace
 
-inline std::vector<DebugLog> gLogs = {};
+std::vector<DebugLog> gLogs = {};
 
 export {
 template <typename... Args>
 void Info(std::format_string<Args...> fmt, Args&&... args)
 {
-	std::printf("[%sINFO%s] ", GREEN, RESET);
+	std::printf("[%sINFO%s] ", green, reset);
 	const std::string message = std::format(fmt, std::forward<Args>(args)...);
 	std::printf("%s\n", message.c_str());
 
@@ -50,7 +53,7 @@ void Info(std::format_string<Args...> fmt, Args&&... args)
 template <typename... Args>
 void Warning(std::format_string<Args...> fmt, Args&&... args)
 {
-	std::printf("[%sWARN%s] ", MAGENTA, RESET);
+	std::printf("[%sWARN%s] ", magenta, reset);
 	const std::string message = std::format(fmt, std::forward<Args>(args)...);
 	std::printf("%s\n", message.c_str());
 
@@ -64,7 +67,7 @@ void Warning(std::format_string<Args...> fmt, Args&&... args)
 template <typename... Args>
 void Error(std::format_string<Args...> fmt, Args&&... args)
 {
-	std::printf("[%sERR!%s] ", RED, RESET);
+	std::printf("[%sERR!%s] ", red, reset);
 	const std::string message = std::format(fmt, std::forward<Args>(args)...);
 	std::printf("%s\n", message.c_str());
 
@@ -78,7 +81,7 @@ void Error(std::format_string<Args...> fmt, Args&&... args)
 template <typename... Args>
 void Critical(std::format_string<Args...> fmt, Args&&... args)
 {
-	std::printf("[%sCRIT%s] ", RED, RESET);
+	std::printf("[%sCRIT%s] ", red, reset);
 	const std::string message = std::format(fmt, std::forward<Args>(args)...);
 	std::printf("%s\n", message.c_str());
 

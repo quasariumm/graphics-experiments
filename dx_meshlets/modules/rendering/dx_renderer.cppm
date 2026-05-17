@@ -1,13 +1,13 @@
 ﻿module;
 
-export module dx_bare.rendering.dx_render;
+export module dx_meshlets.rendering.dx_renderer;
 import std;
-import dx_wrapper.core;
-import dx_wrapper.gltf;
-import dx_wrapper.rendering;
-import dx_wrapper.resources.dx_const_buffer;
+import dx_meshlets.gltf;
 import dx_wrapper.external.glm;
-import dx_bare.core.camera;
+import dx_wrapper.core.dx_device;
+import dx_meshlets.core.camera;
+import dx_wrapper.rendering.dx_pipelinestate;
+import dx_wrapper.resources.dx_const_buffer;
 
 export class DxRenderer
 {
@@ -20,7 +20,7 @@ public:
 	void Render();
 
 	Camera& GetCamera() { return m_camera; }
-
+	
 private:
 
 	DxDevice* m_device;
@@ -61,6 +61,17 @@ private:
 
 	DxRootSignature m_renderRootSignature;
 	DxPipelineState m_renderPipeline;
+	
+	struct MainRootParams
+	{
+		// NOLINTBEGIN
+		// Because this is an "enum"
+		static constexpr std::uint32_t PrimitiveSRVs = 0;
+		static constexpr std::uint32_t CameraCB = 1;
+		static constexpr std::uint32_t Material32C = 2;
+		static constexpr std::uint32_t Transform32C = 3;
+		// NOLINTENT
+	};
 
 	std::vector<GltfModel> m_models;
 };

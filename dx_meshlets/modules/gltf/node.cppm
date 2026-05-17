@@ -1,8 +1,8 @@
 ﻿module;
 
-export module dx_wrapper.gltf.node;
+export module dx_meshlets.gltf.node;
 import std;
-import dx_wrapper.gltf.mesh;
+import dx_meshlets.gltf.mesh;
 import dx_wrapper.core.transform;
 
 export struct GltfNode

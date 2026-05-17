@@ -2,10 +2,10 @@
 
 #include <cassert>
 
-module dx_wrapper.gltf.model;
+module dx_meshlets.gltf.model;
 import std;
-import dx_wrapper.external.fastgltf;
 import dx_wrapper.external.glm;
+import dx_wrapper.external.fastgltf;
 import dx_wrapper.core.dx_device;
 import dx_wrapper.core.log;
 

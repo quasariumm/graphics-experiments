@@ -257,8 +257,6 @@ void DeviceResources::CreateDeviceResources()
 
 	m_fence->SetName(L"DeviceResources");
 
-	if (m_fenceEvent)
-		CloseHandle(m_fenceEvent);
 	m_fenceEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 	if (m_fenceEvent == nullptr || m_fenceEvent == INVALID_HANDLE_VALUE)
 	{

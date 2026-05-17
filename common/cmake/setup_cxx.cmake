@@ -17,15 +17,18 @@ endif()
 
 set(CMAKE_CXX_MODULE_STD ON)
 
-add_compile_options(-target x86_64-w64-windows-gnu -pthread)
-add_link_options(-target x86_64-w64-windows-gnu -pthread)
-
-if (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (MINGW AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	add_compile_options(-target x86_64-w64-windows-gnu -pthread)
+	add_link_options(-target x86_64-w64-windows-gnu -pthread)
 	add_compile_options(-stdlib=libc++)
 	add_link_options(-stdlib=libc++)
 endif ()
 
-add_compile_options(-march=native)
+if (CMAKE_CXX_COMPLER_ID STREQUAL "Clang")
+	add_compile_options(-march=native)
+else()
+	add_compile_options(/arch:AVX2)
+endif()
 
 # Because std.pcm is compiled without
 set(CMAKE_DISABLE_FIND_PACKAGE_OpenMP TRUE)

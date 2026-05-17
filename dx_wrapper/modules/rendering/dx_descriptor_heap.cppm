@@ -13,6 +13,7 @@ export class DxDescriptorHeap
 {
 public:
 
+	DxDescriptorHeap() = default;
 	explicit DxDescriptorHeap(ID3D12DescriptorHeap* existingHeap);
 	explicit DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc);
 	explicit DxDescriptorHeap(ID3D12Device2* device, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags,
@@ -62,9 +63,9 @@ private:
 
 	void Create(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc);
 
-	ComPtr<ID3D12DescriptorHeap> m_heap;
-	D3D12_DESCRIPTOR_HEAP_DESC	 m_heapDesc;
-	D3D12_CPU_DESCRIPTOR_HANDLE	 m_cpuHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE	 m_gpuHandle;
-	std::uint32_t				 m_increment;
+	ComPtr<ID3D12DescriptorHeap> m_heap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC	 m_heapDesc{};
+	D3D12_CPU_DESCRIPTOR_HANDLE	 m_cpuHandle{};
+	D3D12_GPU_DESCRIPTOR_HANDLE	 m_gpuHandle{};
+	std::uint32_t				 m_increment = 0;
 };

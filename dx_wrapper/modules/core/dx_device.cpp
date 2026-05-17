@@ -15,6 +15,8 @@ import dx_wrapper.external.directx12;
 import dx_wrapper.core;
 import dx_wrapper.rendering;
 
+inline std::unordered_map<HWND, DxDevice*> registered_devices = {}; // NOLINT
+
 #ifdef TESTPLATE_HAS_IMGUI
 extern "C++" LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam); // NOLINT
 #endif
@@ -48,13 +50,14 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 	default:
 		break;
 	}
-	
+
 	InputWindowProc(hwnd, msg, wp, lp);
 
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-DxDevice::DxDevice(const int width, const int height, const LPCSTR title) : m_windowWidth(width), m_windowHeight(height)
+DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel)
+	: m_windowWidth(width), m_windowHeight(height)
 {
 	// Needed for WIC textures
 	CheckHR(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
@@ -90,7 +93,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title) : m_wi
 	m_deviceResources = DirectX::DeviceResources{DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
 												 DXGI_FORMAT_D32_FLOAT,
 												 3,
-												 D3D_FEATURE_LEVEL_11_0,
+												 featureLevel,
 												 DirectX::DeviceResources::c_AllowTearing};
 	m_deviceResources.SetWindow(window, width, height);
 	m_deviceResources.CreateDeviceResources();

@@ -253,13 +253,48 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 						 D3DX12_MESH_SHADER_PIPELINE_STATE_DESC psoDesc{};
 
 						 psoDesc.pRootSignature = *rootSignature;
-						 psoDesc.AS				= GetBytecode(asBlob);
-						 psoDesc.MS				= GetBytecode(msBlob);
-						 psoDesc.PS				= GetBytecode(psBlob);
+
+						 psoDesc.AS = GetBytecode(asBlob);
+						 psoDesc.MS = GetBytecode(msBlob);
+						 psoDesc.PS = GetBytecode(psBlob);
+
+						 // Normal graphics stuff
+						 psoDesc.RasterizerState		  = CD3DX12_RASTERIZER_DESC{D3D12_DEFAULT};
+						 psoDesc.RasterizerState.CullMode = m_params.m_cullMode;
+
+						 psoDesc.BlendState = CD3DX12_BLEND_DESC{D3D12_DEFAULT};
+						 if (m_params.m_blend)
+						 {
+							 psoDesc.BlendState.AlphaToCoverageEnable				  = TRUE;
+							 psoDesc.BlendState.IndependentBlendEnable				  = FALSE;
+							 psoDesc.BlendState.RenderTarget[0].BlendEnable			  = TRUE;
+							 psoDesc.BlendState.RenderTarget[0].SrcBlend			  = D3D12_BLEND_SRC_ALPHA;
+							 psoDesc.BlendState.RenderTarget[0].DestBlend			  = D3D12_BLEND_INV_SRC_ALPHA;
+							 psoDesc.BlendState.RenderTarget[0].BlendOp				  = D3D12_BLEND_OP_ADD;
+							 psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+						 }
+
+						 psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC{D3D12_DEFAULT};
+
+						 if (!m_params.m_depthTesting)
+							 psoDesc.DepthStencilState.DepthEnable = FALSE;
+
+						 psoDesc.SampleMask			   = std::numeric_limits<std::uint32_t>::max();
+
+						 psoDesc.NumRenderTargets = static_cast<UINT>(m_renderTargets.size());
+						 std::memcpy(&psoDesc.RTVFormats[0],
+									 m_renderTargets.data(),
+									 m_renderTargets.size() * sizeof(DXGI_FORMAT));
+
+						 psoDesc.DSVFormat			= m_depthFormat;
+						 psoDesc.SampleDesc.Count	= 1;
+						 psoDesc.SampleDesc.Quality = 0;
+					 	
+					 	 auto psoStream = CD3DX12_PIPELINE_STATE_STREAM2(psoDesc);
 
 						 D3D12_PIPELINE_STATE_STREAM_DESC streamDesc = {};
-						 streamDesc.SizeInBytes						 = sizeof(psoDesc);
-						 streamDesc.pPipelineStateSubobjectStream	 = &psoDesc;
+						 streamDesc.SizeInBytes						 = sizeof(psoStream);
+						 streamDesc.pPipelineStateSubobjectStream	 = &psoStream;
 
 						 CheckHR(device.GetDXDevice()->CreatePipelineState(&streamDesc,
 																		   GetIID(m_pipelineState),
@@ -269,7 +304,7 @@ void DxPipelineState::Finalize(DxDevice& device, const DxRootSignature& rootSign
 
 	if (!name.empty())
 	{
-		std::wstring wname = Filesystem::path{name}.wstring();
+		std::wstring wname = std::filesystem::path{name}.wstring();
 		CheckHR(m_pipelineState->SetName(wname.c_str()));
 	}
 

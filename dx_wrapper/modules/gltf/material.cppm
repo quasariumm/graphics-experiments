@@ -1,10 +1,12 @@
 ﻿module;
 
-#include <fastgltf/types.hpp>
-
 export module dx_wrapper.gltf.material;
-import dx_wrapper.core.dx_device;
+
+import std;
+import dx_wrapper.external.fastgltf;
 import dx_wrapper.external.glm;
+
+import dx_wrapper.core.dx_device;
 import dx_wrapper.resources.dx_texture;
 
 export class GltfMaterial

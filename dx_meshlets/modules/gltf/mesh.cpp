@@ -1,6 +1,6 @@
 ﻿module;
 
-module dx_wrapper.gltf.mesh;
+module dx_meshlets.gltf.mesh;
 import std;
 import dx_wrapper.external.fastgltf;
 

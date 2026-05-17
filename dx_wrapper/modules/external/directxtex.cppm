@@ -40,6 +40,7 @@ using DirectX::PrepareUpload;
 using DirectX::TEX_DIMENSION;
 using DirectX::TEX_FILTER_FLAGS;
 using DirectX::TEX_MISC_FLAG;
+using DirectX::TEX_MISC_TEXTURECUBE;
 using DirectX::CREATETEX_FLAGS;
 using DirectX::DDS_FLAGS;
 using DirectX::WIC_FLAGS;

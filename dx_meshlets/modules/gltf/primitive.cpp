@@ -2,10 +2,11 @@
 
 #include <mikktspace.h>
 
-module dx_wrapper.gltf.primitive;
+module dx_meshlets.gltf.primitive;
 import std;
 import dx_wrapper.external.fastgltf;
 import dx_wrapper.external.directx12;
+import dx_meshlets.external.meshopt_meshlets;
 import dx_wrapper.core.log;
 import dx_wrapper.helpers.dx_buffer_helpers;
 import dx_wrapper.external.glm;
@@ -27,6 +28,7 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 	}
 
 	ProcessVerticesIndices(asset, primitive);
+	CreateMeshlets();
 
 	// Material
 	if (!primitive.materialIndex.has_value())
@@ -41,22 +43,46 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 	m_vertexBufferView.SizeInBytes	  = m_vertices.size() * sizeof(Vertex);
 	m_vertexBufferView.StrideInBytes  = sizeof(Vertex);
 
-	CheckHR(CreateStaticBuffer(device, m_indices, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_indexBuffer));
+	CheckHR(CreateStaticBuffer(device, m_meshlets, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletsBuffer));
+	CheckHR(CreateStaticBuffer(device, m_meshletVertices, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletVerticesBuffer));
+	CheckHR(CreateStaticBuffer(device, m_meshletTriangles, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletTrianglesBuffer));
 
-	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-	m_indexBufferView.SizeInBytes	 = m_indices.size() * sizeof(std::uint32_t);
-	m_indexBufferView.Format		 = DXGI_FORMAT_R32_UINT;
+	// Put them all on the device's heap
+	DxDescriptorPile::IndexType end;
+	device.GetShaderDescriptorPile().AllocateRange(4, m_descriptorTableHeapIndex, end);
+
+	CreateShaderResourceView(device,
+							 device.GetShaderDescriptorPile(),
+							 m_descriptorTableHeapIndex + 0,
+							 m_meshletsBuffer.Get(),
+							 sizeof(Meshopt::Meshlet));
+
+	CreateShaderResourceView(device,
+							 device.GetShaderDescriptorPile(),
+							 m_descriptorTableHeapIndex + 1,
+							 m_meshletVerticesBuffer.Get());
+
+	CreateShaderResourceView(device,
+							 device.GetShaderDescriptorPile(),
+							 m_descriptorTableHeapIndex + 2,
+							 m_meshletTrianglesBuffer.Get());
+
+	CreateShaderResourceView(device,
+							 device.GetShaderDescriptorPile(),
+							 m_descriptorTableHeapIndex + 3,
+							 m_vertexBuffer.Get(),
+							 sizeof(Vertex));
+	
+	m_descriptorTableGpuHandle = device.GetShaderDescriptorPile().GetGpuHandleAt(m_descriptorTableHeapIndex);
 }
 
 const std::vector<Vertex>&		   GltfPrimitive::GetVertices() const { return m_vertices; }
 const std::vector<std::uint32_t>&  GltfPrimitive::GetIndices() const { return m_indices; }
 const std::optional<GltfMaterial>& GltfPrimitive::GetMaterial() const { return m_material; }
 
-void GltfPrimitive::Bind(const DxDevice& device, const std::uint32_t vertexBufferSlot) const
+void GltfPrimitive::Bind(const DxDevice& device, const std::uint32_t descTableRootSigParam) const
 {
-	auto* commandList = device.GetDXDirectComList();
-	commandList->IASetVertexBuffers(vertexBufferSlot, 1, &m_vertexBufferView);
-	commandList->IASetIndexBuffer(&m_indexBufferView);
+	device.GetDXDirectComList()->SetGraphicsRootDescriptorTable(descTableRootSigParam, m_descriptorTableGpuHandle);
 }
 
 void GltfPrimitive::ProcessVerticesIndices(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive)
@@ -162,6 +188,46 @@ void GltfPrimitive::ProcessVerticesIndices(const fastgltf::Asset& asset, const f
 		CalculateTangents();
 }
 
+void GltfPrimitive::CreateMeshlets()
+{
+	static constexpr std::size_t max_vertices  = 64;
+	static constexpr std::size_t max_triangles = 126;
+	static constexpr std::size_t cone_weight   = 0.f;
+
+	const std::size_t maxMeshlets = Meshopt::BuildMeshletsBound(m_indices.size(), max_vertices, max_triangles);
+
+	m_meshlets.resize(maxMeshlets);
+	m_meshletVertices.resize(maxMeshlets * max_vertices);
+	m_meshletTriangles.resize(maxMeshlets * max_triangles * 3);
+
+	const std::size_t meshletCount = Meshopt::BuildMeshlets(m_meshlets.data(),
+															m_meshletVertices.data(),
+															m_meshletTriangles.data(),
+															m_indices.data(),
+															m_indices.size(),
+															reinterpret_cast<const float*>(m_vertices.data()),
+															m_vertices.size(),
+															sizeof(Vertex),
+															max_vertices,
+															max_triangles,
+															cone_weight);
+
+	// Crop the buffers because they are not fully filled
+	const Meshopt::Meshlet& last = m_meshlets[meshletCount - 1];
+	m_meshletVertices.resize(last.vertex_offset + last.vertex_count);
+	m_meshletTriangles.resize(last.triangle_offset + last.triangle_count * 3);
+	m_meshlets.resize(meshletCount);
+
+	// Optimise
+	for (const auto& meshlet : m_meshlets)
+	{
+		Meshopt::OptimizeMeshlet(&m_meshletVertices[meshlet.vertex_offset],
+								 &m_meshletTriangles[meshlet.triangle_offset],
+								 meshlet.triangle_count,
+								 meshlet.vertex_count);
+	}
+}
+
 /*
  * Tangent generation
  */
@@ -177,7 +243,7 @@ struct GeometryData
 bool				 gInitInterface = false;
 SMikkTSpaceInterface gInterface		= {};
 
-int GetVertexIndex(const int iFace, const int iVert) { return (iFace * 3) + iVert; }
+inline int GetVertexIndex(const int iFace, const int iVert) { return (iFace * 3) + iVert; }
 
 int GetNumFaces(const SMikkTSpaceContext* pContext)
 {
