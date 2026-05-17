@@ -42,7 +42,8 @@ struct ShaderMaterial
     int4 m_texIndices2;
 	
     uint m_flags;
-    uint3 m_padding;
+    uint m_debugMode;
+    uint2 m_padding;
 };
 
 struct ShaderCamera

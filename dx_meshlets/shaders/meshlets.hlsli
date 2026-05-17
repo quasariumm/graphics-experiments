@@ -30,11 +30,12 @@ struct Vertex
 
 struct MSOut
 {
-    float2 Uv0 : TEXCOORD0;
-    float2 Uv1 : TEXCOORD1;
-    float3 WorldPos : WORLDPOS;
-    float3 Normal : NORMAL;
-    float4 Tangent : TANGENT;
-    float4 Position : SV_Position;
-    float3 Color : COLOR0;
+    float4 Position     : SV_Position;
+    float3 WorldPos     : WORLDPOS;
+    float2 Uv0          : TEXCOORD0;
+    float2 Uv1          : TEXCOORD1;
+    float3 Normal       : NORMAL;
+    float4 Tangent      : TANGENT;
+    float3 Color        : COLOR0;
+    uint   MeshletIndex : MESHLETINDEX;
 };

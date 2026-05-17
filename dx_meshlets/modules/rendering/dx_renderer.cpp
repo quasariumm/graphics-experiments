@@ -34,6 +34,12 @@ void DxRenderer::AddModel(const std::filesystem::path& path) { m_models.emplace_
 
 void DxRenderer::Render()
 {
+	// Update meshlet debug mode with input
+	if (m_device->GetInput().GetKeyboardKeyOnce(Key::D1))
+		m_meshletDebugMode = MeshletDebugMode::None;
+	if (m_device->GetInput().GetKeyboardKeyOnce(Key::D2))
+		m_meshletDebugMode = MeshletDebugMode::MeshletIndex;
+	
 	auto* commandList = m_device->GetDXDirectComList();
 
 	commandList->SetGraphicsRootSignature(*m_renderRootSignature);
@@ -70,6 +76,7 @@ void DxRenderer::Render()
 				{
 					ShaderMaterial shaderMaterial;
 					CompileShaderMaterial(*material, shaderMaterial);
+					shaderMaterial.m_debugMode = std::to_underlying(m_meshletDebugMode);
 					commandList->SetGraphicsRoot32BitConstants(MainRootParams::Material32C,
 															   sizeof(ShaderMaterial) / sizeof(DWORD32),
 															   &shaderMaterial,

@@ -48,7 +48,7 @@ private:
 	// Meshlets
 	std::vector<Meshopt::Meshlet> m_meshlets{};
 	std::vector<std::uint32_t>	  m_meshletVertices{};
-	std::vector<std::uint8_t>	  m_meshletTriangles{};
+	std::vector<std::uint32_t>	  m_meshletTriangles{};
 
 	DxDescriptorHeap m_descriptorHeap{};
 	

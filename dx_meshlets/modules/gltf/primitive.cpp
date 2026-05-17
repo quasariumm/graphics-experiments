@@ -72,7 +72,7 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 							 m_descriptorTableHeapIndex + 3,
 							 m_vertexBuffer.Get(),
 							 sizeof(Vertex));
-	
+
 	m_descriptorTableGpuHandle = device.GetShaderDescriptorPile().GetGpuHandleAt(m_descriptorTableHeapIndex);
 }
 
@@ -81,9 +81,7 @@ const std::vector<std::uint32_t>&  GltfPrimitive::GetIndices() const { return m_
 const std::optional<GltfMaterial>& GltfPrimitive::GetMaterial() const { return m_material; }
 
 void GltfPrimitive::Bind(const DxDevice& device, const std::uint32_t descTableRootSigParam) const
-{
-	device.GetDXDirectComList()->SetGraphicsRootDescriptorTable(descTableRootSigParam, m_descriptorTableGpuHandle);
-}
+{ device.GetDXDirectComList()->SetGraphicsRootDescriptorTable(descTableRootSigParam, m_descriptorTableGpuHandle); }
 
 void GltfPrimitive::ProcessVerticesIndices(const fastgltf::Asset& asset, const fastgltf::Primitive& primitive)
 {
@@ -198,11 +196,13 @@ void GltfPrimitive::CreateMeshlets()
 
 	m_meshlets.resize(maxMeshlets);
 	m_meshletVertices.resize(maxMeshlets * max_vertices);
-	m_meshletTriangles.resize(maxMeshlets * max_triangles * 3);
+
+	std::vector<std::uint8_t> meshletTriangles{};
+	meshletTriangles.resize(maxMeshlets * max_triangles);
 
 	const std::size_t meshletCount = Meshopt::BuildMeshlets(m_meshlets.data(),
 															m_meshletVertices.data(),
-															m_meshletTriangles.data(),
+															meshletTriangles.data(),
 															m_indices.data(),
 															m_indices.size(),
 															reinterpret_cast<const float*>(m_vertices.data()),
@@ -215,16 +215,43 @@ void GltfPrimitive::CreateMeshlets()
 	// Crop the buffers because they are not fully filled
 	const Meshopt::Meshlet& last = m_meshlets[meshletCount - 1];
 	m_meshletVertices.resize(last.vertex_offset + last.vertex_count);
-	m_meshletTriangles.resize(last.triangle_offset + last.triangle_count * 3);
 	m_meshlets.resize(meshletCount);
 
 	// Optimise
 	for (const auto& meshlet : m_meshlets)
 	{
 		Meshopt::OptimizeMeshlet(&m_meshletVertices[meshlet.vertex_offset],
-								 &m_meshletTriangles[meshlet.triangle_offset],
+								 &meshletTriangles[meshlet.triangle_offset],
 								 meshlet.triangle_count,
 								 meshlet.vertex_count);
+	}
+
+	// Fill m_meshletTriangles by packing 3 u8's into one u32
+	// https://github.com/chaoticbob/GraphicsExperiments/blob/7154df65b4602f8dbc4bf49191ee6373d61bc19f/projects/geometry/111_mesh_shader_meshlets_d3d12/111_mesh_shader_meshlets_d3d12.cpp#L150
+	m_meshletTriangles.clear();
+	m_meshletTriangles.reserve(last.triangle_offset / 3 + last.triangle_count);
+	for (auto& meshlet : m_meshlets)
+	{
+		// Save triangle offset for current meshlet
+		const std::uint32_t triangleOffset = static_cast<std::uint32_t>(m_meshletTriangles.size());
+
+		// Repack to uint32_t
+		for (std::uint32_t i = 0; i < meshlet.triangle_count; ++i)
+		{
+			const std::uint32_t i0 = meshlet.triangle_offset + 3 * i;
+			const std::uint32_t i1 = meshlet.triangle_offset + 3 * i + 1;
+			const std::uint32_t i2 = meshlet.triangle_offset + 3 * i + 2;
+
+			const std::uint8_t vIdx0  = meshletTriangles[i0];
+			const std::uint8_t vIdx1  = meshletTriangles[i1];
+			const std::uint8_t vIdx2  = meshletTriangles[i2];
+			std::uint32_t	   packed = ((static_cast<std::uint32_t>(vIdx0) & 0xFF) << 0) |
+								   ((static_cast<std::uint32_t>(vIdx1) & 0xFF) << 8) |
+								   ((static_cast<std::uint32_t>(vIdx2) & 0xFF) << 16);
+			m_meshletTriangles.push_back(packed);
+		}
+
+		meshlet.triangle_offset = triangleOffset;
 	}
 }
 

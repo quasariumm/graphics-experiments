@@ -5,9 +5,9 @@ import dx_meshlets.core.camera;
 
 struct Demo
 {
-	DxDevice m_device{1920, 1080, "DX12 Meshlets", D3D_FEATURE_LEVEL_12_2};
+	DxDevice   m_device{1920, 1080, "DX12 Meshlets", D3D_FEATURE_LEVEL_12_2};
 	DxRenderer m_renderer{&m_device};
-	
+
 	void Run();
 	void HandleInput();
 };
@@ -21,8 +21,8 @@ int main()
 
 void Demo::Run()
 {
-	m_renderer.AddModel("../dx_bare/assets/DamagedHelmet/DamagedHelmet.gltf");
-	
+	m_renderer.AddModel("../dx_bare/assets/Sponza/Sponza.gltf");
+
 	while (!m_device.ShouldClose())
 	{
 		m_device.BeginFrame();
@@ -34,36 +34,48 @@ void Demo::Run()
 
 void Demo::HandleInput()
 {
-	Input& input = m_device.GetInput();
-	Camera& camera = m_renderer.GetCamera();
+	Input&	   input		   = m_device.GetInput();
+	Camera&	   camera		   = m_renderer.GetCamera();
 	Transform& cameraTransform = camera.GetTransform();
-	
-	static constexpr float camera_speed = 5.0f;
-	
+
+	static constexpr float camera_speed		 = 5.0f;
+	static constexpr float mouse_sensitivity = 0.1f;
+
+	static float yaw   = 0.0f;
+	static float pitch = 0.0f;
+
 	float deltaTime = m_device.GetDeltaTime();
-	
+
 	if (input.GetKeyboardKey(Key::W))
-		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) + deltaTime * camera_speed * cameraTransform.GetForward(TransformSpace::Local));
+		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) +
+									deltaTime * camera_speed * cameraTransform.GetForward(TransformSpace::Local));
 	if (input.GetKeyboardKey(Key::S))
-		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) - deltaTime * camera_speed * cameraTransform.GetForward(TransformSpace::Local));
+		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) -
+									deltaTime * camera_speed * cameraTransform.GetForward(TransformSpace::Local));
 	if (input.GetKeyboardKey(Key::A))
-		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) + deltaTime * camera_speed * cameraTransform.GetRight(TransformSpace::Local));
+		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) +
+									deltaTime * camera_speed * cameraTransform.GetRight(TransformSpace::Local));
 	if (input.GetKeyboardKey(Key::D))
-		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) - deltaTime * camera_speed * cameraTransform.GetRight(TransformSpace::Local));
+		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) -
+									deltaTime * camera_speed * cameraTransform.GetRight(TransformSpace::Local));
 	if (input.GetKeyboardKey(Key::E))
-		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) + deltaTime * camera_speed * cameraTransform.GetUp(TransformSpace::Local));
+		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) +
+									deltaTime * camera_speed * cameraTransform.GetUp(TransformSpace::Local));
 	if (input.GetKeyboardKey(Key::Q))
-		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) - deltaTime * camera_speed * cameraTransform.GetUp(TransformSpace::Local));
-	
+		cameraTransform.SetPosition(cameraTransform.GetPosition(TransformSpace::Local) -
+									deltaTime * camera_speed * cameraTransform.GetUp(TransformSpace::Local));
+
 	if (input.GetMouseButton(MouseButton::Right))
 	{
 		glm::vec2 delta = input.GetMouseDelta();
 
-		static constexpr float mouse_sensitivity = 0.5f;
+		yaw += delta.x * mouse_sensitivity;
+		pitch -= delta.y * mouse_sensitivity;
+		pitch = glm::clamp(pitch, -89.0f, 89.0f);
 
-		glm::quat yaw   = glm::angleAxis(delta.x * deltaTime * mouse_sensitivity, glm::vec3(0, 1, 0));
-		glm::quat pitch = glm::angleAxis(-delta.y * deltaTime * mouse_sensitivity, cameraTransform.GetRight(TransformSpace::Local));
+		glm::quat qYaw	 = glm::angleAxis(glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::quat qPitch = glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 
-		cameraTransform.SetRotation(glm::normalize(pitch * yaw * cameraTransform.GetRotation()));
+		cameraTransform.SetRotation(glm::normalize(qYaw * qPitch));
 	}
 }

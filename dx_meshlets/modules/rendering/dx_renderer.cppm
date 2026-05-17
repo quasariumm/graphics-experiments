@@ -55,7 +55,8 @@ private:
 		int m_texIndices[8];
 	
 		std::uint32_t m_flags;
-		std::uint32_t m_padding[3];
+		std::uint32_t m_debugMode;
+		std::uint32_t m_padding[2];
 	};
 	static void CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial);
 
@@ -74,4 +75,11 @@ private:
 	};
 
 	std::vector<GltfModel> m_models;
+	
+	enum class MeshletDebugMode : std::uint32_t
+	{
+		None = 0,
+		MeshletIndex = 1
+	};
+	MeshletDebugMode m_meshletDebugMode = MeshletDebugMode::None;
 };
