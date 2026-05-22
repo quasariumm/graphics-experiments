@@ -2,7 +2,7 @@
 
 include(common/cmake/setup_cxx.cmake)
 
-project(testplates)
+project(graphics_experiments)
 
 add_subdirectory(dx_wrapper)
 add_subdirectory(dx_bare)

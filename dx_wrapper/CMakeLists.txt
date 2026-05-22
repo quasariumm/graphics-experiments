@@ -4,7 +4,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_cxx.cmake)
 
 project(dx_wrapper)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_testplate.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_experiment.cmake)
 set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
 
 #
