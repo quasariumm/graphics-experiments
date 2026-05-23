@@ -6,7 +6,7 @@ This is a library of personal projects with which I experiment with graphics-rel
 - `dx_wrapper`: A wrapper library used by all other DX12 experiments
 - `dx_bare`: A demo with a simple camera and PBR Forward rendering pipeline
 - `dx_imgui`: A demo that renders Dear ImGUI windows
-- `dx_meshlets`: A demo with 
+- `dx_meshlets`: A demo in which I try out clustered geometry rendering for the first time
 
 ## Building
 This the projects use C++23 with `import std;` support. Only the `ninja` generator supports this with one of the following compilers:
