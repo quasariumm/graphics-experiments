@@ -60,7 +60,7 @@ inline DirectX::TEX_DIMENSION TextureTypeToDxTex(const TextureType type)
 	return DirectX::TEX_DIMENSION_TEXTURE2D;
 }
 
-DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips, const bool _internal)
+DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips, D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	m_device = &device;
 
@@ -88,10 +88,14 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
+	
+	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
+		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
 	CheckHR(DirectX::CreateTextureEx(*device,
 									 metadata,
-									 D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+									 flags,
 									 DirectX::CREATETEX_DEFAULT,
 									 m_resource.GetAddressOf()));
 
@@ -113,13 +117,11 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 #endif
 	m_textureType = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
 
-	if (!_internal)
-		GenerateDescriptors(device, true, isCubemap);
+	GenerateDescriptors(device, true, isCubemap);
 }
 
 DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const TextureType type, const DXGI_FORMAT format,
-					 const std::uint32_t width, const std::uint32_t height, const std::uint32_t depth, bool generateMips,
-					 const bool _internal)
+					 const std::uint32_t width, const std::uint32_t height, const std::uint32_t depth, bool generateMips, D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	m_textureType = type;
 
@@ -160,10 +162,14 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
+	
+	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
+		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
 	CheckHR(DirectX::CreateTextureEx(*device,
 									 metadata,
-									 D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+									 flags,
 									 DirectX::CREATETEX_DEFAULT,
 									 m_resource.GetAddressOf()));
 
@@ -180,15 +186,20 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 	SetState(D3D12_RESOURCE_STATE_COPY_DEST);
 	Transition(device.GetDXDirectComList(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
-	if (!_internal)
-		GenerateDescriptors(device, true, isCube);
+	GenerateDescriptors(device, true, isCube);
 }
 
 DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width, std::uint32_t height,
-					 std::uint32_t depth, bool allocateMips, const bool _internal)
+					 std::uint32_t depth, bool allocateMips, D3D12_RESOURCE_FLAGS additionalFlags)
 {
+	m_textureType = type;
+	
 	std::size_t mips = 1;
 	DirectX::CalculateMipLevels(width, height, mips);
+	
+	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
+		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
 	D3D12_RESOURCE_DESC texDesc{};
 	texDesc.Dimension		 = TextureTypeToDx(type);
@@ -196,10 +207,13 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 	texDesc.Height			 = height;
 	texDesc.DepthOrArraySize = depth;
 	texDesc.Format			 = format;
-	texDesc.Flags			 = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	texDesc.Flags			 = flags;
 	texDesc.Layout			 = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	texDesc.MipLevels		 = allocateMips ? mips : 1;
 	texDesc.Alignment		 = 0;
+	
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
 
 	const CD3DX12_HEAP_PROPERTIES heapProp{D3D12_HEAP_TYPE_DEFAULT};
 
@@ -211,12 +225,10 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 											GetIID(m_resource),
 											GetPPV(m_resource)));
 
-	if (!_internal)
-		GenerateDescriptors(device, true, type == TextureType::DCube);
+	GenerateDescriptors(device, true, type == TextureType::DCube);
 }
 
-DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::size_t size, const bool generateMips,
-					 const bool _internal)
+DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::size_t size, const bool generateMips, D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	const bool isHdr = size >= 2 && *reinterpret_cast<const std::uint16_t*>(data) == 0x3f23;
 	const bool isExr = size >= 4 && *reinterpret_cast<const std::uint32_t*>(data) == 0x01312f76;
@@ -243,10 +255,14 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::s
 		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
+	
+	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
+		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
 	CheckHR(DirectX::CreateTextureEx(*device,
 									 metadata,
-									 D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+									 flags,
 									 DirectX::CREATETEX_DEFAULT,
 									 &m_resource));
 
@@ -268,8 +284,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::s
 #endif
 	m_textureType = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
 
-	if (!_internal)
-		GenerateDescriptors(device, true, isCubemap);
+	GenerateDescriptors(device, true, isCubemap);
 }
 
 DxTexture::~DxTexture()
@@ -343,10 +358,6 @@ std::uint32_t DxTexture::GetNumMips() const
 
 void DxTexture::CreateUAV(const DxDevice& device, std::uint32_t mip, std::uint32_t sliceMin, std::uint32_t sliceMax)
 {
-	// If no UAV was generated for mip 0, the proper flags are not set. This is not supported
-	if (m_uavHeapIndices.empty())
-		Log::Critical("UAV flags not set for resource. Undefined behaviour.");
-
 	auto&	   descriptorPile = device.GetShaderDescriptorPile();
 	const auto uavIdx		  = descriptorPile.Allocate();
 	m_uavHeapIndices.push_back(uavIdx);

@@ -15,7 +15,7 @@ export enum class TextureType {
 	DCube	 // Cubemap texture
 };
 
-export class DxTexture : protected DxResource
+export class DxTexture : public DxResource
 {
 
 public:
@@ -26,9 +26,10 @@ public:
 	 * @param path The path to the image file
 	 * @param generateMips [optional, default = true] Whether to generate mipmaps
 	 * generate ones for other mips/slices
+	 * @param additionalFlags Additional flags to pass to the resource creation
 	 */
 	explicit DxTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips = true,
-					   bool _internal = false);
+					   D3D12_RESOURCE_FLAGS additionalFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	/**
 	 * @brief Constructs a new texture from raw data
@@ -41,12 +42,14 @@ public:
 	 * @param depth [optional, default = 1] The depth in pixels of the image or the array
 	 * @param generateMips [optional, default = true] Whether to generate mipmaps
 	 * generate ones for other mips/slices
+	 * @param additionalFlags Additional flags to pass to the resource creation
 	 * @attention This function does NOT convert between formats. Write your own conversion shader for that.
 	 * @attention This function determines the data size from the width, height and format. If your data is not big enough, this
 	 * will break. Use with caution.
 	 */
 	explicit DxTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format, std::uint32_t width,
-					   std::uint32_t height = 1, std::uint32_t depth = 1, bool generateMips = true, bool _internal = false);
+					   std::uint32_t height = 1, std::uint32_t depth = 1, bool generateMips = true,
+					   D3D12_RESOURCE_FLAGS additionalFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	/**
 	 * @brief Constructs a new empty texture
@@ -57,10 +60,12 @@ public:
 	 * @param height [optional, default = 1] The height in pixels of the image or one slice/face
 	 * @param depth [optional, default = 1] The depth in pixels of the image or the array
 	 * @param allocateMips [optional, default = true] Whether to generate mipmaps
+	 * @param additionalFlags Additional flags to pass to the resource creation
 	 * generate ones for other mips/slices
 	 */
 	explicit DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width,
-					   std::uint32_t height = 1, std::uint32_t depth = 1, bool allocateMips = true, bool _internal = false);
+					   std::uint32_t height = 1, std::uint32_t depth = 1, bool allocateMips = true,
+					   D3D12_RESOURCE_FLAGS additionalFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	/**
 	 * @brief Constructs a new texture from encoded data
@@ -69,10 +74,11 @@ public:
 	 * @param size The size of the raw data
 	 * @param generateMips [optional, default = true] Whether to generate mipmaps
 	 * generate ones for other mips/slices
+	 * @param additionalFlags Additional flags to pass to the resource creation
 	 * @attention If you already loaded the data through STB or aky akin library, please use the other data-based constructor
 	 */
 	explicit DxTexture(const DxDevice& device, const std::byte* data, std::size_t size, bool generateMips = true,
-					   bool _internal = false);
+					   D3D12_RESOURCE_FLAGS additionalFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	~DxTexture() override;
 

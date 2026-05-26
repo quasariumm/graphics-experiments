@@ -6,7 +6,7 @@ import dx_wrapper.external.directx12;
 import dx_wrapper.core.log;
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::path& path, bool generateMips, bool generateSrv)
-	: DxTexture{device, path, generateMips, true},
+	: DxTexture{device, path, generateMips, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);
@@ -19,7 +19,7 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::filesystem::
 DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, TextureType type, DXGI_FORMAT format,
 								 std::uint32_t width, std::uint32_t height, std::uint32_t depth, bool generateMips,
 								 bool generateSrv)
-	: DxTexture{device, data, type, format, width, height, depth, generateMips, true},
+	: DxTexture{device, data, type, format, width, height, depth, generateMips, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);
@@ -31,7 +31,7 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, 
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width,
 								 std::uint32_t height, std::uint32_t depth, bool allocateMips, bool generateSrv)
-	: DxTexture{device, type, format, width, height, depth, allocateMips, true},
+	: DxTexture{device, type, format, width, height, depth, allocateMips, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);
@@ -43,7 +43,7 @@ DxRenderTexture::DxRenderTexture(const DxDevice& device, TextureType type, DXGI_
 
 DxRenderTexture::DxRenderTexture(const DxDevice& device, const std::byte* data, std::size_t size, bool generateMips,
 								 bool generateSrv)
-	: DxTexture{device, data, size, generateMips, true},
+	: DxTexture{device, data, size, generateMips, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET},
 	  m_rtvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);

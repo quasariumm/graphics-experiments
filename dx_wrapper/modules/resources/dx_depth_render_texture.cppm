@@ -7,7 +7,7 @@ import dx_wrapper.core.dx_device;
 import dx_wrapper.resources.dx_texture;
 import dx_wrapper.rendering.dx_descriptor_heap;
 
-export class DxDepthRenderTexture : protected DxTexture
+export class DxDepthRenderTexture : public DxTexture
 {
 public:
 

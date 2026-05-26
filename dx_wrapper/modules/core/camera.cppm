@@ -1,7 +1,8 @@
 ﻿module;
 
-export module dx_bare.core.camera;
-import dx_wrapper.core;
+export module dx_wrapper.core.camera;
+import dx_wrapper.core.transform;
+import dx_wrapper.core.dx_device;
 import dx_wrapper.external.glm;
 
 export class Camera

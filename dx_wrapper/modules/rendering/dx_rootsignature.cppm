@@ -48,7 +48,8 @@ public:
 										  D3D12_SHADER_VISIBILITY	 shaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL);
 
 
-	void Finalize(DxDevice& device, const std::string& name, bool heapDirectlyIndexed = false);
+	void Finalize(DxDevice& device, const std::string& name, bool heapDirectlyIndexed = false,
+				  D3D12_ROOT_SIGNATURE_FLAGS additionalFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
 	bool IsFinalized() const { return m_finalized; }
 
@@ -58,10 +59,10 @@ private:
 
 	std::vector<D3D12_STATIC_SAMPLER_DESC> m_samplers;
 	std::vector<D3D12_ROOT_PARAMETER1>	   m_rootParameters;
-	
+
 	// Slots check cache
 	std::vector<std::pair<std::string, std::size_t>> m_slotOccupancy{};
-	std::size_t m_occupiedSlots = 0;
+	std::size_t										 m_occupiedSlots = 0;
 
 	bool m_finalized = false;
 };

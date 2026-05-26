@@ -6,17 +6,25 @@ import dx_wrapper.core;
 import dx_wrapper.rendering.dx_descriptor_heap;
 import dx_wrapper.rendering.dx_descriptor_pile;
 
+// NOLINTNEXTLINE
+static constexpr auto D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = static_cast<D3D12_RESOURCE_STATES>(4194304);
+
 export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std::size_t size,
-								  const D3D12_RESOURCE_STATES initialState, ComPtr<ID3D12Resource>& buffer)
+								  const D3D12_RESOURCE_STATES initialState, ComPtr<ID3D12Resource>& buffer,
+								  const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
 {
 	// Create
 	const auto heapProps	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	const auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+	const auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size, resourceFlags);
+
+	D3D12_RESOURCE_STATES creationState = D3D12_RESOURCE_STATE_COMMON;
+	if (initialState == D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
+		creationState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
 	const HRESULT result = device->CreateCommittedResource(&heapProps,
 														   D3D12_HEAP_FLAG_NONE,
 														   &resourceDesc,
-														   D3D12_RESOURCE_STATE_COMMON,
+														   creationState,
 														   nullptr,
 														   GetIID(buffer),
 														   GetPPV(buffer));
@@ -25,8 +33,18 @@ export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std:
 		return result;
 
 	// Transition
-	const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COMMON, initialState);
-	device.GetDXDirectComList()->ResourceBarrier(1, &barrier);
+	if (initialState != creationState)
+	{
+		const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(buffer.Get(), D3D12_RESOURCE_STATE_COMMON, initialState);
+		device.GetDXDirectComList()->ResourceBarrier(1, &barrier);
+	}
+
+	if (!data)
+		return result;
+
+	// Skip ray acceleration structures since that can never be COPY_DEST
+	if (initialState == D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE)
+		return result;
 
 	// Upload
 	D3D12_SUBRESOURCE_DATA initData;
@@ -42,8 +60,8 @@ export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std:
 
 export template <typename T>
 HRESULT CreateStaticBuffer(DxDevice& device, const std::vector<T>& data, const D3D12_RESOURCE_STATES initialState,
-						   ComPtr<ID3D12Resource>& buffer)
-{ return CreateStaticBuffer(device, data.data(), sizeof(T) * data.size(), initialState, buffer); }
+						   ComPtr<ID3D12Resource>& buffer, const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
+{ return CreateStaticBuffer(device, data.data(), sizeof(T) * data.size(), initialState, buffer, resourceFlags); }
 
 /*
  * Private descriptor helpers

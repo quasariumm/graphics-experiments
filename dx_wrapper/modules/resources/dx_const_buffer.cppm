@@ -29,6 +29,7 @@ public:
 	ID3D12Resource* operator*() const override;
 	ID3D12Resource* operator->() const override;
 
+	void UpdateData(const DxDevice& device, const T* data);
 	void Bind(const DxDevice& device, const T* data, std::uint32_t rootParameterIndex);
 
 private:
@@ -95,11 +96,18 @@ void DxConstBuffer<T>::Init(DxDevice& device, const T* data, const Type type)
 
 template <typename T>
 	requires ConstBufferRequriement<T>
-void DxConstBuffer<T>::Bind(const DxDevice& device, const T* data, const std::uint32_t rootParameterIndex)
+void DxConstBuffer<T>::UpdateData(const DxDevice& device, const T* data)
 {
 	// Set and upload data
 	DxResource::SetData(data, sizeof(T));
 	Upload(device.GetResourceUpload(), device.GetDXDirectComQueue(), device.GetDXDirectComList());
+}
+
+template <typename T>
+	requires ConstBufferRequriement<T>
+void DxConstBuffer<T>::Bind(const DxDevice& device, const T* data, const std::uint32_t rootParameterIndex)
+{
+	UpdateData(device, data);
 
 	device.GetDXDirectComList()->SetGraphicsRootConstantBufferView(rootParameterIndex, GetResource()->GetGPUVirtualAddress());
 }

@@ -43,7 +43,7 @@ public:
 	DeviceResources(DeviceResources const&)			   = delete;
 	DeviceResources& operator=(DeviceResources const&) = delete;
 
-	void CreateDeviceResources();
+	void CreateDeviceResources(bool enableDebugLayer = true);
 	void CreateWindowSizeDependentResources();
 	void SetWindow(HWND window, int width, int height) noexcept;
 	bool WindowSizeChanged(int width, int height);
@@ -59,7 +59,7 @@ public:
 	RECT GetOutputSize() const noexcept { return m_outputSize; }
 
 	// Direct3D Accessors.
-	ID3D12Device2*				GetD3DDevice() const noexcept { return m_d3dDevice.Get(); }
+	ID3D12Device5*				GetD3DDevice() const noexcept { return m_d3dDevice.Get(); }
 	IDXGISwapChain3*			GetSwapChain() const noexcept { return m_swapChain.Get(); }
 	IDXGIFactory4*				GetDXGIFactory() const noexcept { return m_dxgiFactory.Get(); }
 	HWND						GetWindow() const noexcept { return m_window; }
@@ -111,7 +111,7 @@ private:
 	UINT m_backBufferIndex;
 
 	// Direct3D objects.
-	Microsoft::WRL::ComPtr<ID3D12Device2>			   m_d3dDevice;
+	Microsoft::WRL::ComPtr<ID3D12Device5>			   m_d3dDevice;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> m_commandList;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>		   m_commandQueue;
 	Microsoft::WRL::ComPtr<ID3D12CommandAllocator>	   m_commandAllocators[MAX_BACK_BUFFER_COUNT];

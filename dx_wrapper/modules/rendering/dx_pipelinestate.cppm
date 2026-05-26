@@ -56,7 +56,7 @@ public:
 	DxPipelineState& SetDepthTesting(bool testDepth);
 	DxPipelineState& SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
 
-	void Finalize(DxDevice& device, const DxRootSignature& rootSignature, const std::string& name = "",
+	void Finalize(DxDevice& device, const DxRootSignature& rootSignature, const std::string& name = "Unnamed Pipeline",
 				  const std::string& outDirExtension = "");
 
 private:

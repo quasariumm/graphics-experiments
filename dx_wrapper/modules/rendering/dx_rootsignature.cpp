@@ -151,12 +151,13 @@ DxRootSignature& DxRootSignature::AddComparisonSampler(const D3D12_FILTER filter
 	return *this;
 }
 
-void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const bool heapDirectlyIndexed)
+void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const bool heapDirectlyIndexed,
+							   const D3D12_ROOT_SIGNATURE_FLAGS additionalFlags)
 {
 	if (m_occupiedSlots > 64)
 	{
 		Log::Error("Root signature {} occupied more than the 64 max slots. Costs:", name);
-		uint32_t idx = 0;
+		std::uint32_t idx = 0;
 		for (const auto& [paramType, cost] : m_slotOccupancy)
 			Log::Error("{:2} | {:21} | {:2}", idx++, paramType, cost);
 		std::cout.flush();
@@ -170,10 +171,18 @@ void DxRootSignature::Finalize(DxDevice& device, const std::string& name, const 
 	}
 
 	// Allow input layout.
-	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+	
+	// Local root sig and this do not combine
+	if (!(additionalFlags & D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE))
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	if (heapDirectlyIndexed)
 		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+
+	// Add additional flags
+	if (additionalFlags != D3D12_ROOT_SIGNATURE_FLAG_NONE)
+		rootSignatureFlags |= additionalFlags;
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
 	rootSignatureDescription.Init_1_1(static_cast<UINT>(m_rootParameters.size()),

@@ -5,6 +5,7 @@ module;
 #include <d3dx12.h>
 #include <dxgi1_6.h>
 #include <wrl/client.h>
+#include <DirectXMath.h>
 
 export module dx_wrapper.external.directx12;
 export import dx_wrapper.external.win32_dx_common;
@@ -29,7 +30,7 @@ export using ::Microsoft::WRL::ComPtr;
 // =========================================================================================================
 // Common interfaces
 // =========================================================================================================
-export using ::ID3D12Device2;
+export using ::ID3D12Device5;
 export using ::ID3D12GraphicsCommandList;
 export using ::ID3D12GraphicsCommandList6;
 export using ::ID3D12CommandList;
@@ -41,7 +42,7 @@ export using ::ID3D12Fence1;
 export using ::ID3D12DescriptorHeap;
 export using ::CD3DX12_RESOURCE_BARRIER;
 
-REGISTER_IID(ID3D12Device2);
+REGISTER_IID(ID3D12Device5);
 REGISTER_IID(ID3D12GraphicsCommandList);
 REGISTER_IID(ID3D12GraphicsCommandList6);
 REGISTER_IID(ID3D12CommandList);
@@ -114,6 +115,10 @@ export using ::ID3D12PipelineState;
 
 REGISTER_IID(ID3D12PipelineState);
 
+export using ::D3D12_EXPORT_DESC;
+export using ::D3D12_DXIL_LIBRARY_DESC;
+export using ::D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION;
+
 export using ::D3D12_INPUT_ELEMENT_DESC;
 export using ::D3D12_SHADER_BYTECODE;
 export using ::CD3DX12_SHADER_BYTECODE;
@@ -146,6 +151,10 @@ export constexpr int D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING = D3D12_DEFAULT_SH
 // =========================================================================================================
 // Enums
 // =========================================================================================================
+// D3D12_EXPORT_FLAGS (Why is this even a thing if it only has NONE, the fuck Microslop)
+export using ::D3D12_EXPORT_FLAGS;
+export using ::D3D12_EXPORT_FLAG_NONE;
+
 // D3D12_INPUT_CLASSIFICATION
 export using ::D3D12_INPUT_CLASSIFICATION;
 export using ::D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
@@ -454,7 +463,6 @@ export using ::D3D12_RESOURCE_STATE_COPY_DEST;
 export using ::D3D12_RESOURCE_STATE_COPY_SOURCE;
 export using ::D3D12_RESOURCE_STATE_RESOLVE_DEST;
 export using ::D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-export using ::D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 export using ::D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
 export using ::D3D12_RESOURCE_STATE_GENERIC_READ;
 export using ::D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
@@ -475,8 +483,6 @@ export using ::D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS;
 export using ::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 export using ::D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 export using ::D3D12_RESOURCE_FLAG_NONE;
-export using ::D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE;
-export using ::D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
 #pragma endregion
 
 #pragma region Views
@@ -499,7 +505,6 @@ export using ::D3D12_DEPTH_STENCIL_VIEW_DESC;
 // D3D12_SRV_DIMENSION
 export using ::D3D12_SRV_DIMENSION;
 export using ::D3D12_SRV_DIMENSION_BUFFER;
-export using ::D3D12_SRV_DIMENSION_BUFFER_BYTE_OFFSET;
 export using ::D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 export using ::D3D12_SRV_DIMENSION_TEXTURE1D;
 export using ::D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
@@ -515,7 +520,6 @@ export using ::D3D12_SRV_DIMENSION_UNKNOWN;
 // D3D12_UAV_DIMENSION
 export using ::D3D12_UAV_DIMENSION;
 export using ::D3D12_UAV_DIMENSION_BUFFER;
-export using ::D3D12_UAV_DIMENSION_BUFFER_BYTE_OFFSET;
 export using ::D3D12_UAV_DIMENSION_TEXTURE1D;
 export using ::D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
 export using ::D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -703,6 +707,18 @@ export using ::DXGI_FORMAT_SAMPLER_FEEDBACK_MIP_REGION_USED_OPAQUE;
 export using ::DXGI_FORMAT_FORCE_UINT;
 #pragma endregion
 
+#pragma region DirectX Math
+export namespace DirectX
+{
+export using DirectX::XMMATRIX;
+export using DirectX::XMFLOAT2;
+export using DirectX::XMFLOAT3;
+export using DirectX::XMFLOAT4;
+export using DirectX::XMFLOAT4X4;
+export using DirectX::XMFLOAT3X3;
+}
+#pragma endregion
+
 #pragma region Misc
 // Format support
 export using ::D3D12_FEATURE_DATA_FORMAT_SUPPORT;
@@ -716,5 +732,9 @@ export using ::D3D12_FEATURE_D3D12_OPTIONS;
 export using ::D3D12_CLEAR_FLAG_DEPTH;
 export using ::D3D12_CLEAR_FLAG_STENCIL;
 export using ::D3D12_CLEAR_FLAG_STENCIL;
+export using ::D3D12_FEATURE_DATA_D3D12_OPTIONS5;
+export using ::D3D12_FEATURE;
+export using ::D3D12_FEATURE_D3D12_OPTIONS5;
+export using ::D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 #pragma endregion
 // NOLINTEND

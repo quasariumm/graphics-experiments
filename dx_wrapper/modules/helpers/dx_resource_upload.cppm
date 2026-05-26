@@ -14,7 +14,7 @@ export class DxResourceUpload final
 {
 public:
 
-	explicit DxResourceUpload(ID3D12Device2* device);
+	explicit DxResourceUpload(ID3D12Device5* device);
 
 	// Call this before your multiple calls to Upload.
 	void Begin(D3D12_COMMAND_LIST_TYPE commandType = D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -35,7 +35,7 @@ public:
 
 private:
 
-	ID3D12Device2*					  m_device;
+	ID3D12Device5*					  m_device;
 	ComPtr<ID3D12CommandAllocator>	  m_commandAllocator;
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
 

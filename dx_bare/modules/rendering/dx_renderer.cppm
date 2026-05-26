@@ -7,7 +7,6 @@ import dx_wrapper.gltf;
 import dx_wrapper.rendering;
 import dx_wrapper.resources.dx_const_buffer;
 import dx_wrapper.external.glm;
-import dx_bare.core.camera;
 
 export class DxRenderer
 {
@@ -62,5 +61,5 @@ private:
 	DxRootSignature m_renderRootSignature;
 	DxPipelineState m_renderPipeline;
 
-	std::vector<GltfModel> m_models;
+	std::vector<GltfModel<>> m_models;
 };

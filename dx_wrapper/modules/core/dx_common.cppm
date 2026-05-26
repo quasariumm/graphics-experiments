@@ -16,12 +16,12 @@ export void CheckHR(HRESULT hr)
 		DWORD errMsgLen = 0;
 
 		errMsgLen = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-								   nullptr,
-								   hr,
-								   0,
-								   errMsgBuf,
-								   sizeof(errMsgBuf),
-								   nullptr);
+								  nullptr,
+								  hr,
+								  0,
+								  errMsgBuf,
+								  sizeof(errMsgBuf),
+								  nullptr);
 
 		if (errMsgLen != 0)
 		{
@@ -35,11 +35,18 @@ export void CheckHR(HRESULT hr)
 	}
 }
 
+export template <typename T>
+	requires std::is_integral_v<T>
+T NextMultipleOf(T value, T multiple)
+{
+	return (value + multiple - 1) & ~(multiple - 1);
+}
+
 export std::vector<char> ReadFileBinary(const std::filesystem::path& path)
 {
 	if (!std::filesystem::exists(path))
 	{
-		Log::Error("File {} nor found", path.string());
+		Log::Error("File {} not found", path.string());
 		return {};
 	}
 	std::ifstream file(path, std::ios::binary | std::ios::ate);

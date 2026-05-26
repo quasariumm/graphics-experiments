@@ -24,7 +24,7 @@ export class DxDevice
 public:
 
 	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window",
-					  D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0);
+					  D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0, bool enableDebugLayer = true);
 	~DxDevice();
 
 	Input& GetInput() { return m_input; }
@@ -34,6 +34,11 @@ public:
 
 	bool ShouldClose() const { return m_shouldClose; }
 	void RequestClose() { m_shouldClose = true; }
+
+	/*
+	 * Features
+	 */
+	bool SupportsRaytracing() const;
 
 	/*
 	 * Window Functions
@@ -49,9 +54,11 @@ public:
 	DxDescriptorPile& GetShaderDescriptorPile() const { return *m_descriptorPile; }
 	ResourceBank&	  GetResourceBank() const { return *m_resourceBank; }
 
-	ID3D12Device2*				  operator*() const { return m_deviceResources.GetD3DDevice(); }
-	ID3D12Device2*				  operator->() const { return m_deviceResources.GetD3DDevice(); }
-	ID3D12Device2*				  GetDXDevice() const { return m_deviceResources.GetD3DDevice(); }
+	void RegisterScratchResource(ComPtr<ID3D12Resource>&& resource);
+
+	ID3D12Device5*				  operator*() const { return m_deviceResources.GetD3DDevice(); }
+	ID3D12Device5*				  operator->() const { return m_deviceResources.GetD3DDevice(); }
+	ID3D12Device5*				  GetDXDevice() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12GraphicsCommandList6*	  GetDXDirectComList() const { return m_deviceResources.GetCommandList(); }
 	ID3D12CommandQueue*			  GetDXDirectComQueue() const { return m_deviceResources.GetCommandQueue(); }
 	ID3D12Resource*				  GetRenderTarget() const { return m_deviceResources.GetRenderTarget(); }
@@ -79,6 +86,8 @@ private:
 	std::unique_ptr<DxResourceUpload> m_resourceUpload;
 	std::unique_ptr<DxDescriptorPile> m_descriptorPile;
 	std::unique_ptr<ResourceBank>	  m_resourceBank;
+
+	std::vector<ComPtr<ID3D12Resource>> m_scratchResources;
 
 	int m_windowWidth;
 	int m_windowHeight;

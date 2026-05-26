@@ -301,7 +301,7 @@ export std::size_t BitsPerPixel(const DXGI_FORMAT format)
 	}
 }
 
-export bool IsUAVCompatible(ID3D12Device2* device, const bool typedUAVLoadAdditionalFormats, const DXGI_FORMAT format) noexcept
+export bool IsUAVCompatible(ID3D12Device5* device, const bool typedUAVLoadAdditionalFormats, const DXGI_FORMAT format) noexcept
 {
 	switch (format)
 	{

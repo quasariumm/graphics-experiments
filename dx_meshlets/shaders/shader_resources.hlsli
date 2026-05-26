@@ -48,9 +48,9 @@ struct ShaderMaterial
 
 struct ShaderCamera
 {
-    float4x4 m_viewProjectionMatrix;
-    float4x4 m_prevViewProjectionMatrix;
-    float4x4 m_viewMatrix;
+    column_major float4x4 m_viewProjectionMatrix;
+    column_major float4x4 m_prevViewProjectionMatrix;
+    column_major float4x4 m_viewMatrix;
     float3 m_cameraPosition;
 
     float m_nearPlane;

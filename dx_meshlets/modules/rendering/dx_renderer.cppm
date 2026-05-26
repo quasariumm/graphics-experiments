@@ -5,7 +5,7 @@ import std;
 import dx_meshlets.gltf;
 import dx_wrapper.external.glm;
 import dx_wrapper.core.dx_device;
-import dx_meshlets.core.camera;
+import dx_wrapper.core.camera;
 import dx_wrapper.rendering.dx_pipelinestate;
 import dx_wrapper.resources.dx_const_buffer;
 

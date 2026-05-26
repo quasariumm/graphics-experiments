@@ -5,6 +5,10 @@ import std;
 import dx_wrapper.core.dx_common;
 import dx_wrapper.helpers.dx_resource_upload;
 
+// Helper for ID3D12Resource*
+export void Transition(ID3D12GraphicsCommandList* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES oldState,
+					   D3D12_RESOURCE_STATES newState);
+
 export class DxResource
 {
 public:

@@ -56,7 +56,7 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel)
+DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel, bool enableDebugLayer)
 	: m_windowWidth(width), m_windowHeight(height)
 {
 	// Needed for WIC textures
@@ -96,7 +96,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FE
 												 featureLevel,
 												 DirectX::DeviceResources::c_AllowTearing};
 	m_deviceResources.SetWindow(window, width, height);
-	m_deviceResources.CreateDeviceResources();
+	m_deviceResources.CreateDeviceResources(enableDebugLayer);
 	m_deviceResources.CreateWindowSizeDependentResources();
 
 	m_resourceUpload = std::make_unique<DxResourceUpload>(m_deviceResources.GetD3DDevice());
@@ -116,6 +116,13 @@ DxDevice::~DxDevice()
 	m_deviceResources.WaitForGpu();
 	::DestroyWindow(m_deviceResources.GetWindow());
 	::UnregisterClass(m_windowClass.lpszClassName, m_windowClass.hInstance);
+}
+
+bool DxDevice::SupportsRaytracing() const
+{
+	D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
+	CheckHR(m_deviceResources.GetD3DDevice()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5)));
+	return options5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 }
 
 void DxDevice::SetWindowTitle(const std::string& title) const { SetWindowText(m_deviceResources.GetWindow(), title.c_str()); }
@@ -194,6 +201,9 @@ void DxDevice::SetWindowCursorState(bool active) const
 	}
 }
 
+void DxDevice::RegisterScratchResource(ComPtr<ID3D12Resource>&& resource)
+{ m_scratchResources.emplace_back(std::move(resource)); }
+
 void DxDevice::BeginFrame()
 {
 	if (m_commandListOpened)
@@ -226,6 +236,8 @@ void DxDevice::EndFrame()
 	{
 		m_deviceResources.HandleDeviceLost();
 	}
+
+	m_scratchResources.clear();
 
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);

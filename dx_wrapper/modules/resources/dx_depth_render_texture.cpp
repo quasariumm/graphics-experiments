@@ -7,7 +7,7 @@ import dx_wrapper.core.log;
 
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips,
 										   const bool generateSrv)
-	: DxTexture{device, path, generateMips, true},
+	: DxTexture{device, path, generateMips, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL},
 	  m_dsvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);
@@ -23,7 +23,7 @@ DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::fi
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::byte* data, const TextureType type,
 										   const DXGI_FORMAT format, const std::uint32_t width, const std::uint32_t height,
 										   const std::uint32_t depth, const bool generateMips, const bool generateSrv)
-	: DxTexture{device, data, type, format, width, height, depth, generateMips, true},
+	: DxTexture{device, data, type, format, width, height, depth, generateMips, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL},
 	  m_dsvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);
@@ -33,7 +33,7 @@ DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::by
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const TextureType type, const DXGI_FORMAT format,
 										   const std::uint32_t width, const std::uint32_t height, const std::uint32_t depth,
 										   const bool allocateMips, const bool generateSrv)
-	: DxTexture{device, type, format, width, height, depth, allocateMips, true},
+	: DxTexture{device, type, format, width, height, depth, allocateMips, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL},
 	  m_dsvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);
@@ -42,7 +42,7 @@ DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const Texture
 
 DxDepthRenderTexture::DxDepthRenderTexture(const DxDevice& device, const std::byte* data, const std::size_t size,
 										   const bool generateMips, const bool generateSrv)
-	: DxTexture{device, data, size, generateMips, true},
+	: DxTexture{device, data, size, generateMips, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL},
 	  m_dsvHeap{*device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, 1}
 {
 	GenerateDescriptors(device, generateSrv, GetTextureType() == TextureType::DCube);

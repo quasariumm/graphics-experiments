@@ -25,6 +25,8 @@ public:
 	explicit GltfPrimitive(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
 						   const fastgltf::Primitive& primitive);
 
+	virtual ~GltfPrimitive() = default;
+
 	const std::vector<Vertex>&		  GetVertices() const;
 	const std::vector<std::uint32_t>& GetIndices() const;
 
@@ -35,9 +37,9 @@ public:
 	 * @param device The device (used for getting the command list)
 	 * @param vertexBufferSlot The slot to bind the vertex buffer to
 	 */
-	void Bind(const DxDevice& device, std::uint32_t vertexBufferSlot) const;
+	virtual void Bind(const DxDevice& device, std::uint32_t vertexBufferSlot) const;
 
-private:
+protected:
 
 	std::vector<std::uint32_t>	m_indices{};
 	std::vector<Vertex>			m_vertices{};

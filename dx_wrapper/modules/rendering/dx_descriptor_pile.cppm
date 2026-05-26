@@ -17,10 +17,10 @@ public:
 	static constexpr IndexType invalid = IndexType{-1};
 
 	explicit DxDescriptorPile(ID3D12DescriptorHeap* existingHeap, IndexType reserve = 0);
-	explicit DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc, IndexType reserve = 0);
-	explicit DxDescriptorPile(ID3D12Device2* device, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags,
+	explicit DxDescriptorPile(ID3D12Device5* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc, IndexType reserve = 0);
+	explicit DxDescriptorPile(ID3D12Device5* device, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags,
 							  std::size_t capacity, IndexType reserve = 0);
-	explicit DxDescriptorPile(ID3D12Device2* device, std::size_t count, IndexType reserve = 0);
+	explicit DxDescriptorPile(ID3D12Device5* device, std::size_t count, IndexType reserve = 0);
 
 	ID3D12DescriptorHeap* GetHeap() const noexcept { return Heap(); }
 	ID3D12DescriptorHeap* operator*() const noexcept { return Heap(); }

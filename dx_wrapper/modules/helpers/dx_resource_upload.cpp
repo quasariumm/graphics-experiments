@@ -5,7 +5,7 @@ import std;
 import dx_wrapper.helpers.dx_format_helpers;
 import dx_wrapper.core;
 
-DxResourceUpload::DxResourceUpload(ID3D12Device2* device)
+DxResourceUpload::DxResourceUpload(ID3D12Device5* device)
 	: m_device{device}, m_commandListType{D3D12_COMMAND_LIST_TYPE_DIRECT}, m_began{false}
 {
 	if (!device)

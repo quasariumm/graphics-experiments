@@ -1,7 +1,6 @@
 ﻿import dx_wrapper.core;
 import dx_meshlets.gltf.model;
 import dx_meshlets.rendering.dx_renderer;
-import dx_meshlets.core.camera;
 
 struct Demo
 {

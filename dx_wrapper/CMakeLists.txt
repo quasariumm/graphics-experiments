@@ -191,8 +191,6 @@ target_link_libraries(dx_wrapper PUBLIC
 		glm::glm
 )
 
-target_compile_definitions(dx_wrapper PUBLIC BIN_DIR="${CMAKE_CURRENT_BINARY_DIR}")
-
 target_compile_definitions(dx_wrapper PUBLIC GLM_ENABLE_EXPERIMENTAL)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

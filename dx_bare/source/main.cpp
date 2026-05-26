@@ -2,7 +2,6 @@ import dx_wrapper.core;
 import dx_wrapper.rendering;
 
 import dx_bare.rendering.dx_render;
-import dx_bare.core.camera;
 
 struct Demo
 {

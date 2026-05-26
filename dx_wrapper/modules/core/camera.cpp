@@ -1,6 +1,6 @@
 ﻿module;
 
-module dx_meshlets.core.camera;
+module dx_wrapper.core.camera;
 
 Camera::Camera(const DxDevice* device)
 {

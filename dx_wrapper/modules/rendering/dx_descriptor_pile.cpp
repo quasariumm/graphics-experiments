@@ -11,14 +11,14 @@ DxDescriptorPile::DxDescriptorPile(ID3D12DescriptorHeap* existingHeap, const Ind
 		throw std::out_of_range("Reserve descriptor range is too large");
 }
 
-DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc, const IndexType reserve)
+DxDescriptorPile::DxDescriptorPile(ID3D12Device5* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc, const IndexType reserve)
 	: DxDescriptorHeap{device, desc}, m_top(reserve)
 {
 	if (reserve > 0 && m_top >= Count())
 		throw std::out_of_range("Reserve descriptor range is too large");
 }
 
-DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
+DxDescriptorPile::DxDescriptorPile(ID3D12Device5* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
 								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const std::size_t capacity, const IndexType reserve)
 	: DxDescriptorHeap{device, type, flags, capacity}, m_top{reserve}
 {
@@ -26,7 +26,7 @@ DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const D3D12_DESCRIPTOR
 		throw std::out_of_range("Reserve descriptor range is too large");
 }
 
-DxDescriptorPile::DxDescriptorPile(ID3D12Device2* device, const std::size_t count, const IndexType reserve)
+DxDescriptorPile::DxDescriptorPile(ID3D12Device5* device, const std::size_t count, const IndexType reserve)
 	: DxDescriptorPile{
 			  device, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, count, reserve}
 {}

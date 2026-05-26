@@ -14,10 +14,13 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 	if (path.empty())
 		return std::nullopt;
 
-	const auto csoPath =
-			Filesystem::path{BIN_DIR} / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
+	const auto csoPath = path.parent_path() / outDirExtension / path.filename().replace_extension(std::format("{}.cso", type));
 
-	if (Filesystem::exists(csoPath) && Filesystem::last_write_time(csoPath) >= Filesystem::last_write_time(path))
+	std::error_code ec1{}, ec2{};
+	auto csoWriteTime = Filesystem::last_write_time(csoPath, ec1);
+	auto hlslWriteTime = Filesystem::last_write_time(path, ec2);
+	
+	if (Filesystem::exists(csoPath) && csoWriteTime >= hlslWriteTime)
 	{
 		const auto data = ReadFileBinary(csoPath);
 

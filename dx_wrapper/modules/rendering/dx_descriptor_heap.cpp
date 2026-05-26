@@ -18,17 +18,17 @@ DxDescriptorHeap::DxDescriptorHeap(ID3D12DescriptorHeap* existingHeap) : m_heap{
 	existingHeap->GetDesc(&m_heapDesc);
 #endif
 
-	ComPtr<ID3D12Device2> device;
+	ComPtr<ID3D12Device5> device;
 	CheckHR(existingHeap->GetDevice(GetIID(device), GetPPV(device)));
 
 	m_increment = device->GetDescriptorHandleIncrementSize(m_heapDesc.Type);
 }
 
-DxDescriptorHeap::DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc)
+DxDescriptorHeap::DxDescriptorHeap(ID3D12Device5* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc)
 	: m_heapDesc{}, m_cpuHandle{}, m_gpuHandle{}, m_increment{0}
 { Create(device, desc); }
 
-DxDescriptorHeap::DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
+DxDescriptorHeap::DxDescriptorHeap(ID3D12Device5* device, const D3D12_DESCRIPTOR_HEAP_TYPE type,
 								   const D3D12_DESCRIPTOR_HEAP_FLAGS flags, const std::size_t count)
 	: m_heapDesc{}, m_cpuHandle{}, m_gpuHandle{}, m_increment{0}
 {
@@ -42,7 +42,7 @@ DxDescriptorHeap::DxDescriptorHeap(ID3D12Device2* device, const D3D12_DESCRIPTOR
 	Create(device, &desc);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const std::uint32_t offsetIntoHeap,
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device5* device, const std::uint32_t offsetIntoHeap,
 															   const std::uint32_t				  totalDescriptorCount,
 															   const D3D12_CPU_DESCRIPTOR_HANDLE* descriptorRangeStarts,
 															   const std::uint32_t*				  descriptorRangeSizes,
@@ -65,7 +65,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* de
 	return GetGpuHandleAt(offsetIntoHeap);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const std::uint32_t offsetIntoHeap,
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device5* device, const std::uint32_t offsetIntoHeap,
 															   const D3D12_CPU_DESCRIPTOR_HANDLE* descriptorRangeStarts,
 															   const std::uint32_t*				  descriptorRangeSizes,
 															   const std::uint32_t				  descriptorRangeCount) const
@@ -82,7 +82,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* de
 							descriptorRangeCount);
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device2* device, const std::uint32_t offsetIntoHeap,
+D3D12_GPU_DESCRIPTOR_HANDLE DxDescriptorHeap::WriteDescriptors(ID3D12Device5* device, const std::uint32_t offsetIntoHeap,
 															   const D3D12_CPU_DESCRIPTOR_HANDLE* pDescriptors,
 															   const std::uint32_t				  descriptorCount) const
 { return WriteDescriptors(device, offsetIntoHeap, descriptorCount, pDescriptors, &descriptorCount, 1); }
@@ -145,7 +145,7 @@ void DxDescriptorHeap::DefaultDesc(const D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_
 	desc->Type			 = type;
 }
 
-void DxDescriptorHeap::Create(ID3D12Device2* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc)
+void DxDescriptorHeap::Create(ID3D12Device5* device, const D3D12_DESCRIPTOR_HEAP_DESC* desc)
 {
 	if (!device)
 		Log::Critical("No device provided");

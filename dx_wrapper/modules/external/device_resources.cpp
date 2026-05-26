@@ -70,12 +70,13 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources()
+void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
 {
-#if defined(_DEBUG)
+#ifndef NDEBUG
 	// Enable the debug layer (requires the Graphics Tools "optional feature").
 	//
 	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
+	if (enableDebugLayer)
 	{
 		ComPtr<ID3D12Debug> debugController;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
@@ -144,25 +145,28 @@ void DeviceResources::CreateDeviceResources()
 	m_d3dDevice->SetName(L"DeviceResources");
 
 #ifndef NDEBUG
-	// Configure debug device (if active).
-	ComPtr<ID3D12InfoQueue> d3dInfoQueue;
-	if (SUCCEEDED(m_d3dDevice->QueryInterface(IID_ID3D12InfoQueue, GetPPV(d3dInfoQueue))))
+	if (enableDebugLayer)
 	{
-	#ifdef _DEBUG
-		d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-		d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-	#endif
-		D3D12_MESSAGE_ID hide[] = {
+		// Configure debug device (if active).
+		ComPtr<ID3D12InfoQueue> d3dInfoQueue;
+		if (SUCCEEDED(m_d3dDevice->QueryInterface(IID_ID3D12InfoQueue, GetPPV(d3dInfoQueue))))
+		{
+			#ifdef _DEBUG
+			d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+			d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+			#endif
+			D3D12_MESSAGE_ID hide[] = {
 				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
 				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
 				// Workarounds for debug layer issues on hybrid-graphics systems
 				D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE,
 				D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE,
 		};
-		D3D12_INFO_QUEUE_FILTER filter = {};
-		filter.DenyList.NumIDs		   = static_cast<UINT>(std::size(hide));
-		filter.DenyList.pIDList		   = hide;
-		d3dInfoQueue->AddStorageFilterEntries(&filter);
+			D3D12_INFO_QUEUE_FILTER filter = {};
+			filter.DenyList.NumIDs		   = static_cast<UINT>(std::size(hide));
+			filter.DenyList.pIDList		   = hide;
+			d3dInfoQueue->AddStorageFilterEntries(&filter);
+		}
 	}
 #endif
 

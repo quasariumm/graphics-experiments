@@ -3,6 +3,13 @@
 module dx_wrapper.resources.dx_resource;
 import dx_wrapper.core;
 
+void Transition(ID3D12GraphicsCommandList* commandList, ID3D12Resource* resource, D3D12_RESOURCE_STATES oldState,
+				D3D12_RESOURCE_STATES newState)
+{
+	const auto transition = CD3DX12_RESOURCE_BARRIER::Transition(resource, oldState, newState);
+	commandList->ResourceBarrier(1, &transition);
+}
+
 void DxResource::Transition(ID3D12GraphicsCommandList* commandList, const D3D12_RESOURCE_STATES newState)
 {
 	if (newState == m_currentState)

@@ -3,7 +3,7 @@
 module dx_bare.rendering.dx_render;
 import std;
 import dx_wrapper.external.directx12;
-import dx_bare.core.camera;
+import dx_wrapper.core.camera;
 import dx_wrapper.external.glm;
 
 DxRenderer::DxRenderer(DxDevice* device)
