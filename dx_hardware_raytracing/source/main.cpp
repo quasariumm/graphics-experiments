@@ -1,23 +1,28 @@
 ﻿import dx_wrapper.core;
 import std;
 import dx_hw_ray.rendering.dx_render;
+import dx_hw_ray.rendering.imgui_renderer;
+import dx_hw_ray.external.imgui;
 
 struct Demo
 {
 	explicit Demo(const bool enableDebugLayer = true)
-		: m_device{1920, 1080, "DXR Hardware Raytracing", D3D_FEATURE_LEVEL_12_2, enableDebugLayer}, m_renderer{&m_device}
+		: m_device{1920, 1080, "DXR Hardware Raytracing", D3D_FEATURE_LEVEL_12_2, enableDebugLayer}, m_renderer{&m_device},
+		  m_imguiRenderer{&m_device}
 	{}
 
-	DxDevice   m_device;
-	DxRenderer m_renderer;
+	DxDevice	  m_device;
+	DxRenderer	  m_renderer;
+	ImGuiRenderer m_imguiRenderer;
 
 	void Run();
 	void HandleInput();
+	void DrawImGuiWindow();
 };
 
 int main(const int argc, char** argv)
 {
-	bool enableDebugLayer = true;
+	bool			enableDebugLayer = true;
 	const std::span args{argv, argv + argc};
 	for (const char* arg : args)
 	{
@@ -26,10 +31,10 @@ int main(const int argc, char** argv)
 		if (std::strcmp(arg, "-nd") == 0)
 			enableDebugLayer = false;
 	}
-	
+
 	if (!enableDebugLayer)
 		Log::Info("Debug layer turned off");
-	
+
 	Demo demo{enableDebugLayer};
 	demo.Run();
 	return 0;
@@ -45,8 +50,15 @@ void Demo::Run()
 	while (!m_device.ShouldClose())
 	{
 		m_device.BeginFrame();
+		m_imguiRenderer.BeginFrame();
+		
 		HandleInput();
+		
 		m_renderer.Render();
+		
+		DrawImGuiWindow();
+		
+		m_imguiRenderer.EndFrame();
 		m_device.EndFrame();
 	}
 }
@@ -97,4 +109,23 @@ void Demo::HandleInput()
 
 		cameraTransform.SetRotation(glm::normalize(qYaw * qPitch));
 	}
+}
+
+void Demo::DrawImGuiWindow()
+{
+	ImGui::Begin("Config");
+	
+	static float smoothFPS = 0.0f;
+	static constexpr float fps_alpha = 0.05f; // lower = smoother, higher = more responsive
+	
+	const float dt = std::max(0.0001f, m_device.GetDeltaTime());
+	const float currentFPS = 1.0f / dt;
+	if (smoothFPS == 0.0f)
+		smoothFPS = currentFPS;
+	else
+		smoothFPS += fps_alpha * (currentFPS - smoothFPS);
+	
+	ImGui::Text("%.1f fps", smoothFPS);
+	
+	ImGui::End();
 }
