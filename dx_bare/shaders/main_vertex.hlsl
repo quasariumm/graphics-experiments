@@ -3,9 +3,11 @@
 struct VSIn
 {
     float3 Position : POSITION;
+    float _padding1 : PADDING;
     float2 Uv0 : UV_PRIM;
     float2 Uv1 : UV_SEC;
     float3 Normal : NORMAL;
+    float _padding2 : PADDING_TWO;
     float4 Tangent : TANGENT;
 };
 

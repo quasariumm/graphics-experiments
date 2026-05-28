@@ -24,9 +24,11 @@ DxRenderer::DxRenderer(DxDevice* device)
 			.SetDepthRenderTarget(DXGI_FORMAT_D32_FLOAT)
 			.SetCullMode(D3D12_CULL_MODE_NONE)
 			.AddVertexInput("POSITION", DXGI_FORMAT_R32G32B32_FLOAT)
+			.AddVertexInput("PADDING", DXGI_FORMAT_R32_FLOAT)
 			.AddVertexInput("UV_PRIM", DXGI_FORMAT_R32G32_FLOAT)
 			.AddVertexInput("UV_SEC", DXGI_FORMAT_R32G32_FLOAT)
 			.AddVertexInput("NORMAL", DXGI_FORMAT_R32G32B32_FLOAT)
+			.AddVertexInput("PADDING_TWO", DXGI_FORMAT_R32_FLOAT)
 			.AddVertexInput("TANGENT", DXGI_FORMAT_R32G32B32A32_FLOAT)
 			.Finalize(*m_device, m_renderRootSignature, "Main Render Pipeline", "dx_wrapper");
 

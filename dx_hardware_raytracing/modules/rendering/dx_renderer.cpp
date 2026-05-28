@@ -34,12 +34,21 @@ DxRenderer::DxRenderer(DxDevice* device)
 
 	m_closestHitRootSignature = DxRootSignature{};
 	m_closestHitRootSignature.AddBufferSRV(0);
-	m_closestHitRootSignature.Finalize(*m_device, "Closest Hit Root Signature", false, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+	m_closestHitRootSignature.AddConstantBuffer(0);
+	m_closestHitRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+										 D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+										 D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
+										 D3D12_SHADER_VISIBILITY_ALL);
+	m_closestHitRootSignature.Finalize(*m_device,
+									   "Closest Hit Root Signature",
+									   false,
+									   D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 
 	m_camera = Camera{m_device};
 	m_camera.GetTransform().SetPosition(glm::vec3{0, 0, 4});
 
 	m_cameraConstBuffer = DxConstBuffer<CameraConstBuffer>{*m_device, nullptr, ConstBufferType::Static};
+	m_sceneConstBuffer = DxConstBuffer<SceneConstBuffer>{*m_device, nullptr, ConstBufferType::Static};
 
 	m_renderPipeline = DxRayPipeline{};
 
@@ -59,7 +68,7 @@ void DxRenderer::Render()
 	static bool generatedTlas = false;
 	if (!generatedTlas)
 	{
-		CreateTlas();
+		CreateRaySceneResources();
 
 		const auto rayOutGpuHandle = m_device->GetShaderDescriptorPile().GetGpuHandleAt(m_rayOutputTexture.GetUavHeapIndex());
 
@@ -71,7 +80,13 @@ void DxRenderer::Render()
 
 		m_renderPipeline.SetMissShader("shaders/miss.hlsl", "Miss");
 
-		m_renderPipeline.AddHitGroup("HitGroup", "shaders/hit.hlsl", "ClosestHit");
+		m_renderPipeline.AddHitGroup("HitGroup",
+									 "shaders/hit.hlsl",
+									 "ClosestHit",
+									 "",
+									 "",
+									 {reinterpret_cast<void*>(m_materialBuffer->GetGPUVirtualAddress()),
+									  reinterpret_cast<void*>(m_sceneConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.Finalize(*m_device, "Main Ray Pipeline");
 
@@ -141,12 +156,15 @@ void DxRenderer::Render()
 	Transition(commandList, rt, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
-void DxRenderer::CreateTlas()
+void DxRenderer::CreateRaySceneResources()
 {
-	m_tlas = Tlas{};
+	m_tlas				  = Tlas{};
+	m_sceneGeometryBuffer = SceneGeometryBuffer{};
+	std::vector<ShaderMaterial> materials;
 
 	for (const auto& model : m_models)
 	{
+		// Nodes
 		for (const auto& node : model.GetNodes())
 		{
 			if (!node->m_mesh)
@@ -154,10 +172,24 @@ void DxRenderer::CreateTlas()
 
 			const auto& mesh = node->m_mesh;
 			for (const auto& primitive : mesh->m_primitives)
+			{
 				m_tlas.AddBlas(primitive.GetBlas(), node->m_transform.GetWorldTransform(), 0, 0);
+				m_sceneGeometryBuffer.AddPrimitive(primitive.GetVertexBuffer(), primitive.GetIndexBuffer());
+				ShaderMaterial material{};
+				if (primitive.GetMaterial())
+					CompileShaderMaterial(primitive.GetMaterial().value(), material);
+				materials.push_back(material);
+			}
 		}
 	}
 	m_tlas.Generate(*m_device);
+	m_sceneGeometryBuffer.Generate(*m_device);
+	m_materialBuffer = DxStructuredBuffer{*m_device, materials};
+
+	SceneConstBuffer sceneConstBuffer{};
+	sceneConstBuffer.m_vertexBuffers = m_sceneGeometryBuffer.GetVertexHeapIndex();
+	sceneConstBuffer.m_indexBuffers	 = m_sceneGeometryBuffer.GetIndexHeapIndex();
+	m_sceneConstBuffer.UpdateData(*m_device, &sceneConstBuffer);
 }
 
 void DxRenderer::CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial)

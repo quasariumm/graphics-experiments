@@ -11,6 +11,8 @@ import dx_wrapper.external.glm;
 import dx_hw_ray.helpers.tlas;
 import dx_hw_ray.rendering.dx_ray_pipeline;
 import dx_wrapper.resources.dx_render_texture;
+import dx_wrapper.resources.dx_structured_buffer;
+import dx_hw_ray.gltf.scene_geometry_buffer;
 
 export class DxRenderer
 {
@@ -26,7 +28,7 @@ public:
 
 private:
 	
-	void CreateTlas();
+	void CreateRaySceneResources();
 
 	DxDevice* m_device;
 	Camera	  m_camera;
@@ -41,19 +43,19 @@ private:
 	
 	struct ShaderMaterial 
 	{
-		float m_alphaCutoff;
+		float m_alphaCutoff = 0.5f;
 
-		glm::vec3 m_emissiveFactor;
-		glm::vec4 m_baseColorFactor;
+		glm::vec3 m_emissiveFactor{1.f};
+		glm::vec4 m_baseColorFactor{1.f};
 
-		float m_metallicFactor;
-		float m_roughnessFactor;
-		float m_normalScale;
-		float m_occlusionStrength;
+		float m_metallicFactor = 0.0f;
+		float m_roughnessFactor = 1.0f;
+		float m_normalScale = 1.0f;
+		float m_occlusionStrength = 1.0f;
 
-		int m_texIndices[8];
+		int m_texIndices[8]{-1};
 	
-		std::uint32_t m_flags;
+		std::uint32_t m_flags = 0;
 		std::uint32_t m_padding[3];
 	};
 	static void CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial);
@@ -64,6 +66,17 @@ private:
 	DxRayPipeline m_renderPipeline;
 	
 	DxRenderTexture m_rayOutputTexture;
+	DxStructuredBuffer<ShaderMaterial> m_materialBuffer;
+	SceneGeometryBuffer m_sceneGeometryBuffer;
+	
+	struct SceneConstBuffer
+	{
+		std::int32_t m_vertexBuffers;
+		std::int32_t m_indexBuffers;
+		glm::uvec2 m_padding;
+		glm::uvec4 m_morePadding[15];
+	};
+	DxConstBuffer<SceneConstBuffer> m_sceneConstBuffer{};
 
 	std::vector<GltfModel<RaytracedGltfPrimitive>> m_models;
 	Tlas m_tlas;

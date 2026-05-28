@@ -22,9 +22,11 @@ struct Payload
 struct Vertex
 {
     float3 Position;
+    float _padding1;
     float2 Uv0;
     float2 Uv1;
     float3 Normal;
+    float _padding2;
     float4 Tangent;
 };
 

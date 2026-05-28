@@ -88,6 +88,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 		std::string		   line;
 		while (std::getline(stream, line))
 			Log::Error("{}", line);
+		std::cout.flush();
 		return std::nullopt;
 	}
 
@@ -116,6 +117,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 				while (std::getline(stream, line))
 					Log::Error("{}", line);
 			}
+			std::cout.flush();
 			return std::nullopt;
 		}
 

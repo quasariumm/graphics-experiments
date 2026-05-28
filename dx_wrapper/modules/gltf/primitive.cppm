@@ -11,9 +11,11 @@ import dx_wrapper.core;
 export struct Vertex
 {
 	glm::vec3 m_position{0.f};
+	float m_padding1;
 	glm::vec2 m_uv0{0.f};
 	glm::vec2 m_uv1{0.f};
 	glm::vec3 m_normal{0.f};
+	float m_padding2;
 	glm::vec4 m_tangent{0.f};
 };
 
@@ -38,6 +40,9 @@ public:
 	 * @param vertexBufferSlot The slot to bind the vertex buffer to
 	 */
 	virtual void Bind(const DxDevice& device, std::uint32_t vertexBufferSlot) const;
+	
+	const ComPtr<ID3D12Resource>& GetVertexBuffer() const { return m_vertexBuffer; }
+	const ComPtr<ID3D12Resource>& GetIndexBuffer() const { return m_indexBuffer; }
 
 protected:
 

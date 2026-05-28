@@ -14,9 +14,11 @@ import dx_wrapper.rendering.dx_descriptor_pile;
 export struct Vertex
 {
 	glm::vec3 m_position{0.f};
+	float m_padding;
 	glm::vec2 m_uv0{0.f};
 	glm::vec2 m_uv1{0.f};
 	glm::vec3 m_normal{0.f};
+	float m_padding2;
 	glm::vec4 m_tangent{0.f};
 };
 

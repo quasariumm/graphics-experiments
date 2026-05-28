@@ -10,7 +10,7 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 							 DXGI_FORMAT indexFormat, D3D12_RAYTRACING_GEOMETRY_FLAGS additionalFlags)
 {
 	// Create a geometry description
-	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc;
+	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc{};
 	geometryDesc.Type								  = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 	geometryDesc.Triangles.VertexBuffer.StartAddress  = vertexBuffer->GetGPUVirtualAddress();
 	geometryDesc.Triangles.VertexBuffer.StrideInBytes = vertexStride;
@@ -26,7 +26,7 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 	geometryDesc.Flags = additionalFlags;
 
 	// Get the byte size of the new resources
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc;
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc{};
 	prebuildDesc.Type			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	prebuildDesc.DescsLayout	= D3D12_ELEMENTS_LAYOUT_ARRAY;
 	prebuildDesc.NumDescs		= 1;
@@ -64,7 +64,7 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 	CheckHR(m_blas->SetName(L"BLAS Resource"));
 
 	// Generate the BLAS
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc;
+	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc{};
 	buildDesc.Inputs						   = prebuildDesc;
 	buildDesc.DestAccelerationStructureData	   = m_blas->GetGPUVirtualAddress();
 	buildDesc.ScratchAccelerationStructureData = scratchResource->GetGPUVirtualAddress();

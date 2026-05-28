@@ -78,10 +78,20 @@ void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
 	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
 	if (enableDebugLayer)
 	{
-		ComPtr<ID3D12Debug> debugController;
+		// DRED (Device Removed Extended Data)
+		ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings;
+		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&dredSettings))))
+		{
+			dredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+			dredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
+		}
+
+		ComPtr<ID3D12Debug3> debugController;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
 		{
 			debugController->EnableDebugLayer();
+			debugController->SetEnableGPUBasedValidation(TRUE);
+			debugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
 		}
 		else
 		{
@@ -151,17 +161,17 @@ void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
 		ComPtr<ID3D12InfoQueue> d3dInfoQueue;
 		if (SUCCEEDED(m_d3dDevice->QueryInterface(IID_ID3D12InfoQueue, GetPPV(d3dInfoQueue))))
 		{
-			#ifdef _DEBUG
+	#ifdef _DEBUG
 			d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
 			d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-			#endif
+	#endif
 			D3D12_MESSAGE_ID hide[] = {
-				D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-				D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
-				// Workarounds for debug layer issues on hybrid-graphics systems
-				D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE,
-				D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE,
-		};
+					D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+					D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
+					// Workarounds for debug layer issues on hybrid-graphics systems
+					D3D12_MESSAGE_ID_EXECUTECOMMANDLISTS_WRONGSWAPCHAINBUFFERREFERENCE,
+					D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE,
+			};
 			D3D12_INFO_QUEUE_FILTER filter = {};
 			filter.DenyList.NumIDs		   = static_cast<UINT>(std::size(hide));
 			filter.DenyList.pIDList		   = hide;
@@ -310,6 +320,25 @@ void DeviceResources::CreateWindowSizeDependentResources()
 					"Device Lost on ResizeBuffers: Reason code 0x%08X\n",
 					static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr));
 			OutputDebugStringA(buff);
+			
+			// Query DRED
+			const HRESULT removed = m_d3dDevice->GetDeviceRemovedReason();
+			if (FAILED(removed))
+			{
+				ComPtr<ID3D12DeviceRemovedExtendedData> dred;
+				m_d3dDevice->QueryInterface(IID_PPV_ARGS(&dred));
+
+				D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs{};
+				D3D12_DRED_PAGE_FAULT_OUTPUT pageFault{};
+				dred->GetAutoBreadcrumbsOutput(&breadcrumbs);
+				dred->GetPageFaultAllocationOutput(&pageFault);
+
+				// pageFault.PageFaultVA is your 0xCDCD... address
+				// Walk pageFault.pHeadExistingAllocationNode linked list for live resources
+				// Walk pageFault.pHeadRecentFreedAllocationNode for recently freed ones
+				auto reason = std::format("Device removed: DRED page fault at VA {:x}", pageFault.PageFaultVA);
+				OutputDebugStringA(reason.c_str());
+			}
 #endif
 			// If the device was removed for any reason, a new device and swap chain will need to be created.
 			HandleDeviceLost();
@@ -643,11 +672,10 @@ void DeviceResources::GetAdapter(IDXGIAdapter1** ppAdapter)
 	HRESULT				  hr = m_dxgiFactory.As(&factory6);
 	if (SUCCEEDED(hr))
 	{
-		for (UINT adapterIndex = 0;
-			 SUCCEEDED(factory6->EnumAdapterByGpuPreference(adapterIndex,
-															DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
-															IID_IDXGIAdapter1,
-															GetPPV(adapter.ReleaseAndGetAddressOf())));
+		for (UINT adapterIndex = 0; SUCCEEDED(factory6->EnumAdapterByGpuPreference(adapterIndex,
+																				   DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+																				   IID_IDXGIAdapter1,
+																				   GetPPV(adapter.ReleaseAndGetAddressOf())));
 			 adapterIndex++)
 		{
 			DXGI_ADAPTER_DESC1 desc;

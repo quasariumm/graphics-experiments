@@ -35,6 +35,17 @@ export void CheckHR(HRESULT hr)
 	}
 }
 
+export D3D12_RESOURCE_DESC GetDesc(ID3D12Resource* resource)
+{
+#ifdef _MSC_VER
+	return resource->GetDesc();
+#else
+	D3D12_RESOURCE_DESC desc;
+	resource->GetDesc(&desc);
+	return desc;
+#endif
+}
+
 export template <typename T>
 	requires std::is_integral_v<T>
 T NextMultipleOf(T value, T multiple)
