@@ -27,8 +27,20 @@ void main(uint gtId : SV_GroupThreadID,
 {
     uint meshletIndex = payload.MeshletIndices[gId];
 
-    Meshlet m = Meshlets[meshletIndex];
-    SetMeshOutputCounts(m.VertexCount, m.TriangleCount);
+    uint meshletCount, stride;
+    Meshlets.GetDimensions(meshletCount, stride);
+
+    uint safeIndex = min(meshletIndex, meshletCount - 1);
+    Meshlet m = Meshlets[safeIndex];
+
+    bool valid = meshletIndex < meshletCount;
+    SetMeshOutputCounts(valid ? m.VertexCount : 0, valid ? m.TriangleCount : 0);
+
+    if (!valid || m.TriangleCount == 0)
+        return;
+
+    if (m.TriangleCount == 0)
+        return;
 
     if (gtId < m.TriangleCount)
         triangles[gtId] = LoadMeshletTriangle(m.TriangleOffset, gtId);

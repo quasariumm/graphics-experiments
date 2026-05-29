@@ -33,6 +33,14 @@ Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in StructuredBu
     return fragment;
 }
 
+float3 HUEtoRGB(in float H)
+{
+    float R = abs(H * 6 - 3) - 1;
+    float G = 2 - abs(H * 6 - 2);
+    float B = 2 - abs(H * 6 - 4);
+    return saturate(float3(R,G,B));
+}
+
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
@@ -67,5 +75,6 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     
     payload.m_color = worldNormal * 0.5 + 0.5;
     payload.m_color = fragment.Position;
+    payload.m_color = HUEtoRGB(InstanceIndex() / 103.0);
     payload.m_distance = RayTCurrent();
 }

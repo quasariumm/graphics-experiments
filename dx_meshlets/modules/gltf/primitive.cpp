@@ -37,15 +37,15 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 		m_material = GltfMaterial{device, modelPath, asset, asset.materials[*primitive.materialIndex]};
 
 	// Make DX12 buffers
-	CheckHR(CreateStaticBuffer(device, m_vertices, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_vertexBuffer));
+	CheckHR(CreateStaticBuffer(device, m_vertices, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_vertexBuffer, "Vertex Buffer"));
 
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.SizeInBytes	  = m_vertices.size() * sizeof(Vertex);
 	m_vertexBufferView.StrideInBytes  = sizeof(Vertex);
 
-	CheckHR(CreateStaticBuffer(device, m_meshlets, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletsBuffer));
-	CheckHR(CreateStaticBuffer(device, m_meshletVertices, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletVerticesBuffer));
-	CheckHR(CreateStaticBuffer(device, m_meshletTriangles, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletTrianglesBuffer));
+	CheckHR(CreateStaticBuffer(device, m_meshlets, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletsBuffer, "Meshlets Buffer"));
+	CheckHR(CreateStaticBuffer(device, m_meshletVertices, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletVerticesBuffer, "Meshlet Vertices Buffer"));
+	CheckHR(CreateStaticBuffer(device, m_meshletTriangles, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, m_meshletTrianglesBuffer, "Meshlet Triangles Buffer"));
 
 	// Put them all on the device's heap
 	DxDescriptorPile::IndexType end;

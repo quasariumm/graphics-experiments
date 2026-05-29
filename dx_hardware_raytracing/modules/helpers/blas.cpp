@@ -31,7 +31,7 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 	prebuildDesc.DescsLayout	= D3D12_ELEMENTS_LAYOUT_ARRAY;
 	prebuildDesc.NumDescs		= 1;
 	prebuildDesc.pGeometryDescs = &geometryDesc;
-	prebuildDesc.Flags			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+	prebuildDesc.Flags			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
 	// Get the prebuild info
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
@@ -52,16 +52,16 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 							   scratchSize,
 							   D3D12_RESOURCE_STATE_COMMON,
 							   scratchResource,
+							   "BLAS Scratch Resource",
 							   D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-	CheckHR(scratchResource->SetName(L"BLAS Scratch Resource"));
 	
 	CheckHR(CreateStaticBuffer(device,
 							   nullptr,
 							   resultSize,
 							   D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 							   m_blas,
+							   "BLAS Resource",
 							   D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-	CheckHR(m_blas->SetName(L"BLAS Resource"));
 
 	// Generate the BLAS
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc{};

@@ -40,16 +40,16 @@ void Tlas::Generate(DxDevice& device)
 							   scratchSize,
 							   D3D12_RESOURCE_STATE_COMMON,
 							   scratchResource,
+							   "TLAS Scratch Resource",
 							   D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-	CheckHR(scratchResource->SetName(L"TLAS Scratch Resource"));
 
 	CheckHR(CreateStaticBuffer(device,
 							   nullptr,
 							   resultSize,
 							   D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE,
 							   m_tlas,
+							   "TLAS Resource",
 							   D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-	CheckHR(m_tlas->SetName(L"TLAS Resource"));
 
 	// Instances
 	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instances;
@@ -76,8 +76,8 @@ void Tlas::Generate(DxDevice& device)
 							   instances.data(),
 							   instanceBufferSize,
 							   D3D12_RESOURCE_STATE_GENERIC_READ,
-							   m_instanceBuffer));
-	CheckHR(m_instanceBuffer->SetName(L"TLAS Instance Buffer Resource"));
+							   m_instanceBuffer,
+							   "TLAS Instance Buffer Resource"));
 
 	// Create the TLAS
 	prebuildDesc.InstanceDescs = m_instanceBuffer->GetGPUVirtualAddress();

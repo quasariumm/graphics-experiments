@@ -11,6 +11,7 @@ static constexpr auto D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = s
 
 export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std::size_t size,
 								  const D3D12_RESOURCE_STATES initialState, ComPtr<ID3D12Resource>& buffer,
+								  const std::string&		 name		   = "",
 								  const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
 {
 	// Create
@@ -39,6 +40,12 @@ export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std:
 		device.GetDXDirectComList()->ResourceBarrier(1, &barrier);
 	}
 
+	if (!name.empty())
+	{
+		std::wstring wname = std::filesystem::path{name}.wstring();
+		CheckHR(buffer->SetName(wname.c_str()));
+	}
+
 	if (!data)
 		return result;
 
@@ -60,8 +67,9 @@ export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std:
 
 export template <typename T>
 HRESULT CreateStaticBuffer(DxDevice& device, const std::vector<T>& data, const D3D12_RESOURCE_STATES initialState,
-						   ComPtr<ID3D12Resource>& buffer, const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
-{ return CreateStaticBuffer(device, data.data(), sizeof(T) * data.size(), initialState, buffer, resourceFlags); }
+						   ComPtr<ID3D12Resource>& buffer, const std::string& name = "",
+						   const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
+{ return CreateStaticBuffer(device, data.data(), sizeof(T) * data.size(), initialState, buffer, name, resourceFlags); }
 
 /*
  * Private descriptor helpers

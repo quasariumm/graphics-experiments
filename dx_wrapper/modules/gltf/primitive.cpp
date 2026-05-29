@@ -35,13 +35,17 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 		m_material = GltfMaterial{device, modelPath, asset, asset.materials[*primitive.materialIndex]};
 
 	// Make DX12 buffers
-	CheckHR(CreateStaticBuffer(device, m_vertices, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_vertexBuffer));
+	CheckHR(CreateStaticBuffer(device,
+							   m_vertices,
+							   D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+							   m_vertexBuffer,
+							   "Vertex Buffer"));
 
 	m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.SizeInBytes	  = m_vertices.size() * sizeof(Vertex);
 	m_vertexBufferView.StrideInBytes  = sizeof(Vertex);
 
-	CheckHR(CreateStaticBuffer(device, m_indices, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_indexBuffer));
+	CheckHR(CreateStaticBuffer(device, m_indices, D3D12_RESOURCE_STATE_INDEX_BUFFER, m_indexBuffer, "Index Buffer"));
 
 	m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.SizeInBytes	 = m_indices.size() * sizeof(std::uint32_t);
