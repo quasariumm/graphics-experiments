@@ -27,9 +27,6 @@ Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in StructuredBu
     fragment.Normal = bary.x * v0.Normal + bary.y * v1.Normal + bary.z * v2.Normal;
     fragment.Tangent = bary.x * v0.Tangent + bary.y * v1.Tangent + bary.z * v2.Tangent;
 
-    // Debug
-    fragment.Position = float3(indexBuffer[offset] % 64 / 64.0, indexBuffer[offset + 1] % 64 / 64.0, indexBuffer[offset + 2] % 64 / 64.0);
-
     return fragment;
 }
 
@@ -51,8 +48,8 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     if (Geometry32C.m_vertexBuffers == -1 || Geometry32C.m_indexBuffers == -1)
         return;
     
-    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[Geometry32C.m_vertexBuffers + InstanceIndex()];
-    StructuredBuffer<uint> indices = ResourceDescriptorHeap[Geometry32C.m_indexBuffers + InstanceIndex()];
+    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[72 + InstanceIndex()];
+    StructuredBuffer<uint> indices = ResourceDescriptorHeap[175 + InstanceIndex()];
 
     // Get the interpolated vertex data
     Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
@@ -60,21 +57,14 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     // Shade with the material
     ShaderMaterial material = MaterialsCB[InstanceIndex()];
 
-    float3 color = 0.0;
+    // float3 albedo = 0.0;
 
-    if (material.m_texIndices1[TEX_ALBEDO] != -1)
-    {
-        Texture2D<float4> albedoTex = ResourceDescriptorHeap[material.m_texIndices1[TEX_ALBEDO]];
-        color = albedoTex.SampleLevel(SSLinearWrap, fragment.Uv0, 0.0).rgb;
-    }
-
-    float3x4 objectToWorld = ObjectToWorld3x4();
-    // For normals, use inverse transpose (= transpose of inverse)
-    // For uniform scale, the 3x3 upper-left works fine
-    float3 worldNormal = normalize(mul((float3x3)objectToWorld, fragment.Normal));
+    // if (material.m_texIndices1[TEX_ALBEDO] != -1)
+    // {
+    //     Texture2D<float4> albedoTex = ResourceDescriptorHeap[material.m_texIndices1[TEX_ALBEDO]];
+    //     albedo = albedoTex.SampleLevel(SSLinearWrap, fragment.Uv0, 0.0).rgb;
+    // }
     
-    payload.m_color = worldNormal * 0.5 + 0.5;
-    payload.m_color = fragment.Position;
-    payload.m_color = HUEtoRGB(InstanceIndex() / 103.0);
+    payload.m_color = float3(fragment.Uv0, 0.0);
     payload.m_distance = RayTCurrent();
 }

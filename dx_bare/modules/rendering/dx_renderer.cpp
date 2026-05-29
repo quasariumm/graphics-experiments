@@ -61,7 +61,7 @@ void DxRenderer::Render()
 	m_camera.UpdateShaderCamera();
 	CameraConstBuffer cameraCb = {m_camera.GetShaderCamera(), {glm::vec4{0.f}}};
 
-	m_cameraConstBuffer.Bind(*m_device, &cameraCb, 0);
+	m_cameraConstBuffer.Bind(*m_device, std::move(cameraCb), 0);
 
 	for (const auto& model : m_models)
 	{

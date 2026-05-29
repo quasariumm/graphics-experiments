@@ -78,13 +78,8 @@ HRESULT CreateStaticBuffer(DxDevice& device, const std::vector<T>& data, const D
 void CreateSRV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU_DESCRIPTOR_HANDLE handle,
 			   size_t structuredBufferElementSize)
 {
-#ifdef _MSC_VER
-	const auto desc = resource->GetDesc();
-#else
-	D3D12_RESOURCE_DESC desc;
-	resource->GetDesc(&desc);
-#endif
-
+	const auto desc = GetDesc(resource);
+	
 	switch (desc.Dimension)
 	{
 	case D3D12_RESOURCE_DIMENSION_UNKNOWN:
@@ -123,14 +118,9 @@ void CreateSRV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU
 }
 
 void CreateUAV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU_DESCRIPTOR_HANDLE handle,
-			   size_t structuredBufferElementSize)
+			   size_t structuredBufferElementSize, ID3D12Resource* counterResource = nullptr)
 {
-#ifdef _MSC_VER
-	const auto desc = resource->GetDesc();
-#else
-	D3D12_RESOURCE_DESC desc;
-	resource->GetDesc(&desc);
-#endif
+	const auto desc = GetDesc(resource);
 
 	switch (desc.Dimension)
 	{
@@ -140,6 +130,8 @@ void CreateUAV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU
 	case D3D12_RESOURCE_DIMENSION_BUFFER:
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
 		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+		uavDesc.Buffer.CounterOffsetInBytes = 0;
+		uavDesc.Buffer.FirstElement = 0;
 		if (structuredBufferElementSize == 0)
 		{
 			// User wants a ByteAddressBuffer / Buffer<uint>
@@ -152,17 +144,16 @@ void CreateUAV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU
 		{
 			// User wants a StructuredBuffer<T>
 			uavDesc.Format					   = DXGI_FORMAT_UNKNOWN;
-			uavDesc.Buffer.FirstElement		   = 0;
 			uavDesc.Buffer.NumElements		   = desc.Width / structuredBufferElementSize;
 			uavDesc.Buffer.StructureByteStride = structuredBufferElementSize;
 			uavDesc.Buffer.Flags			   = D3D12_BUFFER_UAV_FLAG_NONE;
 		}
-		device->CreateUnorderedAccessView(resource, nullptr, &uavDesc, handle);
+		device->CreateUnorderedAccessView(resource, counterResource, &uavDesc, handle);
 		break;
 	case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
 	case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
 	case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
-		device->CreateUnorderedAccessView(resource, nullptr, nullptr, handle);
+		device->CreateUnorderedAccessView(resource, counterResource, nullptr, handle);
 		break;
 	}
 }
@@ -197,11 +188,12 @@ export DxDescriptorPile::IndexType AllocateShaderResourceView(DxDevice& device, 
  * @return The index in the pile
  */
 export DxDescriptorPile::IndexType AllocateUnorderedAccessView(DxDevice& device, ID3D12Resource* resource,
-															   std::size_t structuredBufferElementSize = 0)
+															   std::size_t	   structuredBufferElementSize = 0,
+															   ID3D12Resource* counterResource			   = nullptr)
 {
 	const auto heapIndex = device.GetShaderDescriptorPile().Allocate();
 	const auto result	 = device.GetShaderDescriptorPile().GetCpuHandleAt(heapIndex);
-	CreateUAV(device, resource, result, structuredBufferElementSize);
+	CreateUAV(device, resource, result, structuredBufferElementSize, counterResource);
 	return heapIndex;
 }
 
@@ -217,13 +209,7 @@ export DxDescriptorPile::IndexType AllocateConstantBufferView(DxDevice& device, 
 	const auto						result	  = device.GetShaderDescriptorPile().GetCpuHandleAt(heapIndex);
 	D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
 	desc.BufferLocation = resource->GetGPUVirtualAddress();
-#ifdef _MSC_VER
-	desc.SizeInBytes = resource->GetDesc().Width;
-#else
-	D3D12_RESOURCE_DESC resourceDesc;
-	resource->GetDesc(&resourceDesc);
-	desc.SizeInBytes = resourceDesc.Width;
-#endif
+	desc.SizeInBytes = GetDesc(resource).Width;
 	device->CreateConstantBufferView(&desc, result);
 	return heapIndex;
 }
@@ -252,10 +238,11 @@ export void CreateShaderResourceView(const DxDevice& device, const DxDescriptorH
  * @return The index in the pile
  */
 export void CreateUnorderedAccessView(const DxDevice& device, const DxDescriptorHeap& heap, const size_t index,
-									  ID3D12Resource* resource, std::size_t structuredBufferElementSize = 0)
+									  ID3D12Resource* resource, std::size_t structuredBufferElementSize = 0,
+									  ID3D12Resource* counterResource = nullptr)
 {
 	const auto result = heap.GetCpuHandleAt(index);
-	CreateUAV(device, resource, result, structuredBufferElementSize);
+	CreateUAV(device, resource, result, structuredBufferElementSize, counterResource);
 }
 
 /**
@@ -270,12 +257,6 @@ export void CreateConstantBufferView(const DxDevice& device, const DxDescriptorH
 	const auto						result = heap.GetCpuHandleAt(index);
 	D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
 	desc.BufferLocation = resource->GetGPUVirtualAddress();
-#ifdef _MSC_VER
-	desc.SizeInBytes = resource->GetDesc().Width;
-#else
-	D3D12_RESOURCE_DESC resourceDesc;
-	resource->GetDesc(&resourceDesc);
-	desc.SizeInBytes = resourceDesc.Width;
-#endif
+	desc.SizeInBytes = GetDesc(resource).Width;
 	device->CreateConstantBufferView(&desc, result);
 }

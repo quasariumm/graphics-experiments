@@ -4,6 +4,8 @@ export module dx_wrapper.resources.dx_structured_buffer;
 import std;
 import dx_wrapper.resources.dx_resource;
 import dx_wrapper.core;
+import dx_wrapper.rendering.dx_descriptor_pile;
+import dx_wrapper.helpers.dx_buffer_helpers;
 
 export template <typename T>
 class DxStructuredBuffer : protected DxResource
@@ -22,6 +24,9 @@ public:
 	ID3D12Resource* operator->() const override { return m_resource.Get(); }
 
 	ID3D12Resource* GetCounterResource() const { return m_counterResource.Get(); }
+	
+	DxDescriptorPile::IndexType GetSrvHeapIndex() const { return m_srvHeapIndex; }
+	DxDescriptorPile::IndexType GetUavHeapIndex() const { return m_uavHeapIndex; }
 
 private:
 
@@ -30,7 +35,8 @@ private:
 
 	std::vector<T> m_cpuData;
 
-	std::uint32_t m_uavHeapIndex = -1;
+	DxDescriptorPile::IndexType m_srvHeapIndex = -1;
+	DxDescriptorPile::IndexType m_uavHeapIndex = -1;
 };
 
 template <typename T>
@@ -73,24 +79,12 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 											GetIID(m_counterResource),
 											GetPPV(m_counterResource)));
 
-	// UAV
-	m_uavHeapIndex = device.GetShaderDescriptorPile().Allocate();
-	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
-	uavDesc.Format						= DXGI_FORMAT_UNKNOWN;
-	uavDesc.ViewDimension				= D3D12_UAV_DIMENSION_BUFFER;
-	uavDesc.Buffer.FirstElement			= 0;
-	uavDesc.Buffer.NumElements			= m_cpuData.size();
-	uavDesc.Buffer.StructureByteStride	= sizeof(T);
-	uavDesc.Buffer.CounterOffsetInBytes = 0;
-	uavDesc.Buffer.Flags				= D3D12_BUFFER_UAV_FLAG_NONE;
-
-	device->CreateUnorderedAccessView(m_resource.Get(),
-									  m_counterResource.Get(),
-									  &uavDesc,
-									  device.GetShaderDescriptorPile().GetCpuHandleAt(m_uavHeapIndex));
+	// Descriptors
+	m_srvHeapIndex = AllocateShaderResourceView(device, m_resource.Get(), sizeof(T));
+	m_uavHeapIndex = AllocateUnorderedAccessView(device, m_resource.Get(), sizeof(T), m_counterResource.Get());
 
 	// Upload
-	DxResource::SetData(m_cpuData.data(), m_cpuData.size());
+	DxResource::SetData(m_cpuData.data(), sizeof(T) * m_cpuData.size());
 	DxResource::Upload(device.GetResourceUpload(), device.GetDXDirectComQueue(), device.GetDXDirectComList());
 
 	device.GetResourceUpload().Begin();

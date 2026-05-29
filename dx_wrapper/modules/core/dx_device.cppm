@@ -55,6 +55,7 @@ public:
 	ResourceBank&	  GetResourceBank() const { return *m_resourceBank; }
 
 	void RegisterScratchResource(ComPtr<ID3D12Resource>&& resource);
+	void SetUavBarrier(ID3D12Resource* resource);
 
 	ID3D12Device5*				  operator*() const { return m_deviceResources.GetD3DDevice(); }
 	ID3D12Device5*				  operator->() const { return m_deviceResources.GetD3DDevice(); }

@@ -73,8 +73,7 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 	// Build the BLAS
 	device.GetDXDirectComList()->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV(m_blas.Get());
-	device.GetDXDirectComList()->ResourceBarrier(1, &barrier);
+	device.SetUavBarrier(m_blas.Get());
 	
 	device.RegisterScratchResource(std::move(scratchResource));
 }

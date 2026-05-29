@@ -204,6 +204,12 @@ void DxDevice::SetWindowCursorState(bool active) const
 void DxDevice::RegisterScratchResource(ComPtr<ID3D12Resource>&& resource)
 { m_scratchResources.emplace_back(std::move(resource)); }
 
+void DxDevice::SetUavBarrier(ID3D12Resource* resource)
+{
+	const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(resource);
+	m_deviceResources.GetCommandList()->ResourceBarrier(1, &barrier);
+}
+
 void DxDevice::BeginFrame()
 {
 	if (m_commandListOpened)

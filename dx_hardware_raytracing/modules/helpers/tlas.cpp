@@ -90,8 +90,7 @@ void Tlas::Generate(DxDevice& device)
 
 	device.GetDXDirectComList()->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 	
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::UAV(m_tlas.Get());
-	device.GetDXDirectComList()->ResourceBarrier(1, &barrier);
+	device.SetUavBarrier(m_tlas.Get());
 	
 	device.RegisterScratchResource(std::move(scratchResource));
 }

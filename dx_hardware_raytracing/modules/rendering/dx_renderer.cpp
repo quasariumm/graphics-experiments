@@ -33,7 +33,8 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_missRootSignature.Finalize(*m_device, "Miss Root Signature", false, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 
 	m_closestHitRootSignature = DxRootSignature{};
-	m_closestHitRootSignature.AddBufferSRV(0);
+	// Material buffer. Since that is not aligned, I create a descriptor just to be sure
+	m_closestHitRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1);
 	m_closestHitRootSignature.AddConstantBuffer(0);
 	m_closestHitRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
 										 D3D12_TEXTURE_ADDRESS_MODE_WRAP,
@@ -79,13 +80,15 @@ void DxRenderer::Render()
 										  reinterpret_cast<void*>(m_cameraConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.SetMissShader("shaders/miss.hlsl", "Miss");
+		
+		const auto materialBufferGpuHandle = m_device->GetShaderDescriptorPile().GetGpuHandleAt(m_materialBuffer.GetSrvHeapIndex());
 
 		m_renderPipeline.AddHitGroup("HitGroup",
 									 "shaders/hit.hlsl",
 									 "ClosestHit",
 									 "",
 									 "",
-									 {reinterpret_cast<void*>(m_materialBuffer->GetGPUVirtualAddress()),
+									 {reinterpret_cast<void*>(materialBufferGpuHandle.ptr),
 									  reinterpret_cast<void*>(m_sceneConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.Finalize(*m_device, "Main Ray Pipeline");
@@ -100,7 +103,7 @@ void DxRenderer::Render()
 	CameraConstBuffer cameraCb{m_camera.GetShaderCamera()};
 	// Rebind prevViewPos to inverseViewPos
 	cameraCb.m_shaderCamera.m_prevViewProjectionMatrix = glm::inverse(cameraCb.m_shaderCamera.m_viewProjectionMatrix);
-	m_cameraConstBuffer.UpdateData(*m_device, &cameraCb);
+	m_cameraConstBuffer.UpdateData(*m_device, std::move(cameraCb));
 
 	/*
 	 * Ray tracing
@@ -189,7 +192,7 @@ void DxRenderer::CreateRaySceneResources()
 	SceneConstBuffer sceneConstBuffer{};
 	sceneConstBuffer.m_vertexBuffers = m_sceneGeometryBuffer.GetVertexHeapIndex();
 	sceneConstBuffer.m_indexBuffers	 = m_sceneGeometryBuffer.GetIndexHeapIndex();
-	m_sceneConstBuffer.UpdateData(*m_device, &sceneConstBuffer);
+	m_sceneConstBuffer.UpdateData(*m_device, std::move(sceneConstBuffer));
 }
 
 void DxRenderer::CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial)
