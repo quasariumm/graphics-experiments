@@ -157,6 +157,8 @@ void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
 #ifndef NDEBUG
 	if (enableDebugLayer)
 	{
+		dred_query_device = m_d3dDevice.Get();
+		
 		// Configure debug device (if active).
 		ComPtr<ID3D12InfoQueue> d3dInfoQueue;
 		if (SUCCEEDED(m_d3dDevice->QueryInterface(IID_ID3D12InfoQueue, GetPPV(d3dInfoQueue))))
@@ -320,25 +322,6 @@ void DeviceResources::CreateWindowSizeDependentResources()
 					"Device Lost on ResizeBuffers: Reason code 0x%08X\n",
 					static_cast<unsigned int>((hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr));
 			OutputDebugStringA(buff);
-			
-			// Query DRED
-			const HRESULT removed = m_d3dDevice->GetDeviceRemovedReason();
-			if (FAILED(removed))
-			{
-				ComPtr<ID3D12DeviceRemovedExtendedData> dred;
-				m_d3dDevice->QueryInterface(IID_PPV_ARGS(&dred));
-
-				D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs{};
-				D3D12_DRED_PAGE_FAULT_OUTPUT pageFault{};
-				dred->GetAutoBreadcrumbsOutput(&breadcrumbs);
-				dred->GetPageFaultAllocationOutput(&pageFault);
-
-				// pageFault.PageFaultVA is your 0xCDCD... address
-				// Walk pageFault.pHeadExistingAllocationNode linked list for live resources
-				// Walk pageFault.pHeadRecentFreedAllocationNode for recently freed ones
-				auto reason = std::format("Device removed: DRED page fault at VA {:x}", pageFault.PageFaultVA);
-				OutputDebugStringA(reason.c_str());
-			}
 #endif
 			// If the device was removed for any reason, a new device and swap chain will need to be created.
 			HandleDeviceLost();
@@ -533,6 +516,25 @@ void DeviceResources::HandleDeviceLost()
 		{
 			dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL,
 										 DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+		}
+		
+		// Query DRED
+		const HRESULT removed = m_d3dDevice->GetDeviceRemovedReason();
+		if (FAILED(removed))
+		{
+			ComPtr<ID3D12DeviceRemovedExtendedData> dred;
+			m_d3dDevice->QueryInterface(IID_PPV_ARGS(&dred));
+
+			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs{};
+			D3D12_DRED_PAGE_FAULT_OUTPUT pageFault{};
+			dred->GetAutoBreadcrumbsOutput(&breadcrumbs);
+			dred->GetPageFaultAllocationOutput(&pageFault);
+
+			// pageFault.PageFaultVA is your 0xCDCD... address
+			// Walk pageFault.pHeadExistingAllocationNode linked list for live resources
+			// Walk pageFault.pHeadRecentFreedAllocationNode for recently freed ones
+			auto reason = std::format("Device removed: DRED page fault at VA {:x}", pageFault.PageFaultVA);
+			OutputDebugStringA(reason.c_str());
 		}
 	}
 #endif

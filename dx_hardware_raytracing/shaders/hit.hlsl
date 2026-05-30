@@ -55,7 +55,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
 
     // Shade with the material
-    ShaderMaterial material = MaterialsCB[InstanceIndex()];
+    // ShaderMaterial material = MaterialsCB[InstanceIndex()];
 
     // float3 albedo = 0.0;
 

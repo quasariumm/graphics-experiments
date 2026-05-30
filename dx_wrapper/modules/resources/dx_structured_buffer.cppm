@@ -99,5 +99,5 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 	device.GetResourceUpload().Upload(m_counterResource.Get(), 0, &counterData, 1);
 	Transition(device.GetDXDirectComList(), D3D12_RESOURCE_STATE_COMMON);
 
-	device.GetResourceUpload().End(device.GetDXDirectComQueue());
+	device.GetResourceUpload().End(device.GetDXDirectComQueue()).wait();
 }

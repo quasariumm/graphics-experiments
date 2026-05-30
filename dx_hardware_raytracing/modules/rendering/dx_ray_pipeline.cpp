@@ -330,7 +330,7 @@ void DxRayPipeline::ConfigureStateObjectProperties(DxDevice& device)
 
 	for (const auto& hitGroup : m_hitGroups)
 	{
-		CopyShaderData(m_stateObjectProperties, hitGroup.m_name, hitGroup.m_inputs, walkingPointer, m_missEntrySize);
+		CopyShaderData(m_stateObjectProperties, hitGroup.m_name, hitGroup.m_inputs, walkingPointer, m_hitGroupEntrySize);
 	}
 
 	CheckHR(CreateStaticBuffer(device, cpuData, sbtSize, D3D12_RESOURCE_STATE_COMMON, m_sbtResource));

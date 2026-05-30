@@ -17,6 +17,9 @@ import dx_wrapper.rendering;
 
 inline std::unordered_map<HWND, DxDevice*> registered_devices = {}; // NOLINT
 
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 619; }
+extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = "."; }
+
 #ifdef TESTPLATE_HAS_IMGUI
 extern "C++" LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam); // NOLINT
 #endif
