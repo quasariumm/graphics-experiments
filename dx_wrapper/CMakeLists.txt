@@ -179,7 +179,6 @@ target_include_directories(dx_wrapper BEFORE PUBLIC
 )
 
 target_link_libraries(dx_wrapper PUBLIC
-		std_module
 		d3d12
 		dxgi
 		dxguid
@@ -191,6 +190,10 @@ target_link_libraries(dx_wrapper PUBLIC
 		mikktspace
 		glm::glm
 )
+
+if (NOT USE_IMPORT_STD)
+	target_link_libraries(dx_wrapper PUBLIC std_module)
+endif()
 
 target_compile_definitions(dx_wrapper PUBLIC GLM_ENABLE_EXPERIMENTAL)
 

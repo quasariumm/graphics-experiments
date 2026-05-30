@@ -1,4 +1,5 @@
-﻿// Copyright (c) Microsoft Corporation.
+﻿#ifdef BUILD_CUSTOM_STD_MODULE
+// Copyright (c) Microsoft Corporation.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 // In a module-file, the optional `module;` must appear first; see [cpp.pre].
@@ -155,3 +156,4 @@ export module std;
 #include <cwctype>
 
 #pragma warning(pop)
+#endif
