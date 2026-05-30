@@ -23,8 +23,12 @@ export class DxDevice
 
 public:
 
+	using DebugLayerMode = DirectX::DeviceResources::DebugLayerMode;
+	static DebugLayerMode GetDebugLayerModeFromArgs(int argc, char** argv);
+
 	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window",
-					  D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0, bool enableDebugLayer = true);
+					  D3D_FEATURE_LEVEL featureLevel   = D3D_FEATURE_LEVEL_11_0,
+					  DebugLayerMode	debugLayerMode = DebugLayerMode::Enabled);
 	~DxDevice();
 
 	Input& GetInput() { return m_input; }

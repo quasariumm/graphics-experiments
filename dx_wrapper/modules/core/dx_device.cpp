@@ -59,7 +59,10 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 	return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel, bool enableDebugLayer)
+DxDevice::DebugLayerMode DxDevice::GetDebugLayerModeFromArgs(int argc, char** argv)
+{ return DirectX::DeviceResources::GetDebugLayerModeFromArgs(argc, argv); }
+
+DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel, DebugLayerMode debugLayerMode)
 	: m_windowWidth(width), m_windowHeight(height)
 {
 	// Needed for WIC textures
@@ -99,7 +102,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FE
 												 featureLevel,
 												 DirectX::DeviceResources::c_AllowTearing};
 	m_deviceResources.SetWindow(window, width, height);
-	m_deviceResources.CreateDeviceResources(enableDebugLayer);
+	m_deviceResources.CreateDeviceResources(debugLayerMode);
 	m_deviceResources.CreateWindowSizeDependentResources();
 
 	m_resourceUpload = std::make_unique<DxResourceUpload>(m_deviceResources.GetD3DDevice());

@@ -11,6 +11,7 @@ module;
 module dx_wrapper.external.device_resources;
 import std;
 import dx_wrapper.core.dx_common;
+import dx_wrapper.core.log;
 
 using namespace DirectX;
 
@@ -62,6 +63,48 @@ DeviceResources::DeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depth
 	}
 }
 
+DeviceResources::DebugLayerMode DeviceResources::GetDebugLayerModeFromArgs(int argc, char** argv) noexcept
+{
+	auto debugLayerMode = DebugLayerMode::Enabled;
+	
+	const std::span args{argv, argv + argc};
+	for (const char* arg : args)
+	{
+		Log::Info("Got argument {}", arg);
+		if (std::strcmp(arg, "--disable-debug-layer") == 0)
+			debugLayerMode = DebugLayerMode::Disabled;
+		if (std::strcmp(arg, "-nd") == 0)
+			debugLayerMode = DebugLayerMode::Disabled;
+		if (std::strcmp(arg, "--no-gpu-validation") == 0)
+			debugLayerMode = DebugLayerMode::EnabledNoGpuValidation;
+		if (std::strcmp(arg, "--no-com-queue-validation") == 0)
+			debugLayerMode = DebugLayerMode::EnabledNoComQueueValidation;
+		if (std::strcmp(arg, "--only-basic-validation") == 0)
+			debugLayerMode = DebugLayerMode::EnabledOnlyBasicValidation;
+	}
+	
+	switch (debugLayerMode)
+	{
+	case DebugLayerMode::Disabled:
+		Log::Info("D3D12 Debug Layer Mode: Disabled");
+		break;
+	case DebugLayerMode::Enabled:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (All validation layers)");
+		break;
+	case DebugLayerMode::EnabledNoGpuValidation:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (No GPU validation)");
+		break;
+	case DebugLayerMode::EnabledNoComQueueValidation:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (No synchronized CommandQueue validation)");
+		break;
+	case DebugLayerMode::EnabledOnlyBasicValidation:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (Only basic debug info)");
+		break;
+	}
+
+	return debugLayerMode;
+}
+
 // Destructor for DeviceResources.
 DeviceResources::~DeviceResources()
 {
@@ -70,13 +113,13 @@ DeviceResources::~DeviceResources()
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
+void DeviceResources::CreateDeviceResources(DebugLayerMode debugLayerMode)
 {
 #ifndef NDEBUG
 	// Enable the debug layer (requires the Graphics Tools "optional feature").
 	//
 	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
-	if (enableDebugLayer)
+	if (debugLayerMode >= DebugLayerMode::Enabled)
 	{
 		// DRED (Device Removed Extended Data)
 		ComPtr<ID3D12DeviceRemovedExtendedDataSettings1> dredSettings;
@@ -90,8 +133,18 @@ void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
 		{
 			debugController->EnableDebugLayer();
-			debugController->SetEnableGPUBasedValidation(TRUE);
-			debugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
+			
+			if (debugLayerMode != DebugLayerMode::EnabledNoGpuValidation &&
+				debugLayerMode != DebugLayerMode::EnabledOnlyBasicValidation)
+			{
+				debugController->SetEnableGPUBasedValidation(TRUE);
+			}
+			
+			if (debugLayerMode != DebugLayerMode::EnabledNoComQueueValidation &&
+				debugLayerMode != DebugLayerMode::EnabledOnlyBasicValidation)
+			{
+				debugController->SetEnableSynchronizedCommandQueueValidation(TRUE);
+			}
 		}
 		else
 		{
@@ -155,10 +208,10 @@ void DeviceResources::CreateDeviceResources(bool enableDebugLayer)
 	m_d3dDevice->SetName(L"DeviceResources");
 
 #ifndef NDEBUG
-	if (enableDebugLayer)
+	if (debugLayerMode >= DebugLayerMode::Enabled)
 	{
 		dred_query_device = m_d3dDevice.Get();
-		
+
 		// Configure debug device (if active).
 		ComPtr<ID3D12InfoQueue> d3dInfoQueue;
 		if (SUCCEEDED(m_d3dDevice->QueryInterface(IID_ID3D12InfoQueue, GetPPV(d3dInfoQueue))))
@@ -493,6 +546,39 @@ void DeviceResources::HandleDeviceLost()
 		m_deviceNotify->OnDeviceLost();
 	}
 
+#ifndef NDEBUG
+	if (m_d3dDevice)
+	{
+	#ifndef __MINGW32__
+		ComPtr<IDXGIDebug1> dxgiDebug;
+		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+		{
+			dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL,
+										 DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+		}
+	#endif
+
+		// Query DRED
+		const HRESULT removed = m_d3dDevice->GetDeviceRemovedReason();
+		if (FAILED(removed))
+		{
+			ComPtr<ID3D12DeviceRemovedExtendedData> dred;
+			m_d3dDevice->QueryInterface(IID_PPV_ARGS(&dred));
+
+			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs{};
+			D3D12_DRED_PAGE_FAULT_OUTPUT	   pageFault{};
+			dred->GetAutoBreadcrumbsOutput(&breadcrumbs);
+			dred->GetPageFaultAllocationOutput(&pageFault);
+
+			// pageFault.PageFaultVA is your 0xCDCD... address
+			// Walk pageFault.pHeadExistingAllocationNode linked list for live resources
+			// Walk pageFault.pHeadRecentFreedAllocationNode for recently freed ones
+			auto reason = std::format("Device removed: DRED page fault at VA {:x}", pageFault.PageFaultVA);
+			OutputDebugStringA(reason.c_str());
+		}
+	}
+#endif
+
 	for (UINT n = 0; n < m_backBufferCount; n++)
 	{
 		m_commandAllocators[n].Reset();
@@ -508,36 +594,6 @@ void DeviceResources::HandleDeviceLost()
 	m_swapChain.Reset();
 	m_d3dDevice.Reset();
 	m_dxgiFactory.Reset();
-
-#if defined(_DEBUG) && !defined(__MINGW32__)
-	{
-		ComPtr<IDXGIDebug1> dxgiDebug;
-		if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
-		{
-			dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL,
-										 DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_SUMMARY | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
-		}
-		
-		// Query DRED
-		const HRESULT removed = m_d3dDevice->GetDeviceRemovedReason();
-		if (FAILED(removed))
-		{
-			ComPtr<ID3D12DeviceRemovedExtendedData> dred;
-			m_d3dDevice->QueryInterface(IID_PPV_ARGS(&dred));
-
-			D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs{};
-			D3D12_DRED_PAGE_FAULT_OUTPUT pageFault{};
-			dred->GetAutoBreadcrumbsOutput(&breadcrumbs);
-			dred->GetPageFaultAllocationOutput(&pageFault);
-
-			// pageFault.PageFaultVA is your 0xCDCD... address
-			// Walk pageFault.pHeadExistingAllocationNode linked list for live resources
-			// Walk pageFault.pHeadRecentFreedAllocationNode for recently freed ones
-			auto reason = std::format("Device removed: DRED page fault at VA {:x}", pageFault.PageFaultVA);
-			OutputDebugStringA(reason.c_str());
-		}
-	}
-#endif
 
 	CreateDeviceResources();
 	CreateWindowSizeDependentResources();

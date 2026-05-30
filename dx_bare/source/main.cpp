@@ -5,16 +5,20 @@ import dx_bare.rendering.dx_render;
 
 struct Demo
 {
-	DxDevice m_device{};
-	DxRenderer m_renderer{&m_device};
+	explicit Demo(const DxDevice::DebugLayerMode debugLayerMode = DxDevice::DebugLayerMode::Enabled)
+		: m_device{1920, 1080, "DXR Bare", D3D_FEATURE_LEVEL_11_0, debugLayerMode}, m_renderer{&m_device}
+	{}
+	
+	DxDevice m_device;
+	DxRenderer m_renderer;
 	
 	void Run();
 	void HandleInput();
 };
 
-int main()
+int main(int argc, char** argv)
 {
-	Demo demo{};
+	Demo demo{DxDevice::GetDebugLayerModeFromArgs(argc, argv)};
 	demo.Run();
 	return 0;
 }
