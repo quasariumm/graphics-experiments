@@ -48,23 +48,23 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     if (Geometry32C.m_vertexBuffers == -1 || Geometry32C.m_indexBuffers == -1)
         return;
     
-    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[72 + InstanceIndex()];
-    StructuredBuffer<uint> indices = ResourceDescriptorHeap[175 + InstanceIndex()];
+    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[Geometry32C.m_vertexBuffers + InstanceIndex()];
+    StructuredBuffer<uint> indices = ResourceDescriptorHeap[Geometry32C.m_indexBuffers + InstanceIndex()];
 
     // Get the interpolated vertex data
     Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
 
     // Shade with the material
-    // ShaderMaterial material = MaterialsCB[InstanceIndex()];
+    ShaderMaterial material = MaterialsCB[InstanceIndex()];
 
-    // float3 albedo = 0.0;
+    float3 albedo = 0.0;
 
-    // if (material.m_texIndices1[TEX_ALBEDO] != -1)
-    // {
-    //     Texture2D<float4> albedoTex = ResourceDescriptorHeap[material.m_texIndices1[TEX_ALBEDO]];
-    //     albedo = albedoTex.SampleLevel(SSLinearWrap, fragment.Uv0, 0.0).rgb;
-    // }
+    if (material.m_texIndices1[TEX_ALBEDO] != -1)
+    {
+        Texture2D<float4> albedoTex = ResourceDescriptorHeap[material.m_texIndices1[TEX_ALBEDO]];
+        albedo = albedoTex.SampleLevel(SSLinearWrap, fragment.Uv0, 0.0).rgb;
+    }
     
-    payload.m_color = float3(fragment.Uv0, 0.0);
+    payload.m_color = albedo;//float3(fragment.Uv0, 0.0);
     payload.m_distance = RayTCurrent();
 }

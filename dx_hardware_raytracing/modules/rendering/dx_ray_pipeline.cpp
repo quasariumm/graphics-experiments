@@ -449,6 +449,7 @@ DxRayPipeline::Library&	 DxRayPipeline::Library::operator=(const Library& rhs)
 DxRayPipeline::HitGroup& DxRayPipeline::HitGroup::operator=(const HitGroup& rhs)
 {
 	// Move instead of copy to keep LPCWSTR pointers alive
+	m_inputs	 = rhs.m_inputs;
 	m_name		 = rhs.m_name;
 	m_closestHit = rhs.m_closestHit;
 	m_anyHit	 = rhs.m_anyHit;
