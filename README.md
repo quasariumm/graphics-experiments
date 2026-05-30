@@ -9,10 +9,12 @@ This is a library of personal projects with which I experiment with graphics-rel
 - `dx_meshlets`: A demo in which I try out clustered geometry rendering for the first time
 
 ## Building
-This the projects use C++23 with `import std;` support. Only the `ninja` generator supports this with one of the following compilers:
-- [Windows] MSVC 14.36 or newer
-- [MinGW, Linux] GCC 15 or newer
-- [MinGW, Linux] Clang 18.1.2 with `libc++` or `libstdc++`
+This the projects use C++23 with modules support. The list of compilers that support this are:
+- [Windows] MSVC 14.34 or newer
+- [MinGW, Linux] GCC 14 or newer
+- [MinGW, Linux] Clang 16.0 or newer
+
+For a more up-to-date list, please refer to the [CMake docs](https://cmake.org/cmake/help/latest/manual/cmake-cxxmodules.7.html#compiler-support) 
 
 When building on Windows, I recomment using MSVC for all DX12 projects, since the DX12 debug layer messages print to the LLDB console and are not visible (as far as I can see) on GDB.
 
