@@ -4,6 +4,9 @@ include(common/cmake/setup_cxx.cmake)
 
 project(graphics_experiments)
 
+set(TESTPLATES_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(std_module)
 add_subdirectory(dx_wrapper)
 add_subdirectory(dx_bare)
 add_subdirectory(dx_imgui)

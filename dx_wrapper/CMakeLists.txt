@@ -179,6 +179,7 @@ target_include_directories(dx_wrapper BEFORE PUBLIC
 )
 
 target_link_libraries(dx_wrapper PUBLIC
+		std_module
 		d3d12
 		dxgi
 		dxguid
@@ -208,5 +209,7 @@ add_custom_command(TARGET ${target} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		${DXC_SOURCE_DIR}/bin/x64/dxcompiler.dll
 		${DXC_SOURCE_DIR}/bin/x64/dxil.dll
+		${TESTPLATES_DIR}/agility_sdk/D3D12Core.dll
+		${TESTPLATES_DIR}/agility_sdk/d3d12SDKLayers.dll
 		$<TARGET_FILE_DIR:${target}>)
 endfunction()
