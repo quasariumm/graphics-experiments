@@ -60,7 +60,8 @@ inline DirectX::TEX_DIMENSION TextureTypeToDxTex(const TextureType type)
 	return DirectX::TEX_DIMENSION_TEXTURE2D;
 }
 
-DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips, D3D12_RESOURCE_FLAGS additionalFlags)
+DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, const bool generateMips,
+					 D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	m_device = &device;
 
@@ -88,16 +89,12 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
-	
+
 	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
 		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
-	CheckHR(DirectX::CreateTextureEx(*device,
-									 metadata,
-									 flags,
-									 DirectX::CREATETEX_DEFAULT,
-									 m_resource.GetAddressOf()));
+	CheckHR(DirectX::CreateTextureEx(*device, metadata, flags, DirectX::CREATETEX_DEFAULT, m_resource.GetAddressOf()));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
@@ -117,11 +114,12 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 #endif
 	m_textureType = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
 
-	GenerateDescriptors(device, true, isCubemap);
+	UpdateOrCreateSrv(device, isCubemap);
 }
 
 DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const TextureType type, const DXGI_FORMAT format,
-					 const std::uint32_t width, const std::uint32_t height, const std::uint32_t depth, bool generateMips, D3D12_RESOURCE_FLAGS additionalFlags)
+					 const std::uint32_t width, const std::uint32_t height, const std::uint32_t depth, bool generateMips,
+					 D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	m_textureType = type;
 
@@ -162,16 +160,12 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
-	
+
 	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
 		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
-	CheckHR(DirectX::CreateTextureEx(*device,
-									 metadata,
-									 flags,
-									 DirectX::CREATETEX_DEFAULT,
-									 m_resource.GetAddressOf()));
+	CheckHR(DirectX::CreateTextureEx(*device, metadata, flags, DirectX::CREATETEX_DEFAULT, m_resource.GetAddressOf()));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
@@ -186,17 +180,17 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const Textur
 	SetState(D3D12_RESOURCE_STATE_COPY_DEST);
 	Transition(device.GetDXDirectComList(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
-	GenerateDescriptors(device, true, isCube);
+	UpdateOrCreateSrv(device, isCube);
 }
 
 DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t width, std::uint32_t height,
 					 std::uint32_t depth, bool allocateMips, D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	m_textureType = type;
-	
+
 	std::size_t mips = 1;
 	DirectX::CalculateMipLevels(width, height, mips);
-	
+
 	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
 		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
@@ -211,8 +205,8 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 	texDesc.Layout			 = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	texDesc.MipLevels		 = allocateMips ? mips : 1;
 	texDesc.Alignment		 = 0;
-	
-	texDesc.SampleDesc.Count = 1;
+
+	texDesc.SampleDesc.Count   = 1;
 	texDesc.SampleDesc.Quality = 0;
 
 	const CD3DX12_HEAP_PROPERTIES heapProp{D3D12_HEAP_TYPE_DEFAULT};
@@ -225,10 +219,11 @@ DxTexture::DxTexture(const DxDevice& device, TextureType type, DXGI_FORMAT forma
 											GetIID(m_resource),
 											GetPPV(m_resource)));
 
-	GenerateDescriptors(device, true, type == TextureType::DCube);
+	UpdateOrCreateSrv(device, type == TextureType::DCube);
 }
 
-DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::size_t size, const bool generateMips, D3D12_RESOURCE_FLAGS additionalFlags)
+DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::size_t size, const bool generateMips,
+					 D3D12_RESOURCE_FLAGS additionalFlags)
 {
 	const bool isHdr = size >= 2 && *reinterpret_cast<const std::uint16_t*>(data) == 0x3f23;
 	const bool isExr = size >= 4 && *reinterpret_cast<const std::uint32_t*>(data) == 0x01312f76;
@@ -255,16 +250,12 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::s
 		image	 = std::move(mipChain);
 		metadata = image.GetMetadata();
 	}
-	
+
 	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
 		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
-	CheckHR(DirectX::CreateTextureEx(*device,
-									 metadata,
-									 flags,
-									 DirectX::CREATETEX_DEFAULT,
-									 &m_resource));
+	CheckHR(DirectX::CreateTextureEx(*device, metadata, flags, DirectX::CREATETEX_DEFAULT, &m_resource));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	CheckHR(DirectX::PrepareUpload(*device, image.GetImages(), image.GetImageCount(), metadata, subresources));
@@ -284,7 +275,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::byte* data, const std::s
 #endif
 	m_textureType = isCubemap ? TextureType::DCube : DxToTextureType(desc.Dimension, desc.DepthOrArraySize);
 
-	GenerateDescriptors(device, true, isCubemap);
+	UpdateOrCreateSrv(device, isCubemap);
 }
 
 DxTexture::~DxTexture()
@@ -300,6 +291,59 @@ DxTexture::~DxTexture()
 ID3D12Resource* DxTexture::GetResource() const { return m_resource.Get(); }
 ID3D12Resource* DxTexture::operator*() const { return m_resource.Get(); }
 ID3D12Resource* DxTexture::operator->() const { return m_resource.Get(); }
+
+void DxTexture::Resize(const DxDevice& device, std::uint32_t width, std::uint32_t height, std::uint32_t depth)
+{
+	auto oldResource = m_resource;
+
+	// Make the new resource
+	ResizeClear(device, width, height, depth);
+
+	// Copy over (a region of) the old resource into the new
+	const CD3DX12_TEXTURE_COPY_LOCATION dst{m_resource.Get()};
+	const CD3DX12_TEXTURE_COPY_LOCATION src{oldResource.Get()};
+
+	const auto		  desc = GetDesc(oldResource.Get());
+	const CD3DX12_BOX region{
+			0,
+			0,
+			0,
+			static_cast<long>(std::min(desc.Width, static_cast<UINT64>(width))),
+			static_cast<long>(std::min(desc.Height, height)),
+			std::min(desc.DepthOrArraySize, static_cast<UINT16>(depth)),
+	};
+
+	device.GetDXDirectComList()->CopyTextureRegion(&dst, 0, 0, 0, &src, &region);
+}
+
+void DxTexture::ResizeClear(const DxDevice& device, std::uint32_t width, std::uint32_t height, std::uint32_t depth)
+{
+	auto desc			  = GetDesc(m_resource.Get());
+	desc.Width			  = width;
+	desc.Height			  = height;
+	desc.DepthOrArraySize = depth;
+
+	const CD3DX12_HEAP_PROPERTIES heapProp{D3D12_HEAP_TYPE_DEFAULT};
+
+	m_resource = nullptr;
+
+	SetState(D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+	CheckHR(device->CreateCommittedResource(&heapProp,
+											D3D12_HEAP_FLAG_NONE,
+											&desc,
+											D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+											nullptr,
+											GetIID(m_resource.GetAddressOf()),
+											GetPPV(m_resource.GetAddressOf())));
+
+	// Point all descriptors to the correct location
+	UpdateOrCreateSrv(device, m_textureType == TextureType::DCube, true);
+	for (int i = 0; i < m_uavDescs.size(); ++i)
+		UpdateOrCreateUav(device, 0, 0, 0, true, i);
+	
+	DerivedUpdateDescriptors(device);
+}
 
 std::size_t DxTexture::GetWidth() const
 {
@@ -357,14 +401,93 @@ std::uint32_t DxTexture::GetNumMips() const
 }
 
 void DxTexture::CreateUAV(const DxDevice& device, std::uint32_t mip, std::uint32_t sliceMin, std::uint32_t sliceMax)
+{ UpdateOrCreateUav(device, mip, sliceMin, sliceMax); }
+
+std::int32_t DxTexture::GetSrvHeapIndex() const { return m_srvHeapIndex; }
+std::int32_t DxTexture::GetUavHeapIndex(const std::uint32_t idx) const { return m_uavHeapIndices.at(idx); }
+bool		 DxTexture::IsValid() const { return m_resource.Get() != nullptr && m_textureType != TextureType::Invalid; }
+
+void DxTexture::UpdateOrCreateSrv(const DxDevice& device, bool isCubemap, bool update)
 {
-	auto&	   descriptorPile = device.GetShaderDescriptorPile();
-	const auto uavIdx		  = descriptorPile.Allocate();
-	m_uavHeapIndices.push_back(uavIdx);
+	// Generate descriptors
+	auto& descriptorPile = device.GetShaderDescriptorPile();
+
+	// Allocate index when creating the SRV
+	if (!update)
+		m_srvHeapIndex = descriptorPile.Allocate();
+
+	const auto srv = descriptorPile.GetCpuHandleAt(m_srvHeapIndex);
+
+	switch (m_textureType)
+	{
+	case TextureType::Invalid:
+		return;
+	case TextureType::D1:
+		m_srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex1D(GetFormat());
+		break;
+	case TextureType::D1Array:
+		m_srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex1DArray(GetFormat());
+		break;
+	case TextureType::D2:
+		m_srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2D(GetFormat());
+		break;
+	case TextureType::D2Array:
+		m_srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2DArray(GetFormat());
+		break;
+	case TextureType::D3:
+		m_srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex3D(GetFormat());
+		break;
+	case TextureType::DCube:
+		m_srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2DArray(GetFormat(), 6);
+		break;
+	}
+
+	device->CreateShaderResourceView(m_resource.Get(), &m_srvDesc, srv);
+}
+
+void DxTexture::UpdateOrCreateUav(const DxDevice& device, std::uint32_t mip, std::uint32_t sliceMin, std::uint32_t sliceMax,
+								  bool update, std::size_t updateIndex)
+{
+	auto& descriptorPile = device.GetShaderDescriptorPile();
+
+	const auto uavIdx = (update) ? m_uavHeapIndices.at(updateIndex) : descriptorPile.Allocate();
+
+	if (!update)
+		m_uavHeapIndices.push_back(uavIdx);
 
 	const auto uav = descriptorPile.GetCpuHandleAt(uavIdx);
 
-	CD3DX12_UNORDERED_ACCESS_VIEW_DESC uavDesc{};
+	CD3DX12_UNORDERED_ACCESS_VIEW_DESC& uavDesc = (update) ? m_uavDescs.at(updateIndex) : m_uavDescs.emplace_back();
+
+	if (update)
+	{
+		// Write to the mip and slice params based on the desc
+		switch (uavDesc.ViewDimension)
+		{
+		case D3D12_UAV_DIMENSION_TEXTURE1D:
+			mip		 = uavDesc.Texture1D.MipSlice;
+			sliceMin = 0;
+			sliceMax = 1;
+			break;
+		case D3D12_UAV_DIMENSION_TEXTURE2D:
+			mip		 = uavDesc.Texture2D.MipSlice;
+			sliceMin = 0;
+			sliceMax = 1;
+			break;
+		case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+			mip		 = uavDesc.Texture2DArray.MipSlice;
+			sliceMin = uavDesc.Texture2DArray.FirstArraySlice;
+			sliceMax = uavDesc.Texture2DArray.FirstArraySlice + uavDesc.Texture2DArray.ArraySize;
+			break;
+		case D3D12_UAV_DIMENSION_TEXTURE3D:
+			mip		 = uavDesc.Texture3D.MipSlice;
+			sliceMin = uavDesc.Texture3D.FirstWSlice;
+			sliceMax = uavDesc.Texture3D.FirstWSlice + uavDesc.Texture3D.WSize;
+			break;
+		default:
+			break;
+		}
+	}
 
 	switch (m_textureType)
 	{
@@ -391,49 +514,4 @@ void DxTexture::CreateUAV(const DxDevice& device, std::uint32_t mip, std::uint32
 	}
 
 	device->CreateUnorderedAccessView(GetResource(), nullptr, &uavDesc, uav);
-}
-
-std::int32_t DxTexture::GetSrvHeapIndex() const { return m_srvHeapIndex; }
-std::int32_t DxTexture::GetUavHeapIndex(const std::uint32_t idx) const { return m_uavHeapIndices.at(idx); }
-bool		 DxTexture::IsValid() const { return m_resource.Get() != nullptr && m_textureType != TextureType::Invalid; }
-
-void DxTexture::GenerateDescriptors(const DxDevice& device, const bool generateSrv, const bool isCubemap)
-{
-	// Generate descriptors
-	auto& descriptorPile = device.GetShaderDescriptorPile();
-
-	if (generateSrv)
-	{
-		m_srvHeapIndex = descriptorPile.Allocate();
-
-		const auto srv = descriptorPile.GetCpuHandleAt(m_srvHeapIndex);
-
-		CD3DX12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-
-		switch (m_textureType)
-		{
-		case TextureType::Invalid:
-			return;
-		case TextureType::D1:
-			srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex1D(GetFormat());
-			break;
-		case TextureType::D1Array:
-			srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex1DArray(GetFormat());
-			break;
-		case TextureType::D2:
-			srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2D(GetFormat());
-			break;
-		case TextureType::D2Array:
-			srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2DArray(GetFormat());
-			break;
-		case TextureType::D3:
-			srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex3D(GetFormat());
-			break;
-		case TextureType::DCube:
-			srvDesc = CD3DX12_SHADER_RESOURCE_VIEW_DESC::Tex2DArray(GetFormat(), 6);
-			break;
-		}
-
-		device->CreateShaderResourceView(m_resource.Get(), &srvDesc, srv);
-	}
 }

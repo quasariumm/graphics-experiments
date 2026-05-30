@@ -73,8 +73,11 @@ public:
 
 private:
 
-	void CreateRenderTargetView(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle, std::uint32_t mipLevel) const;
+	void UpdateOrCreateRtv(const DxDevice& device, D3D12_CPU_DESCRIPTOR_HANDLE handle, std::uint32_t mipLevel);
 
-	DxDescriptorHeap			m_rtvHeap;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_rtv{};
+	void DerivedUpdateDescriptors(const DxDevice& device) override;
+
+	DxDescriptorHeap			  m_rtvHeap;
+	D3D12_RENDER_TARGET_VIEW_DESC m_rtvDesc{};
+	D3D12_CPU_DESCRIPTOR_HANDLE	  m_rtv{};
 };

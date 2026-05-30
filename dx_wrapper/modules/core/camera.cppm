@@ -18,23 +18,11 @@ public:
 	Transform& GetTransform() { return m_transform; }
 	const Transform& GetTransform() const { return m_transform; }
 	
-	void SetFov(const float fov)
-	{
-		m_fov = fov;
-		UpdateProjectionMatrix(m_aspect);
-	}
-	void SetNearPlane(const float nearPlane)
-	{
-		m_nearPlane = nearPlane;
-		m_shaderCamera.m_nearPlane = nearPlane;
-		UpdateProjectionMatrix(m_aspect);
-	}
-	void SetFarPlane(const float farPlane)
-	{
-		m_farPlane = farPlane;
-		m_shaderCamera.m_farPlane = farPlane;
-		UpdateProjectionMatrix(m_aspect);
-	}
+	void SetFov(float fov);
+	void SetNearPlane(float nearPlane);
+	void SetFarPlane(float farPlane);
+	void SetAspectRatio(float aspect);
+	void SetAspectRatio(const DxDevice& device);
 
 	float GetFov() const { return m_fov; }
 	float GetNearPlane() const { return m_nearPlane; }

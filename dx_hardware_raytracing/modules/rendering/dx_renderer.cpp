@@ -49,7 +49,7 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_camera.GetTransform().SetPosition(glm::vec3{0, 0, 4});
 
 	m_cameraConstBuffer = DxConstBuffer<CameraConstBuffer>{*m_device, nullptr, ConstBufferType::Static};
-	m_sceneConstBuffer = DxConstBuffer<SceneConstBuffer>{*m_device, nullptr, ConstBufferType::Static};
+	m_sceneConstBuffer	= DxConstBuffer<SceneConstBuffer>{*m_device, nullptr, ConstBufferType::Static};
 
 	m_renderPipeline = DxRayPipeline{};
 
@@ -65,6 +65,13 @@ void DxRenderer::AddModel(const std::filesystem::path& path) { m_models.emplace_
 
 void DxRenderer::Render()
 {
+	// Check resize
+	if (m_device->GetWidth() != m_rayOutputTexture.GetWidth() || m_device->GetHeight() != m_rayOutputTexture.GetHeight())
+	{
+		m_rayOutputTexture.ResizeClear(*m_device, m_device->GetWidth(), m_device->GetHeight());
+		m_camera.SetAspectRatio(*m_device);
+	}
+
 	// Generate a TLAS is not done yet
 	static bool generatedTlas = false;
 	if (!generatedTlas)
@@ -80,8 +87,9 @@ void DxRenderer::Render()
 										  reinterpret_cast<void*>(m_cameraConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.SetMissShader("shaders/miss.hlsl", "Miss");
-		
-		const auto materialBufferGpuHandle = m_device->GetShaderDescriptorPile().GetGpuHandleAt(m_materialBuffer.GetSrvHeapIndex());
+
+		const auto materialBufferGpuHandle =
+				m_device->GetShaderDescriptorPile().GetGpuHandleAt(m_materialBuffer.GetSrvHeapIndex());
 
 		m_renderPipeline.AddHitGroup("HitGroup",
 									 "shaders/hit.hlsl",

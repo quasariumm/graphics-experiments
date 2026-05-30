@@ -74,8 +74,11 @@ public:
 
 private:
 
-	void CreateDsv(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t depth);
+	void UpdateOrCreateDsv(const DxDevice& device, TextureType type, DXGI_FORMAT format, std::uint32_t depth, bool update = false);
+	
+	void DerivedUpdateDescriptors(const DxDevice& device) override;
 
-	DxDescriptorHeap			m_dsvHeap;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_dsv{};
+	DxDescriptorHeap			  m_dsvHeap;
+	D3D12_DEPTH_STENCIL_VIEW_DESC m_dsvDesc{};
+	D3D12_CPU_DESCRIPTOR_HANDLE	  m_dsv{};
 };

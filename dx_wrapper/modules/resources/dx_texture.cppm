@@ -87,6 +87,24 @@ public:
 	ID3D12Resource* operator->() const override;
 
 	/*
+	 * Size operations
+	 */
+
+	/**
+	 * @brief Resizes the texture without affecting the heap indices
+	 * @attention This copies the existing data to the top left corner. If you want to clear the texture as well,
+	 *		please use @ref DxTexture::ResizeClear(const DxDevice&,std::uint32_t,std::uint32_t)
+	 */
+	void Resize(const DxDevice& device, std::uint32_t width, std::uint32_t height = 1, std::uint32_t depth = 1);
+
+	/**
+	 * @brief Resizes the texture without affecting the heap indices
+	 * @attention Clears the texture. If you want to preserve the data,
+	 *		please use @ref DxTexture::Resize(const DxDevice&,std::uint32_t,std::uint32_t)
+	 */
+	void ResizeClear(const DxDevice& device, std::uint32_t width, std::uint32_t height = 1, std::uint32_t depth = 1);
+
+	/*
 	 * Getters via the RESOURCE_DESC
 	 */
 
@@ -123,16 +141,24 @@ public:
 
 protected:
 
-	void GenerateDescriptors(const DxDevice& device, bool generateSrv, bool isCubemap);
+	void UpdateOrCreateSrv(const DxDevice& device, bool isCubemap, bool update = false);
+	void UpdateOrCreateUav(const DxDevice& device, std::uint32_t mip, std::uint32_t sliceMin, std::uint32_t sliceMax, bool update = false, std::size_t updateIndex = 0);
+	
+	virtual void DerivedUpdateDescriptors(const DxDevice&) {}
 
 private:
+	
 
 	/** Since I don't have a singleton, I need this to de-allocate the descriptor indices */
 	const DxDevice* m_device = nullptr;
 
 	TextureType m_textureType = TextureType::Invalid;
 
-	ComPtr<ID3D12Resource>	  m_resource;
-	std::int32_t			  m_srvHeapIndex = -1;
-	std::vector<std::int32_t> m_uavHeapIndices{};
+	ComPtr<ID3D12Resource> m_resource;
+
+	CD3DX12_SHADER_RESOURCE_VIEW_DESC m_srvDesc;
+	std::int32_t					  m_srvHeapIndex = -1;
+
+	std::vector<CD3DX12_UNORDERED_ACCESS_VIEW_DESC> m_uavDescs;
+	std::vector<std::int32_t>						m_uavHeapIndices{};
 };

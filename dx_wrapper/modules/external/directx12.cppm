@@ -414,9 +414,15 @@ export using ::D3D12_HEAP_PROPERTIES;
 export using ::CD3DX12_HEAP_PROPERTIES;
 export using ::D3D12_RESOURCE_DESC;
 export using ::CD3DX12_RESOURCE_DESC;
+
 export using ::D3D12_CLEAR_VALUE;
 export using ::CD3DX12_CLEAR_VALUE;
 export using ::D3D12_SUBRESOURCE_DATA;
+
+export using ::D3D12_TEXTURE_COPY_LOCATION;
+export using ::CD3DX12_TEXTURE_COPY_LOCATION;
+export using ::D3D12_BOX;
+export using ::CD3DX12_BOX;
 
 REGISTER_IID(ID3D12Resource);
 

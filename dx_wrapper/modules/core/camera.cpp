@@ -17,6 +17,36 @@ Camera::Camera(const DxDevice* device)
 	UpdateProjectionMatrix(m_aspect);
 }
 
+void Camera::SetFov(const float fov)
+{
+	m_fov = fov;
+	UpdateProjectionMatrix(m_aspect);
+}
+
+void Camera::SetNearPlane(const float nearPlane)
+{
+	m_nearPlane				   = nearPlane;
+	m_shaderCamera.m_nearPlane = nearPlane;
+	UpdateProjectionMatrix(m_aspect);
+}
+
+void Camera::SetFarPlane(const float farPlane)
+{
+	m_farPlane				  = farPlane;
+	m_shaderCamera.m_farPlane = farPlane;
+	UpdateProjectionMatrix(m_aspect);
+}
+
+void Camera::SetAspectRatio(const float aspect)
+{
+	UpdateProjectionMatrix(aspect);
+}
+
+void Camera::SetAspectRatio(const DxDevice& device)
+{
+	UpdateProjectionMatrix(static_cast<float>(device.GetWidth()) / static_cast<float>(device.GetHeight()));
+}
+
 void Camera::UpdateShaderCamera()
 {
 	// Implemented this to update the projection matrix of a newly serialized camera component
