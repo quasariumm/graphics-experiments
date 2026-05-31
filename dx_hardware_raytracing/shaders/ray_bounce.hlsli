@@ -3,17 +3,12 @@
 
 #include "materials.hlsli"
 
-uint Randomise(inout uint seed)
+uint Randomise(in uint seed)
 {
 	seed = seed * 747796405u + 2891336453u;
 	seed = ((seed >> ((seed >> 28u) + 4u)) ^ seed) * 277803737u;
 	seed = (seed >> 22u) ^ seed;
 	return seed;
-}
-
-float Xi(inout uint seed)
-{
-	return Randomise(seed) / 4294967295.f;
 }
 
 float RandomFloat(inout uint seed)
@@ -27,7 +22,7 @@ float3 SampleGGX(inout uint seed, float3 normal, float3 tangent, float3 bitangen
 	float alpha = roughness * roughness;
 
 	// Transform view direction to local space
-	float3 wo_local = float3(dot(wo, normal), dot(wo, bitangent), dot(wo, bitangent));
+	float3 wo_local = float3(dot(wo, tangent), dot(wo, bitangent), dot(wo, normal));
 
 	// Section 3.2: transforming the view direction to the hemisphere configuration
 	float3 wh = normalize(float3(alpha * wo_local.x, alpha * wo_local.y, wo_local.z));
@@ -57,39 +52,53 @@ float3 SampleGGX(inout uint seed, float3 normal, float3 tangent, float3 bitangen
 	return normalize(Ne.x * tangent + Ne.y * bitangent + Ne.z * normal);
 }
 
-uint RaySeed(in HitInfo hitInfo)
+uint RaySeed(in HitInfo hitInfo, in uint frameNum)
 {
-	uint3 dims = DispatchRaysDimensions();
-	uint depth = hitInfo.m_currentRecursionDepth;
-	uint seed = dims.x ^ (dims.y << 1) ^ (dims.z << 2) ^ Randomise(depth);
-	if (seed == 0)
-		seed += 1;
+	uint3 idx = DispatchRaysIndex();
+	idx += 1u;
+	uint seed = idx.x ^ Randomise(idx.y << 3);
+	seed ^= Randomise(GetRecursionDepth(hitInfo.m_flags) + frameNum);
 	return Randomise(seed);
 }
 
-RayDesc BounceRay(in HitInfo hitInfo, in float3 hitPos, in float3 wo, in FragmentAttributes attributes)
+RayDesc ShadowRay(in FragmentAttributes attributes, in float3 hitPos, in float3 wi)
+{
+	RayDesc desc;
+	desc.Origin = hitPos + 0.001 * attributes.m_normal;
+    desc.TMin = 0.001;
+    desc.TMax = 10000.0;
+	desc.Direction = wi;
+
+	return desc; 
+}
+
+RayDesc BounceRay(
+	in HitInfo hitInfo, in float3 hitPos, 
+	in float3 wo, in FragmentAttributes attributes, 
+	in uint frameNum
+)
 {
     RayDesc desc;
     desc.Origin = hitPos + 0.001 * attributes.m_normal;
     desc.TMin = 0.001;
     desc.TMax = 10000.0;
 
-    // if (attributes.m_roughness < 0.0001)
-    // {
+    if (attributes.m_roughness < 0.0001)
+    {
         desc.Direction = reflect(wo, attributes.m_normal);
-    // }
-    // else
-    // {
-    //     uint seed = RaySeed(hitInfo);
-    //     desc.Direction = SampleGGX(
-	// 		seed, 
-	// 		attributes.m_normal, 
-	// 		attributes.m_tangent, 
-	// 		attributes.m_bitangent, 
-	// 		wo, 
-	// 		attributes.m_roughness
-	// 	);
-    // }
+    }
+    else
+    {
+        uint seed = RaySeed(hitInfo, frameNum);
+        desc.Direction = SampleGGX(
+			seed, 
+			attributes.m_normal, 
+			attributes.m_tangent, 
+			attributes.m_bitangent, 
+			wo, 
+			attributes.m_roughness
+		);
+    }
 
     return desc;
 }

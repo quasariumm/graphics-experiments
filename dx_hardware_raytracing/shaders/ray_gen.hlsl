@@ -14,7 +14,7 @@ void RayGen()
     HitInfo payload;
     payload.m_color = 0.0;
     payload.m_distance = 0.0;
-    payload.m_currentRecursionDepth = 0u;
+    payload.m_flags = 0u;
     payload.m_rayColor = 1.0;
 
     // Get the thread ID

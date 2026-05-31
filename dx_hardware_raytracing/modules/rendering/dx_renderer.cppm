@@ -102,7 +102,9 @@ private:
 		std::int32_t  m_indexBuffers;
 		DebugMode	  m_debugMode;
 		std::uint32_t m_maxRecursionDepth;
-		glm::uvec4	  m_morePadding[15];
+		std::uint32_t m_frameNum;
+		glm::uvec3    m_padding;
+		glm::uvec4	  m_morePadding[14];
 	};
 	DxConstBuffer<SceneConstBuffer> m_sceneConstBuffer{};
 

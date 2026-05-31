@@ -119,6 +119,7 @@ void DxRenderer::Render()
 	SceneConstBuffer& sceneConstBuffer	 = m_sceneConstBuffer.GetLocalStorage();
 	sceneConstBuffer.m_debugMode		 = m_debugMode;
 	sceneConstBuffer.m_maxRecursionDepth = 8u;
+	sceneConstBuffer.m_frameNum++;
 	m_sceneConstBuffer.UpdateData(*m_device, sceneConstBuffer);
 
 	/*
@@ -206,6 +207,7 @@ void DxRenderer::CreateRaySceneResources()
 	m_materialBuffer = DxStructuredBuffer{*m_device, materials};
 
 	SceneConstBuffer sceneConstBuffer{};
+	std::memset(&sceneConstBuffer, 0, sizeof(SceneConstBuffer));
 	sceneConstBuffer.m_vertexBuffers = m_sceneGeometryBuffer.GetVertexHeapIndex();
 	sceneConstBuffer.m_indexBuffers	 = m_sceneGeometryBuffer.GetIndexHeapIndex();
 	m_sceneConstBuffer.UpdateData(*m_device, std::move(sceneConstBuffer));

@@ -1,8 +1,14 @@
 #include "common.hlsli"
 
 [shader("miss")]
-void Miss(inout HitInfo payload : SV_RayPayload)
+void Miss(inout HitInfo payload)
 {
+    if (GetIsShadowRay(payload.m_flags))
+    {
+        SetHasMissed(payload.m_flags);
+        return;
+    }
+
     float3 rd = WorldRayDirection();
 
     // Sky gradient
@@ -20,7 +26,7 @@ void Miss(inout HitInfo payload : SV_RayPayload)
     // Ground (below horizon)
     sky = lerp(float3(0.15f, 0.12f, 0.1f), sky, smoothstep(-0.05f, 0.05f, rd.y));
 
-    if (payload.m_currentRecursionDepth == 0)
+    if (GetRecursionDepth(payload.m_flags) == 0)
         payload.m_color = sky;
     else
         payload.m_color += payload.m_rayColor * sky;

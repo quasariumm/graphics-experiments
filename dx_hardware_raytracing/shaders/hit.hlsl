@@ -9,7 +9,9 @@ struct SceneConstBuffer
     int m_indexBuffers;
     uint m_debugMode;
     uint m_maxRecursionDepth;
-    uint4 m_morePadding[15];
+    uint m_frameNum;
+    uint3 m_padding;
+    uint4 m_morePadding[14];
 };
 ConstantBuffer<SceneConstBuffer> SceneCB : register(b0);
 
@@ -40,9 +42,17 @@ Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in StructuredBu
     return fragment;
 }
 
+static const uint shadow_flags = RAY_FLAG_FORCE_OPAQUE
+                                    | RAY_FLAG_CULL_BACK_FACING_TRIANGLES 
+                                    | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER 
+                                    | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
+    if (GetIsShadowRay(payload.m_flags))
+        return;
+
     float3 barycentrics =
         float3(1.0 - attrib.m_bary.x - attrib.m_bary.y, attrib.m_bary.x, attrib.m_bary.y);
     
@@ -80,6 +90,25 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     float3 wi = -keyLight.m_direction;
 
     float3 lightSample = SampleLight(keyLight, hitPos, attributes.m_normal);
+
+    // Shadow ray
+    // RayDesc shadowRay = ShadowRay(attributes, hitPos, wi);
+    // HitInfo shadowPayload = payload;
+    // SetIsShadowRay(shadowPayload.m_flags);
+    // TraceRay(
+    //     SceneBVH,
+    //     shadow_flags,
+    //     0xff,
+    //     0u,
+    //     0u,
+    //     0u, // TODO: Change this to a more dedicated miss shader
+    //     shadowRay,
+    //     shadowPayload
+    // );
+
+    // if (!GetHasMissed(shadowPayload.m_flags)) // Hit something
+    //     lightSample = 0.0;
+
     // Get the BRDF/PDF
     float3 brdf = ComputeBRDF(
         attributes.m_normal,
@@ -121,12 +150,20 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     payload.m_rayColor *= attributes.m_albedo.rgb;
 
     // Update recursion depth and return if done
-    payload.m_currentRecursionDepth += 1u;
-    if (payload.m_currentRecursionDepth >= SceneCB.m_maxRecursionDepth)
+    IncRecursionDepth(payload.m_flags);
+    if (GetRecursionDepth(payload.m_flags) >= SceneCB.m_maxRecursionDepth)
+        return;
+    
+    // Skip when the albedo is pitch black
+    if (all(payload.m_rayColor < 0.0001))
         return;
 
     // Trace a new ray
-    RayDesc newRay = BounceRay(payload, hitPos, wo, attributes);
+    RayDesc newRay = BounceRay(
+        payload, hitPos, 
+        wo, attributes, 
+        SceneCB.m_frameNum
+    );
     
     HitInfo newPayload = payload;
     

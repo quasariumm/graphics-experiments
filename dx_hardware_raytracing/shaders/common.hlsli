@@ -4,12 +4,26 @@
 static const float pi = 3.14159265359;
 static const float inv_pi = 0.31830988618;
 
+uint GetRecursionDepth(in uint flags) { return flags & 0x1fu; }
+void IncRecursionDepth(inout uint flags) { flags += 1u; }
+
+bool GetIsShadowRay(in uint flags) { return (flags & 0x20u) != 0u; }
+void SetIsShadowRay(inout uint flags) { flags |= 0x20u; }
+
+bool GetHasMissed(in uint flags) { return (flags & 0x40u) != 0u; }
+void SetHasMissed(inout uint flags) { flags |= 0x40u; }
+
 struct [raypayload] HitInfo
 {
-    float3 m_color               : read(caller, closesthit)       : write(caller, closesthit, miss);
-    float m_distance             : read(caller, closesthit)       : write(caller, closesthit, miss);
-    uint m_currentRecursionDepth : read(caller, closesthit, miss) : write(caller, closesthit, miss);
-    float3 m_rayColor            : read(caller, closesthit, miss) : write(caller, closesthit, miss);
+    float3 m_color    : read(caller, closesthit)       : write(caller, closesthit, miss);
+    float m_distance  : read(caller, closesthit)       : write(caller, closesthit, miss);
+    /** 
+        recursionDepth (5 bits),
+        isShadowRay (1 bit),
+        missed (shadow rays, 1 bit)
+    */
+    uint m_flags      : read(caller, closesthit, miss) : write(caller, closesthit, miss);
+    float3 m_rayColor : read(caller, closesthit, miss) : write(caller, closesthit, miss);
 };
 
 struct Attributes
