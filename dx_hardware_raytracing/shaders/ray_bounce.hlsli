@@ -74,22 +74,22 @@ RayDesc BounceRay(in HitInfo hitInfo, in float3 hitPos, in float3 wo, in Fragmen
     desc.TMin = 0.001;
     desc.TMax = 10000.0;
 
-    if (attributes.m_roughness < 0.0001)
-    {
+    // if (attributes.m_roughness < 0.0001)
+    // {
         desc.Direction = reflect(wo, attributes.m_normal);
-    }
-    else
-    {
-        uint seed = RaySeed(hitInfo);
-        desc.Direction = SampleGGX(
-			seed, 
-			attributes.m_normal, 
-			attributes.m_tangent, 
-			attributes.m_bitangent, 
-			wo, 
-			attributes.m_roughness
-		);
-    }
+    // }
+    // else
+    // {
+    //     uint seed = RaySeed(hitInfo);
+    //     desc.Direction = SampleGGX(
+	// 		seed, 
+	// 		attributes.m_normal, 
+	// 		attributes.m_tangent, 
+	// 		attributes.m_bitangent, 
+	// 		wo, 
+	// 		attributes.m_roughness
+	// 	);
+    // }
 
     return desc;
 }

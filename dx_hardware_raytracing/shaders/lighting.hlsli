@@ -9,7 +9,7 @@ ShaderLight CreateDirectionalLight(in float3 direction, in float3 color, in floa
     light.m_type = light_type_directional;
     light.m_intensity = intensity;
     light.m_direction = direction;
-    light.m_color = direction;
+    light.m_color = color;
     return light;
 }
 
