@@ -1,4 +1,5 @@
 #include "common.hlsli"
+#include "tonemap.hlsli"
 
 RWTexture2D<float4> Output : register(u0);
 
@@ -13,6 +14,8 @@ void RayGen()
     HitInfo payload;
     payload.m_color = 0.0;
     payload.m_distance = 0.0;
+    payload.m_currentRecursionDepth = 0u;
+    payload.m_rayColor = 1.0;
 
     // Get the thread ID
     uint2 launchIndex = DispatchRaysIndex().xy;
@@ -31,7 +34,16 @@ void RayGen()
     ray.TMin = 0.001;
     ray.TMax = 10000.0;
 
-    TraceRay(SceneBVH, RAY_FLAG_NONE, 0xff, 0, 0, 0, ray, payload);
+    TraceRay(
+        SceneBVH,
+        RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+        0xff,
+        0u,
+        0u,
+        0u,
+        ray, 
+        payload
+    );
 
-    Output[launchIndex] = float4(payload.m_color, 1.0);
+    Output[launchIndex] = float4(TonemappingAgX(payload.m_color), 1.0);
 }

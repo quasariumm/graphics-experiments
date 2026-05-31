@@ -102,6 +102,7 @@ void Demo::DrawImGuiWindow()
 {
 	ImGui::Begin("Config");
 	
+	ImGui::SeparatorText("Performance");
 	static float smoothFPS = 0.0f;
 	static constexpr float fps_alpha = 0.05f; // lower = smoother, higher = more responsive
 	
@@ -113,6 +114,14 @@ void Demo::DrawImGuiWindow()
 		smoothFPS += fps_alpha * (currentFPS - smoothFPS);
 	
 	ImGui::Text("%.1f fps", smoothFPS);
+	ImGui::Text("%.1f ms", 1000.0f * dt);
+	
+	ImGui::SeparatorText("Debugging");
+	
+	// Debug mode selector
+	const auto* const* debugModeOptions = debug_mode_names.data();
+	auto* currentDebugMode = reinterpret_cast<int*>(&m_renderer.m_debugMode);
+	ImGui::Combo("Debug Mode", currentDebugMode, debugModeOptions, debug_mode_names.size());
 	
 	ImGui::End();
 }

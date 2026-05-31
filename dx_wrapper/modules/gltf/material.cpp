@@ -22,27 +22,45 @@ GltfMaterial::GltfMaterial(DxDevice& device, const std::filesystem::path& modelP
 	m_baseColorFactor = ToGlm(material.pbrData.baseColorFactor);
 	m_roughnessFactor = material.pbrData.roughnessFactor;
 	m_metallicFactor  = material.pbrData.metallicFactor;
+	
+	m_textureCoordinateToggles = std::bitset<16>{0};
 
 	if (material.pbrData.baseColorTexture)
+	{
 		ProcessTexture(device, modelPath, asset, *material.pbrData.baseColorTexture, m_baseColorTexture);
+		if (material.pbrData.baseColorTexture->texCoordIndex == 1)
+			m_textureCoordinateToggles.set(0);
+	}
 
 	if (material.emissiveTexture)
+	{
 		ProcessTexture(device, modelPath, asset, *material.emissiveTexture, m_emissiveTexture);
+		if (material.emissiveTexture->texCoordIndex == 1)
+			m_textureCoordinateToggles.set(1);
+	}
 
 	if (material.normalTexture)
 	{
 		m_normalScale = material.normalTexture->scale;
 		ProcessTexture(device, modelPath, asset, *material.normalTexture, m_normalTexture);
+		if (material.normalTexture->texCoordIndex == 1)
+			m_textureCoordinateToggles.set(2);
 	}
 
 	if (material.occlusionTexture)
 	{
 		m_occlusionStrength = material.occlusionTexture->strength;
 		ProcessTexture(device, modelPath, asset, *material.occlusionTexture, m_occlusionTexture);
+		if (material.occlusionTexture->texCoordIndex == 1)
+			m_textureCoordinateToggles.set(3);
 	}
 
 	if (material.pbrData.metallicRoughnessTexture)
+	{
 		ProcessTexture(device, modelPath, asset, *material.pbrData.metallicRoughnessTexture, m_roughMetalTexture);
+		if (material.pbrData.metallicRoughnessTexture->texCoordIndex == 1)
+			m_textureCoordinateToggles.set(4);
+	}
 }
 
 std::array<int, 8> GltfMaterial::GetTextureIndices() const

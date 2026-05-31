@@ -1,7 +1,15 @@
+#ifndef _COMMON_HLSLI
+#define _COMMON_HLSLI
+
+static const float pi = 3.14159265359;
+static const float inv_pi = 0.31830988618;
+
 struct [raypayload] HitInfo
 {
-    float3 m_color : read(caller) : write(caller, closesthit, miss);
-    float m_distance : read(caller) : write(caller, closesthit, miss);
+    float3 m_color               : read(caller, closesthit)       : write(caller, closesthit, miss);
+    float m_distance             : read(caller, closesthit)       : write(caller, closesthit, miss);
+    uint m_currentRecursionDepth : read(caller, closesthit, miss) : write(caller, closesthit, miss);
+    float3 m_rayColor            : read(caller, closesthit, miss) : write(caller, closesthit, miss);
 };
 
 struct Attributes
@@ -22,12 +30,27 @@ struct ShaderCamera
     float3 m_prevCameraPosition;
 };
 
-#define TEX_ALBEDO      0
-#define TEX_NORMAL      1
-#define TEX_EMISSIVE    2
-#define TEX_OCCLUSION   3
-// m_texIndices2
-#define TEX_ROUGH_METAL 0
+static const uint light_type_punctual = 0;
+static const uint light_type_directional = 1;
+
+struct ShaderLight
+{
+    float3 m_position;
+    int m_type;
+    float3 m_direction;
+    float m_range;
+    float3 m_color;
+    float m_intensity;
+    float m_innerAngle;
+    float m_outerAngle;
+    uint2 m_padding;
+};
+
+static const uint tex_albedo      = 0;
+static const uint tex_normal      = 1;
+static const uint tex_emissive    = 2;
+static const uint tex_occlusion   = 3;
+static const uint tex_rough_metal = 4;
 
 struct ShaderMaterial 
 {
@@ -41,8 +64,14 @@ struct ShaderMaterial
 	float m_normalScale;
 	float m_occlusionStrength;
 
-    int4 m_texIndices1;
-    int4 m_texIndices2;
+    int m_albedoTex;
+    int m_normalTex;
+    int m_emissiveTex;
+    int m_occlusionTex;
+    int m_roughMetalTex;
+    int m_tex6;
+    int m_tex7;
+    int m_tex8;
 	
     uint m_flags;
     uint m_debugMode;
@@ -59,3 +88,25 @@ struct Vertex
     float _padding2;
     float4 Tangent;
 };
+
+/*
+    Debug modes
+*/
+static const uint debug_none             = 0;
+static const uint debug_albedo           = 1;
+static const uint debug_alpha            = 2;
+static const uint debug_emissive         = 3;
+static const uint debug_roughness        = 4;
+static const uint debug_metallic         = 5;
+static const uint debug_transmissive     = 6;
+static const uint debug_ior              = 7;
+static const uint debug_geom_normal      = 8;
+static const uint debug_shaded_normal    = 9;
+static const uint debug_geom_tangent     = 10;
+static const uint debug_shaded_tangent   = 11;
+static const uint debug_geom_bitangent   = 12;
+static const uint debug_shaded_bitangent = 13;
+static const uint debug_brdf             = 14;
+static const uint debug_pdf              = 15;
+
+#endif

@@ -46,6 +46,8 @@ public:
 	auto GetEmissiveTexture() { return m_emissiveTexture; }
 	auto GetOcclusionTexture() { return m_occlusionTexture; }
 	auto GetRoughMetalTexture() { return m_roughMetalTexture; }
+	
+	std::uint16_t GetTextureCoordinateMap() const { return static_cast<std::uint16_t>(m_textureCoordinateToggles.to_ulong()); }
 
 	std::array<int, 8> GetTextureIndices() const;
 
@@ -63,6 +65,9 @@ private:
 	MaterialTexture m_occlusionTexture;
 	/** Roughness (G) + Metallic (B) */
 	MaterialTexture m_roughMetalTexture;
+	
+	/** Determines whether Uv1 needs to be used */
+	std::bitset<16> m_textureCoordinateToggles{};
 
 	static void ProcessTexture(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
 							   const fastgltf::TextureInfo& textureInfo, MaterialTexture& result);

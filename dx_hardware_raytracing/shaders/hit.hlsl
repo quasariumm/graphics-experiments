@@ -1,17 +1,27 @@
-#include "common.hlsli"
+#include "materials.hlsli"
+#include "pbr.hlsli"
+#include "lighting.hlsli"
+#include "ray_bounce.hlsli"
 
-struct GeometryBufferHeapIndices
+struct SceneConstBuffer
 {
     int m_vertexBuffers;
     int m_indexBuffers;
-    uint2 m_padding;
+    uint m_debugMode;
+    uint m_maxRecursionDepth;
     uint4 m_morePadding[15];
 };
-ConstantBuffer<GeometryBufferHeapIndices> Geometry32C : register(b0);
+ConstantBuffer<SceneConstBuffer> SceneCB : register(b0);
 
-StructuredBuffer<ShaderMaterial> MaterialsCB : register(t0);
+
+RaytracingAccelerationStructure SceneBVH : register(t0);
+
+
+StructuredBuffer<ShaderMaterial> Materials : register(t1);
+
 
 SamplerState SSLinearWrap : register(s0);
+
 
 Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in StructuredBuffer<uint> indexBuffer, float3 bary) 
 {
@@ -30,41 +40,106 @@ Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in StructuredBu
     return fragment;
 }
 
-float3 HUEtoRGB(in float H)
-{
-    float R = abs(H * 6 - 3) - 1;
-    float G = 2 - abs(H * 6 - 2);
-    float B = 2 - abs(H * 6 - 4);
-    return saturate(float3(R,G,B));
-}
-
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
     float3 barycentrics =
         float3(1.0 - attrib.m_bary.x - attrib.m_bary.y, attrib.m_bary.x, attrib.m_bary.y);
     
+    // Set distance on primary ray only
+    if (all(payload.m_color == 0.0))
+        payload.m_distance = RayTCurrent();
+
     // Get the triangle
-    if (Geometry32C.m_vertexBuffers == -1 || Geometry32C.m_indexBuffers == -1)
+    if (SceneCB.m_vertexBuffers == -1 || SceneCB.m_indexBuffers == -1)
         return;
     
-    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[Geometry32C.m_vertexBuffers + InstanceIndex()];
-    StructuredBuffer<uint> indices = ResourceDescriptorHeap[Geometry32C.m_indexBuffers + InstanceIndex()];
+    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[SceneCB.m_vertexBuffers + InstanceIndex()];
+    StructuredBuffer<uint> indices = ResourceDescriptorHeap[SceneCB.m_indexBuffers + InstanceIndex()];
 
     // Get the interpolated vertex data
     Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
 
     // Shade with the material
-    ShaderMaterial material = MaterialsCB[InstanceIndex()];
+    ShaderMaterial material = Materials[InstanceIndex()];
 
-    float3 albedo = 0.0;
+    FragmentAttributes attributes = GetFragmentAttributes(SSLinearWrap, fragment, material);
 
-    if (material.m_texIndices1[TEX_ALBEDO] != -1)
-    {
-        Texture2D<float4> albedoTex = ResourceDescriptorHeap[material.m_texIndices1[TEX_ALBEDO]];
-        albedo = albedoTex.SampleLevel(SSLinearWrap, fragment.Uv0, 0.0).rgb;
-    }
+    ShaderLight keyLight = CreateDirectionalLight(
+        normalize(float3(-1.0, -1.0, 0.5)),
+        1.0,
+        1.0
+    );
+
+    // Perform PBR
+    float3 hitPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
     
-    payload.m_color = albedo;//float3(fragment.Uv0, 0.0);
-    payload.m_distance = RayTCurrent();
+    float3 wo = -WorldRayDirection();
+    
+    // Temporarily only sample key light
+    float3 wi = -keyLight.m_direction;
+
+    float3 lightSample = SampleLight(keyLight, hitPos, attributes.m_normal);
+    // Get the BRDF/PDF
+    float3 brdf = ComputeBRDF(
+        attributes.m_normal,
+        wo, wi,
+        attributes.m_albedo.rgb,
+        attributes.m_roughness,
+        attributes.m_metallic
+    );
+
+    float pdf = ComputePDF(
+        attributes.m_normal,
+        wo, wi,
+        attributes.m_roughness
+    );
+
+    // Debug mode
+    if (SceneCB.m_debugMode != debug_none)
+    {
+        if (SceneCB.m_debugMode == debug_brdf)
+        {
+            payload.m_color = brdf;
+            return;
+        }
+        if (SceneCB.m_debugMode == debug_pdf)
+        {
+            payload.m_color = pdf;
+            return;
+        }
+        payload.m_color = GetDebugOutput(fragment, attributes, SceneCB.m_debugMode);
+        return;
+    }
+
+    // Update the ray color
+    if (pdf != 0.0)
+        payload.m_color += payload.m_rayColor * lightSample * brdf / pdf;
+    
+    payload.m_color += payload.m_rayColor * attributes.m_emissive;
+
+    payload.m_rayColor *= attributes.m_albedo.rgb;
+
+    // Update recursion depth and return if done
+    payload.m_currentRecursionDepth += 1u;
+    if (payload.m_currentRecursionDepth >= SceneCB.m_maxRecursionDepth)
+        return;
+
+    // Trace a new ray
+    RayDesc newRay = BounceRay(payload, hitPos, wo, attributes);
+    
+    HitInfo newPayload = payload;
+    
+    TraceRay(
+        SceneBVH, 
+        RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+        0xff,
+        0u,
+        0u,
+        0u,
+        newRay,
+        newPayload
+    );
+
+    payload = newPayload;
 }

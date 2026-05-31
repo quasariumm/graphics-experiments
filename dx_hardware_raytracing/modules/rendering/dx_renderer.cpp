@@ -24,9 +24,9 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_rayOutputTexture.CreateUAV(*m_device, 0);
 
 	m_rayGenRootSignature = DxRootSignature{};
-	m_rayGenRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0, 1);
-	m_rayGenRootSignature.AddBufferSRV(0);
-	m_rayGenRootSignature.AddConstantBuffer(0);
+	m_rayGenRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0, 1); // Output texture
+	m_rayGenRootSignature.AddBufferSRV(0);											 // BVH
+	m_rayGenRootSignature.AddConstantBuffer(0);										 // CameraCB
 	m_rayGenRootSignature.Finalize(*m_device, "Ray Gen Root Signature", false, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 
 	m_missRootSignature = DxRootSignature{};
@@ -34,8 +34,9 @@ DxRenderer::DxRenderer(DxDevice* device)
 
 	m_closestHitRootSignature = DxRootSignature{};
 	// Material buffer. Since that is not aligned, I create a descriptor just to be sure
-	m_closestHitRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1);
-	m_closestHitRootSignature.AddConstantBuffer(0);
+	m_closestHitRootSignature.AddBufferSRV(0);											 // BVH
+	m_closestHitRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // Material list
+	m_closestHitRootSignature.AddConstantBuffer(0);										 // SceneCB
 	m_closestHitRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
 										 D3D12_TEXTURE_ADDRESS_MODE_WRAP,
 										 D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
@@ -56,9 +57,9 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_renderPipeline.AddRootSignatureAssociation(m_rayGenRootSignature, {"RayGen"})
 			.AddRootSignatureAssociation(m_missRootSignature, {"Miss"})
 			.AddRootSignatureAssociation(m_closestHitRootSignature, {"ClosestHit"})
-			.SetMaxPayloadSize(sizeof(glm::vec4))
-			.SetMaxAttributesSize(sizeof(glm::vec2))
-			.SetMaxRecursionDepth(1);
+			.SetMaxPayloadSize(8 * sizeof(DWORD32))
+			.SetMaxAttributesSize(2 * sizeof(DWORD32))
+			.SetMaxRecursionDepth(8);
 }
 
 void DxRenderer::AddModel(const std::filesystem::path& path) { m_models.emplace_back(*m_device, path); }
@@ -96,7 +97,8 @@ void DxRenderer::Render()
 									 "ClosestHit",
 									 "",
 									 "",
-									 {reinterpret_cast<void*>(materialBufferGpuHandle.ptr),
+									 {reinterpret_cast<void*>(m_tlas->GetGPUVirtualAddress()),
+									  reinterpret_cast<void*>(materialBufferGpuHandle.ptr),
 									  reinterpret_cast<void*>(m_sceneConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.Finalize(*m_device, "Main Ray Pipeline");
@@ -112,6 +114,12 @@ void DxRenderer::Render()
 	// Rebind prevViewPos to inverseViewPos
 	cameraCb.m_shaderCamera.m_prevViewProjectionMatrix = glm::inverse(cameraCb.m_shaderCamera.m_viewProjectionMatrix);
 	m_cameraConstBuffer.UpdateData(*m_device, std::move(cameraCb));
+
+	// Change scene data
+	SceneConstBuffer& sceneConstBuffer	 = m_sceneConstBuffer.GetLocalStorage();
+	sceneConstBuffer.m_debugMode		 = m_debugMode;
+	sceneConstBuffer.m_maxRecursionDepth = 8u;
+	m_sceneConstBuffer.UpdateData(*m_device, sceneConstBuffer);
 
 	/*
 	 * Ray tracing
@@ -218,4 +226,5 @@ void DxRenderer::CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderM
 
 	shaderMaterial.m_flags = static_cast<std::uint32_t>(gltfMaterial.m_alphaMode);
 	shaderMaterial.m_flags |= gltfMaterial.m_doubleSided ? (1 << 3) : 0;
+	shaderMaterial.m_flags |= gltfMaterial.GetTextureCoordinateMap() << 16;
 }

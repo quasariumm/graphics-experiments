@@ -60,6 +60,13 @@ public:
 	 * @param rootParameterIndex The index in the root parameter list (NOT THE SHADER REGISTER)
 	 */
 	void Bind(const DxDevice& device, T&& data, std::uint32_t rootParameterIndex);
+	
+	/** 
+	 * @brief Gives access to the CPU copy of the data.
+	 *		Use this when you only want to change a handful of values. 
+	 * @attention I don't guarantee the safety of this function.
+	 */
+	T& GetLocalStorage() { return m_localInstance; }
 
 private:
 
