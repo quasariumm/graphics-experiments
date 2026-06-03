@@ -32,7 +32,7 @@ setup_common_compiler_args(dx_hardware_raytracing)
 target_link_libraries(dx_hardware_raytracing PRIVATE dx_wrapper)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
-copy_dxc_dlls(dx_hardware_raytracing)
+copy_dlls(dx_hardware_raytracing)
 
 #
 # ImGUI

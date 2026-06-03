@@ -31,7 +31,7 @@ target_compile_definitions(dx_imgui PUBLIC TESTPLATE_HAS_IMGUI)
 target_link_libraries(dx_imgui PRIVATE dx_wrapper d3dcompiler dwmapi)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
-copy_dxc_dlls(dx_imgui)
+copy_dlls(dx_imgui)
 
 #
 # ImGUI

@@ -13,4 +13,4 @@ setup_common_compiler_args(dx_bare)
 target_link_libraries(dx_bare PRIVATE dx_wrapper)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
-copy_dxc_dlls(dx_bare)
+copy_dlls(dx_bare)

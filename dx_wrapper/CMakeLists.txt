@@ -178,6 +178,15 @@ target_include_directories(dx_wrapper BEFORE PUBLIC
 		${DirectX-Headers_SOURCE_DIR}/include/directx
 )
 
+if (AFTERMATH_SDK_DIR)
+	target_include_directories(dx_wrapper PUBLIC
+			${AFTERMATH_SDK_DIR}/include
+	)
+	target_compile_definitions(dx_wrapper PUBLIC
+			AFTERMATH_AVAILABLE
+	)
+endif ()
+
 target_link_libraries(dx_wrapper PUBLIC
 		d3d12
 		dxgi
@@ -193,13 +202,13 @@ target_link_libraries(dx_wrapper PUBLIC
 
 if (NOT USE_IMPORT_STD)
 	target_link_libraries(dx_wrapper PUBLIC std_module)
-endif()
+endif ()
 
 target_compile_definitions(dx_wrapper PUBLIC GLM_ENABLE_EXPERIMENTAL)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	target_compile_options(DirectXMath INTERFACE -Wno-defaulted-function-deleted)
-endif()
+endif ()
 
 if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_CXX_COMPILER_TARGET x86_64-pc-windows-gnu)
@@ -207,12 +216,22 @@ if (WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif ()
 
 set(DXC_SOURCE_DIR ${dxc_SOURCE_DIR} CACHE PATH "" FORCE)
-function(copy_dxc_dlls target)
-add_custom_command(TARGET ${target} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		${DXC_SOURCE_DIR}/bin/x64/dxcompiler.dll
-		${DXC_SOURCE_DIR}/bin/x64/dxil.dll
-		${TESTPLATES_DIR}/agility_sdk/D3D12Core.dll
-		${TESTPLATES_DIR}/agility_sdk/d3d12SDKLayers.dll
-		$<TARGET_FILE_DIR:${target}>)
+function(copy_dlls target)
+	set(DLLS
+			${DXC_SOURCE_DIR}/bin/x64/dxcompiler.dll
+			${DXC_SOURCE_DIR}/bin/x64/dxil.dll
+			${TESTPLATES_DIR}/agility_sdk/D3D12Core.dll
+			${TESTPLATES_DIR}/agility_sdk/d3d12SDKLayers.dll
+	)
+	
+	if (AFTERMATH_SDK_DIR)
+		list(APPEND DLLS
+				${AFTERMATH_SDK_DIR}/lib/x64/GFSDK_Aftermath_Lib.x64.dll
+		)
+	endif ()
+
+	add_custom_command(TARGET ${target} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			${DLLS}
+			$<TARGET_FILE_DIR:${target}>)
 endfunction()

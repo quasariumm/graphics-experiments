@@ -11,4 +11,4 @@ include(../common/cmake/setup_experiment.cmake)
 
 setup_common_compiler_args(std_module)
 
-target_compile_definitions(BUILD_CUSTOM_STD_MODULE)
+target_compile_definitions(std_module PUBLIC BUILD_CUSTOM_STD_MODULE)

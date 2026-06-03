@@ -22,4 +22,4 @@ setup_common_compiler_args(dx_meshlets)
 target_link_libraries(dx_meshlets PRIVATE meshoptimizer dx_wrapper)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../common/cmake/setup_sources.cmake)
-copy_dxc_dlls(dx_meshlets)
+copy_dlls(dx_meshlets)
