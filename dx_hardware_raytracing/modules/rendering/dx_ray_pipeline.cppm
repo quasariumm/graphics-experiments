@@ -42,7 +42,7 @@ public:
 	 * @param inputs A list of heap pointers and GPU virtual address pointers to all root signature bind points
 	 * @return This pipeline object for function chaining
 	 */
-	DxRayPipeline& SetMissShader(const std::filesystem::path& path, const std::string& entryPoint,
+	DxRayPipeline& AddMissShader(const std::filesystem::path& path, const std::string& entryPoint,
 								 const std::vector<void*>& inputs = {});
 
 	/**
@@ -118,10 +118,10 @@ private:
 	ComPtr<ID3D12Resource>		 m_sbtResource;
 
 	// Stage names
-	std::wstring	   m_rayGenName;
-	std::vector<void*> m_rayGenInputs{};
-	std::wstring	   m_missName;
-	std::vector<void*> m_missInputs{};
+	std::wstring					m_rayGenName;
+	std::vector<void*>				m_rayGenInputs{};
+	std::vector<std::wstring>		m_missNames;
+	std::vector<std::vector<void*>> m_missInputs{};
 
 	/*
 	 * Helpers
@@ -132,7 +132,7 @@ private:
 		Library() = default;
 		Library(const Library& rhs) { *this = rhs; }
 		Library& operator=(const Library& rhs);
-		
+
 		ComPtr<IDxcBlob> m_blob = nullptr;
 
 		std::vector<std::wstring>	   m_entryPoints{};
@@ -186,6 +186,6 @@ private:
 
 	// Entry size data
 	std::uint32_t m_rayGenEntrySize	  = 0;
-	std::uint32_t m_missEntrySize	= 0;
-	std::uint32_t m_hitGroupEntrySize	= 0;
+	std::uint32_t m_missEntrySize	  = 0;
+	std::uint32_t m_hitGroupEntrySize = 0;
 };

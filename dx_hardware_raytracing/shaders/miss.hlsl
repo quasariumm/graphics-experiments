@@ -3,12 +3,6 @@
 [shader("miss")]
 void Miss(inout HitInfo payload)
 {
-    if (GetIsShadowRay(payload.m_flags))
-    {
-        SetHasMissed(payload.m_flags);
-        return;
-    }
-
     float3 rd = WorldRayDirection();
 
     // Sky gradient
@@ -31,4 +25,10 @@ void Miss(inout HitInfo payload)
     else
         payload.m_color += payload.m_rayColor * sky;
     payload.m_distance = -1.0f;
+}
+
+[shader("miss")]
+void ShadowMiss(inout ShadowPayload payload)
+{
+    payload.m_occluded = 0;
 }

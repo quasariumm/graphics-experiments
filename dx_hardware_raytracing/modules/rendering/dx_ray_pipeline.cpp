@@ -19,12 +19,12 @@ DxRayPipeline& DxRayPipeline::SetRayGenShader(const std::filesystem::path& path,
 	return *this;
 }
 
-DxRayPipeline& DxRayPipeline::SetMissShader(const std::filesystem::path& path, const std::string& entryPoint,
+DxRayPipeline& DxRayPipeline::AddMissShader(const std::filesystem::path& path, const std::string& entryPoint,
 											const std::vector<void*>& inputs)
 {
 	AddLibrary(path, {entryPoint});
-	m_missName	 = std::filesystem::path{entryPoint}.wstring();
-	m_missInputs = inputs;
+	m_missNames.push_back(std::filesystem::path{entryPoint}.wstring());
+	m_missInputs.emplace_back(inputs);
 	return *this;
 }
 
@@ -116,7 +116,7 @@ void DxRayPipeline::Finalize(DxDevice& device, const std::string& name)
 std::uint32_t DxRayPipeline::GetRayGenEntrySize() const { return m_rayGenEntrySize; }
 std::uint32_t DxRayPipeline::GetRayGenSectionSize() const { return m_rayGenEntrySize; }
 std::uint32_t DxRayPipeline::GetMissEntrySize() const { return m_missEntrySize; }
-std::uint32_t DxRayPipeline::GetMissSectionSize() const { return m_missEntrySize; }
+std::uint32_t DxRayPipeline::GetMissSectionSize() const { return m_missEntrySize * m_missNames.size(); }
 std::uint32_t DxRayPipeline::GetHitGroupEntrySize() const { return m_hitGroupEntrySize; }
 std::uint32_t DxRayPipeline::GetHitGroupSectionSize() const { return m_hitGroupEntrySize * m_hitGroups.size(); }
 
@@ -271,16 +271,6 @@ void DxRayPipeline::CreateStateObject(const DxDevice& device)
 	CheckHR(m_stateObject->QueryInterface(GetIID(&m_stateObjectProperties), GetPPV(&m_stateObjectProperties)));
 }
 
-inline std::uint32_t GetEntrySize(const std::vector<void*>& inputs)
-{
-	const std::size_t maxArgs = std::max(0uz, inputs.size());
-
-	std::uint32_t entrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-	entrySize += 8 * static_cast<std::uint32_t>(maxArgs);
-
-	return NextMultipleOf(entrySize, static_cast<std::uint32_t>(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT));
-}
-
 inline void CopyShaderData(ID3D12StateObjectProperties* properties, const std::wstring& entryPoint,
 						   const std::vector<void*>& inputs, std::byte*& outData, const std::uint32_t entrySize)
 {
@@ -303,35 +293,59 @@ void DxRayPipeline::ConfigureStateObjectProperties(DxDevice& device)
 {
 	// Compute the entry size of each program type depending on the maximum number of parameters in
 	// each category
-	m_rayGenEntrySize = GetEntrySize(m_rayGenInputs);
-	m_missEntrySize	  = GetEntrySize(m_missInputs);
+	{
+		// RayGen group entry size
+		const std::size_t maxArgs = std::max(0uz, m_rayGenInputs.size());
 
-	std::size_t maxArgs = 0;
-	for (const auto& hitGroup : m_hitGroups)
-		maxArgs = std::max(maxArgs, hitGroup.m_inputs.size());
+		std::uint32_t entrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+		entrySize += 8 * static_cast<std::uint32_t>(maxArgs);
 
-	std::uint32_t entrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-	entrySize += 8 * static_cast<std::uint32_t>(maxArgs);
+		m_rayGenEntrySize = NextMultipleOf(entrySize, static_cast<std::uint32_t>(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT));
+	}
 
-	m_hitGroupEntrySize = NextMultipleOf(entrySize, static_cast<std::uint32_t>(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT));
+	// Miss group entry size
+	{
+		std::size_t maxArgs = 0;
+		for (const auto& inputs : m_missInputs)
+			maxArgs = std::max(maxArgs, inputs.size());
+
+		std::uint32_t entrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+		entrySize += 8 * static_cast<std::uint32_t>(maxArgs);
+
+		m_missEntrySize = NextMultipleOf(entrySize, static_cast<std::uint32_t>(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT));
+	}
+
+	// Hit group entry size
+	{
+		std::size_t maxArgs = 0;
+		for (const auto& hitGroup : m_hitGroups)
+			maxArgs = std::max(maxArgs, hitGroup.m_inputs.size());
+
+		std::uint32_t entrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+		entrySize += 8 * static_cast<std::uint32_t>(maxArgs);
+
+		m_hitGroupEntrySize =
+				NextMultipleOf(entrySize, static_cast<std::uint32_t>(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT));
+	}
 
 	// The total SBT size is the sum of the entries for ray generation, miss and hit groups, aligned
 	// on 256 bytes
-	const std::uint32_t sbtSize = NextMultipleOf(m_rayGenEntrySize + m_missEntrySize +
-														 m_hitGroupEntrySize * static_cast<std::uint32_t>(m_hitGroups.size()),
-												 256u);
+	const std::uint32_t sbtSize =
+			NextMultipleOf(m_rayGenEntrySize + m_missEntrySize * static_cast<std::uint32_t>(m_missNames.size()) +
+								   m_hitGroupEntrySize * static_cast<std::uint32_t>(m_hitGroups.size()),
+						   256u);
 
 	auto* cpuData = new std::byte[sbtSize];
 
 	std::byte* walkingPointer = cpuData;
 
 	CopyShaderData(m_stateObjectProperties, m_rayGenName, m_rayGenInputs, walkingPointer, m_rayGenEntrySize);
-	CopyShaderData(m_stateObjectProperties, m_missName, m_missInputs, walkingPointer, m_missEntrySize);
+
+	for (int i = 0; i < m_missNames.size(); ++i)
+		CopyShaderData(m_stateObjectProperties, m_missNames[i], m_missInputs[i], walkingPointer, m_missEntrySize);
 
 	for (const auto& hitGroup : m_hitGroups)
-	{
 		CopyShaderData(m_stateObjectProperties, hitGroup.m_name, hitGroup.m_inputs, walkingPointer, m_hitGroupEntrySize);
-	}
 
 	CheckHR(CreateStaticBuffer(device, cpuData, sbtSize, D3D12_RESOURCE_STATE_COMMON, m_sbtResource));
 
@@ -418,13 +432,14 @@ void DxRayPipeline::BuildExportList(std::unordered_set<std::wstring>& exports, s
 		exportList.emplace_back(exportStr.c_str());
 }
 
-DxRayPipeline::Library&	 DxRayPipeline::Library::operator=(const Library& rhs)
+DxRayPipeline::Library& DxRayPipeline::Library::operator=(const Library& rhs)
 {
-	if (!rhs.m_blob) return *this;
-	
-	m_blob = rhs.m_blob;
+	if (!rhs.m_blob)
+		return *this;
+
+	m_blob		  = rhs.m_blob;
 	m_entryPoints = rhs.m_entryPoints;
-	
+
 	// Rebuild exports
 	m_exports.clear();
 	m_exports.reserve(m_entryPoints.size());
@@ -438,11 +453,10 @@ DxRayPipeline::Library&	 DxRayPipeline::Library::operator=(const Library& rhs)
 		m_exports.emplace_back(exportDesc);
 	}
 
-	m_dxilLibDesc.DXILLibrary =
-			CD3DX12_SHADER_BYTECODE{m_blob->GetBufferPointer(), m_blob->GetBufferSize()};
-	m_dxilLibDesc.NumExports = m_exports.size();
-	m_dxilLibDesc.pExports	 = m_exports.data();
-	
+	m_dxilLibDesc.DXILLibrary = CD3DX12_SHADER_BYTECODE{m_blob->GetBufferPointer(), m_blob->GetBufferSize()};
+	m_dxilLibDesc.NumExports  = m_exports.size();
+	m_dxilLibDesc.pExports	  = m_exports.data();
+
 	return *this;
 }
 

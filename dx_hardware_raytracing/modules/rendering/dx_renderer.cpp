@@ -87,7 +87,8 @@ void DxRenderer::Render()
 										  reinterpret_cast<void*>(m_tlas->GetGPUVirtualAddress()),
 										  reinterpret_cast<void*>(m_cameraConstBuffer->GetGPUVirtualAddress())});
 
-		m_renderPipeline.SetMissShader("shaders/miss.hlsl", "Miss");
+		m_renderPipeline.AddMissShader("shaders/miss.hlsl", "Miss");
+		m_renderPipeline.AddMissShader("shaders/miss.hlsl", "ShadowMiss");
 
 		m_renderPipeline.AddHitGroup("HitGroup",
 									 "shaders/hit.hlsl",

@@ -49,9 +49,6 @@ static const uint shadow_flags = RAY_FLAG_FORCE_OPAQUE
 [shader("closesthit")]
 void ClosestHit(inout HitInfo payload, Attributes attrib)
 {
-    if (GetIsShadowRay(payload.m_flags))
-        return;
-
     float3 barycentrics =
         float3(1.0 - attrib.m_bary.x - attrib.m_bary.y, attrib.m_bary.x, attrib.m_bary.y);
     
@@ -87,7 +84,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     FragmentAttributes attributes = GetFragmentAttributes(SSLinearWrap, fragment, material);
 
     ShaderLight keyLight = CreateDirectionalLight(
-        normalize(float3(-1.0, -1.0, 0.5)),
+        normalize(float3(-0.1, -1.0, 0.1)),
         1.0,
         1.0
     );
@@ -103,22 +100,22 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     float3 lightSample = SampleLight(keyLight, hitPos, attributes.m_normal);
 
     // Shadow ray
-    // RayDesc shadowRay = ShadowRay(attributes, hitPos, wi);
-    // HitInfo shadowPayload = payload;
-    // SetIsShadowRay(shadowPayload.m_flags);
-    // TraceRay(
-    //     SceneBVH,
-    //     shadow_flags,
-    //     0xff,
-    //     0u,
-    //     0u,
-    //     0u, // TODO: Change this to a more dedicated miss shader
-    //     shadowRay,
-    //     shadowPayload
-    // );
+    RayDesc shadowRay = ShadowRay(attributes, hitPos, wi);
+    ShadowPayload shadowPayload;
+    shadowPayload.m_occluded = 1;
+    TraceRay(
+        SceneBVH,
+        shadow_flags,
+        0xff,
+        0u,
+        0u,
+        1u, // ShadowMiss
+        shadowRay,
+        shadowPayload
+    );
 
-    // if (!GetHasMissed(shadowPayload.m_flags)) // Hit something
-    //     lightSample = 0.0;
+    if (shadowPayload.m_occluded != 0) // Hit something
+        lightSample = 0.0;
 
     // Get the BRDF/PDF
     float3 brdf = ComputeBRDF(
@@ -162,7 +159,7 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
 
     // Update recursion depth and return if done
     IncRecursionDepth(payload.m_flags);
-    if (GetRecursionDepth(payload.m_flags) >= SceneCB.m_maxRecursionDepth)
+    if (GetRecursionDepth(payload.m_flags) >= SceneCB.m_maxRecursionDepth - 1) // - 1 is accounting shadow rays
         return;
     
     // Skip when the albedo is pitch black
