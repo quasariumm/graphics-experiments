@@ -3,6 +3,7 @@
 module dx_hw_ray.rendering.dx_render;
 import std;
 import dx_hw_ray.external.dxr;
+import dx_hw_ray.external.imgui;
 import dx_wrapper.external.directx12;
 import dx_wrapper.core.camera;
 import dx_wrapper.external.glm;
@@ -18,7 +19,8 @@ DxRenderer::DxRenderer(DxDevice* device)
 						 static_cast<std::uint32_t>(device->GetHeight()),
 						 1,
 						 false,
-						 true}
+						 true},
+	  m_sceneLighting{*device}
 {
 	m_device = device;
 
@@ -55,7 +57,7 @@ DxRenderer::DxRenderer(DxDevice* device)
 	m_renderPipeline = DxRayPipeline{};
 
 	m_renderPipeline.AddRootSignatureAssociation(m_rayGenRootSignature, {"RayGen"})
-			.AddRootSignatureAssociation(m_missRootSignature, {"Miss"})
+			.AddRootSignatureAssociation(m_missRootSignature, {"Miss", "ShadowMiss"})
 			.AddRootSignatureAssociation(m_closestHitRootSignature, {"ClosestHit"})
 			.SetMaxPayloadSize(8 * sizeof(DWORD32))
 			.SetMaxAttributesSize(2 * sizeof(DWORD32))
@@ -114,6 +116,7 @@ void DxRenderer::Render()
 
 	// Change scene data
 	SceneConstBuffer& sceneConstBuffer	 = m_sceneConstBuffer.GetLocalStorage();
+	sceneConstBuffer.m_lightCount		 = m_sceneLighting.GetLightCount();
 	sceneConstBuffer.m_debugMode		 = m_debugMode;
 	sceneConstBuffer.m_maxRecursionDepth = 8u;
 	sceneConstBuffer.m_frameNum++;
@@ -173,6 +176,32 @@ void DxRenderer::Render()
 	Transition(commandList, rt, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }
 
+void DxRenderer::Inspector()
+{
+	ImGui::SeparatorText("Performance");
+	static float		   smoothFPS = 0.0f;
+	static constexpr float fps_alpha = 0.05f; // lower = smoother, higher = more responsive
+
+	const float dt		   = std::max(0.0001f, m_device->GetDeltaTime());
+	const float currentFPS = 1.0f / dt;
+	if (smoothFPS == 0.0f)
+		smoothFPS = currentFPS;
+	else
+		smoothFPS += fps_alpha * (currentFPS - smoothFPS);
+
+	ImGui::Text("%.1f fps", smoothFPS);
+	ImGui::Text("%.1f ms", 1000.0f * dt);
+
+	ImGui::SeparatorText("Debugging");
+
+	// Debug mode selector
+	const auto* const* debugModeOptions = debug_mode_names.data();
+	auto*			   currentDebugMode = reinterpret_cast<int*>(&m_debugMode);
+	ImGui::Combo("Debug Mode", currentDebugMode, debugModeOptions, debug_mode_names.size());
+
+	m_sceneLighting.Inspector();
+}
+
 void DxRenderer::CreateRaySceneResources()
 {
 	m_tlas				  = Tlas{};
@@ -193,5 +222,6 @@ void DxRenderer::CreateRaySceneResources()
 	sceneConstBuffer.m_materialsBuffers		  = m_sceneGeometryBuffer.GetMaterialsHeapIndex();
 	sceneConstBuffer.m_materialIndicesBuffers = m_sceneGeometryBuffer.GetMaterialIndicesHeapIndex();
 	sceneConstBuffer.m_blasGeometryCounts	  = m_sceneGeometryBuffer.GetBlasGeometryCountHeapIndex();
+	sceneConstBuffer.m_lightBuffer			  = m_sceneLighting.GetGpuLightsHeapIndex();
 	m_sceneConstBuffer.UpdateData(*m_device, std::move(sceneConstBuffer));
 }

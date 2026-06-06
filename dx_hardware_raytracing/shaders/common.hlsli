@@ -1,7 +1,7 @@
 #ifndef _COMMON_HLSLI
 #define _COMMON_HLSLI
 
-static const float pi = 3.14159265359;
+static const float pi = 3.141592653589;
 static const float inv_pi = 0.31830988618;
 
 uint GetRecursionDepth(in uint flags) { return flags & 0x1fu; }

@@ -13,6 +13,7 @@ import dx_hw_ray.rendering.dx_ray_pipeline;
 import dx_wrapper.resources.dx_render_texture;
 import dx_wrapper.resources.dx_structured_buffer;
 import dx_hw_ray.gltf.scene_geometry_buffer;
+import dx_hw_ray.rendering.scene_lighting;
 
 export class DxRenderer
 {
@@ -23,6 +24,8 @@ public:
 	void AddModel(const std::filesystem::path& path);
 
 	void Render();
+	
+	void Inspector();
 
 	Camera& GetCamera() { return m_camera; }
 
@@ -74,19 +77,26 @@ private:
 	DxRayPipeline	m_renderPipeline;
 
 	DxRenderTexture		m_rayOutputTexture;
-	SceneGeometryBuffer m_sceneGeometryBuffer;
+	SceneGeometryBuffer m_sceneGeometryBuffer{};
+	SceneLighting		m_sceneLighting;
 
 	struct SceneConstBuffer
 	{
-		std::int32_t  m_vertexBuffers;
-		std::int32_t  m_indexBuffers;
-		std::int32_t  m_materialsBuffers;
-		std::int32_t  m_materialIndicesBuffers;
-		std::int32_t  m_blasGeometryCounts;
+		// Geometry buffers
+		std::int32_t m_vertexBuffers;
+		std::int32_t m_indexBuffers;
+		std::int32_t m_materialsBuffers;
+		std::int32_t m_materialIndicesBuffers;
+		std::int32_t m_blasGeometryCounts;
+		// Lighting
+		std::int32_t  m_lightBuffer;
+		std::uint32_t m_lightCount;
+		// Frame parameters
 		DebugMode	  m_debugMode;
 		std::uint32_t m_maxRecursionDepth;
 		std::uint32_t m_frameNum;
-		glm::uvec4	  m_morePadding[14];
+		glm::uvec2	  m_padding;
+		glm::uvec4	  m_morePadding[13];
 	};
 	DxConstBuffer<SceneConstBuffer> m_sceneConstBuffer{};
 

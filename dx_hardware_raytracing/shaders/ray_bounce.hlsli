@@ -61,12 +61,15 @@ uint RaySeed(in HitInfo hitInfo, in uint frameNum)
 	return Randomise(seed);
 }
 
-RayDesc ShadowRay(in FragmentAttributes attributes, in float3 hitPos, in float3 wi)
+RayDesc ShadowRay(in ShaderLight light, in float3 hitPos, in float3 wi)
 {
 	RayDesc desc;
-	desc.Origin = hitPos + 0.001 * attributes.m_normal;
+	desc.Origin = hitPos;
     desc.TMin = 0.001;
-    desc.TMax = 10000.0;
+	if (light.m_type == light_type_punctual)
+		desc.TMax = length(light.m_position - hitPos) - 0.001;
+	else
+		desc.TMax = 10000.0;
 	desc.Direction = wi;
 
 	return desc; 

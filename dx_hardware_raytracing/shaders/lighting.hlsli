@@ -41,7 +41,7 @@ float3 SampleLight(ShaderLight light, float3 hitPos, float3 normal)
             attenuation *= spotAtt * spotAtt;
         }
 
-        float NdotL = dot(normal, -light.m_direction);
+        float NdotL = saturate(dot(normal, -lightDir));
 
         return light.m_color * light.m_intensity * NdotL * attenuation;
     }
