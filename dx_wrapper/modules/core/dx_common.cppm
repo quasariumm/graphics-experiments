@@ -25,31 +25,36 @@ export void CheckHR(HRESULT hr)
 			if (SUCCEEDED(dred_query_device->QueryInterface(IID_PPV_ARGS(dred.GetAddressOf()))))
 			{
 				D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT breadcrumbs{};
-				D3D12_DRED_PAGE_FAULT_OUTPUT pageFault{};
+				D3D12_DRED_PAGE_FAULT_OUTPUT	   pageFault{};
 				dred->GetAutoBreadcrumbsOutput(&breadcrumbs);
 				dred->GetPageFaultAllocationOutput(&pageFault);
 
 				Log::Critical("Device removed: reason=0x{:08X} page fault VA=0x{:016X}",
-					static_cast<unsigned int>(removedReason),
-					pageFault.PageFaultVA);
+							  static_cast<unsigned int>(removedReason),
+							  pageFault.PageFaultVA);
 
 				// Walk breadcrumbs
 				auto* node = breadcrumbs.pHeadAutoBreadcrumbNode;
 				while (node)
 				{
 					Log::Critical("  Breadcrumb: {} completed {}/{} ops",
-						node->pCommandListDebugNameA ? node->pCommandListDebugNameA : "<unnamed>",
-						*node->pLastBreadcrumbValue,
-						node->BreadcrumbCount);
+								  node->pCommandListDebugNameA ? node->pCommandListDebugNameA : "<unnamed>",
+								  *node->pLastBreadcrumbValue,
+								  node->BreadcrumbCount);
 					node = node->pNext;
 				}
 			}
 		}
 		else
 		{
-			CHAR errMsgBuf[256];
+			CHAR  errMsgBuf[256];
 			DWORD errMsgLen = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				nullptr, hr, 0, errMsgBuf, sizeof(errMsgBuf), nullptr);
+											nullptr,
+											hr,
+											0,
+											errMsgBuf,
+											sizeof(errMsgBuf),
+											nullptr);
 
 			if (errMsgLen != 0)
 				Log::Critical("{}", errMsgBuf);

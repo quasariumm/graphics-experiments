@@ -5,9 +5,9 @@ import std;
 import dx_hw_ray.external.dxr;
 import dx_wrapper.helpers.dx_buffer_helpers;
 
-void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std::size_t vertexStride,
-							 std::uint32_t vertexCount, ID3D12Resource* indexBuffer, std::uint32_t indexCount,
-							 DXGI_FORMAT indexFormat, D3D12_RAYTRACING_GEOMETRY_FLAGS additionalFlags)
+void Blas::AddGeometry(const DxDevice& device, const glm::mat4& transform, ID3D12Resource* vertexBuffer, std::size_t vertexStride,
+					   std::uint32_t vertexCount, ID3D12Resource* indexBuffer, std::uint32_t indexCount,
+					   DXGI_FORMAT indexFormat, D3D12_RAYTRACING_GEOMETRY_FLAGS additionalFlags)
 {
 	// Create a geometry description
 	D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc{};
@@ -21,16 +21,32 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 	geometryDesc.Triangles.IndexFormat = indexFormat;
 	geometryDesc.Triangles.IndexCount  = indexCount;
 
-	geometryDesc.Triangles.Transform3x4 = 0;
+	const glm::mat4 transposed = glm::transpose(transform);
+
+	ComPtr<ID3D12Resource> transformBuffer;
+	CheckHR(CreateStaticBuffer(device,
+							   glm::value_ptr(transposed),
+							   sizeof(glm::mat3x4),
+							   D3D12_RESOURCE_STATE_COMMON,
+							   transformBuffer,
+							   "BLAS geometry transform buffer"));
+
+	geometryDesc.Triangles.Transform3x4 = transformBuffer->GetGPUVirtualAddress();
+	m_transforms.emplace_back(std::move(transformBuffer));
 
 	geometryDesc.Flags = additionalFlags;
 
+	m_geometries.push_back(std::move(geometryDesc));
+}
+
+void Blas::Generate(DxDevice& device)
+{
 	// Get the byte size of the new resources
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS prebuildDesc{};
 	prebuildDesc.Type			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	prebuildDesc.DescsLayout	= D3D12_ELEMENTS_LAYOUT_ARRAY;
-	prebuildDesc.NumDescs		= 1;
-	prebuildDesc.pGeometryDescs = &geometryDesc;
+	prebuildDesc.NumDescs		= m_geometries.size();
+	prebuildDesc.pGeometryDescs = m_geometries.data();
 	prebuildDesc.Flags			= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
 
 	// Get the prebuild info
@@ -54,7 +70,7 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 							   scratchResource,
 							   "BLAS Scratch Resource",
 							   D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));
-	
+
 	CheckHR(CreateStaticBuffer(device,
 							   nullptr,
 							   resultSize,
@@ -74,6 +90,6 @@ void Blas::GenerateTriangles(DxDevice& device, ID3D12Resource* vertexBuffer, std
 	device.GetDXDirectComList()->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
 
 	device.SetUavBarrier(m_blas.Get());
-	
+
 	device.RegisterScratchResource(std::move(scratchResource));
 }

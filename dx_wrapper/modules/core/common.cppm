@@ -4,12 +4,17 @@ export module dx_wrapper.core.common;
 import std;
 import dx_wrapper.core.log;
 
+/** Wide pointer type for user data parameters */
+export struct UserData
+{
+	void*		m_data = nullptr;
+	std::size_t m_size = 0;
+};
+
 export template <typename T>
 	requires std::is_integral_v<T>
 T NextMultipleOf(T value, T multiple)
-{
-	return (value + multiple - 1) & ~(multiple - 1);
-}
+{ return (value + multiple - 1) & ~(multiple - 1); }
 
 export std::vector<char> ReadFileBinary(const std::filesystem::path& path)
 {

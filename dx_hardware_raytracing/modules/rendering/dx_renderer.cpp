@@ -8,6 +8,7 @@ import dx_wrapper.core.camera;
 import dx_wrapper.external.glm;
 import dx_wrapper.resources.dx_resource;
 import dx_wrapper.resources.dx_texture;
+import dx_wrapper.helpers.dx_buffer_helpers;
 
 DxRenderer::DxRenderer(DxDevice* device)
 	: m_rayOutputTexture{*device,
@@ -34,9 +35,8 @@ DxRenderer::DxRenderer(DxDevice* device)
 
 	m_closestHitRootSignature = DxRootSignature{};
 	// Material buffer. Since that is not aligned, I create a descriptor just to be sure
-	m_closestHitRootSignature.AddBufferSRV(0);											 // BVH
-	m_closestHitRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // Material list
-	m_closestHitRootSignature.AddConstantBuffer(0);										 // SceneCB
+	m_closestHitRootSignature.AddBufferSRV(0);		// BVH
+	m_closestHitRootSignature.AddConstantBuffer(0); // SceneCB
 	m_closestHitRootSignature.AddSampler(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
 										 D3D12_TEXTURE_ADDRESS_MODE_WRAP,
 										 D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK,
@@ -89,16 +89,12 @@ void DxRenderer::Render()
 
 		m_renderPipeline.SetMissShader("shaders/miss.hlsl", "Miss");
 
-		const auto materialBufferGpuHandle =
-				m_device->GetShaderDescriptorPile().GetGpuHandleAt(m_materialBuffer.GetSrvHeapIndex());
-
 		m_renderPipeline.AddHitGroup("HitGroup",
 									 "shaders/hit.hlsl",
 									 "ClosestHit",
 									 "",
 									 "",
 									 {reinterpret_cast<void*>(m_tlas->GetGPUVirtualAddress()),
-									  reinterpret_cast<void*>(materialBufferGpuHandle.ptr),
 									  reinterpret_cast<void*>(m_sceneConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.Finalize(*m_device, "Main Ray Pipeline");
@@ -180,53 +176,21 @@ void DxRenderer::CreateRaySceneResources()
 {
 	m_tlas				  = Tlas{};
 	m_sceneGeometryBuffer = SceneGeometryBuffer{};
-	std::vector<ShaderMaterial> materials;
 
 	for (const auto& model : m_models)
 	{
-		// Nodes
-		for (const auto& node : model.GetNodes())
-		{
-			if (!node->m_mesh)
-				continue;
-
-			const auto& mesh = node->m_mesh;
-			for (const auto& primitive : mesh->m_primitives)
-			{
-				m_tlas.AddBlas(primitive.GetBlas(), node->m_transform.GetWorldTransform(), 0, 0);
-				m_sceneGeometryBuffer.AddPrimitive(primitive.GetVertexBuffer(), primitive.GetIndexBuffer());
-				ShaderMaterial material{};
-				if (primitive.GetMaterial())
-					CompileShaderMaterial(primitive.GetMaterial().value(), material);
-				materials.push_back(material);
-			}
-		}
+		m_sceneGeometryBuffer.AddModel(model);
+		m_tlas.AddBlas(model.GetBlas(), glm::identity<glm::mat4>());
 	}
 	m_tlas.Generate(*m_device);
 	m_sceneGeometryBuffer.Generate(*m_device);
-	m_materialBuffer = DxStructuredBuffer{*m_device, materials};
 
 	SceneConstBuffer sceneConstBuffer{};
 	std::memset(&sceneConstBuffer, 0, sizeof(SceneConstBuffer));
-	sceneConstBuffer.m_vertexBuffers = m_sceneGeometryBuffer.GetVertexHeapIndex();
-	sceneConstBuffer.m_indexBuffers	 = m_sceneGeometryBuffer.GetIndexHeapIndex();
+	sceneConstBuffer.m_vertexBuffers		  = m_sceneGeometryBuffer.GetVertexHeapIndex();
+	sceneConstBuffer.m_indexBuffers			  = m_sceneGeometryBuffer.GetIndexHeapIndex();
+	sceneConstBuffer.m_materialsBuffers		  = m_sceneGeometryBuffer.GetMaterialsHeapIndex();
+	sceneConstBuffer.m_materialIndicesBuffers = m_sceneGeometryBuffer.GetMaterialIndicesHeapIndex();
+	sceneConstBuffer.m_blasGeometryCounts	  = m_sceneGeometryBuffer.GetBlasGeometryCountHeapIndex();
 	m_sceneConstBuffer.UpdateData(*m_device, std::move(sceneConstBuffer));
-}
-
-void DxRenderer::CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial)
-{
-	shaderMaterial.m_alphaCutoff	   = gltfMaterial.m_alphaCutoff;
-	shaderMaterial.m_emissiveFactor	   = gltfMaterial.m_emissiveFactor;
-	shaderMaterial.m_baseColorFactor   = gltfMaterial.m_baseColorFactor;
-	shaderMaterial.m_metallicFactor	   = gltfMaterial.m_metallicFactor;
-	shaderMaterial.m_roughnessFactor   = gltfMaterial.m_roughnessFactor;
-	shaderMaterial.m_normalScale	   = gltfMaterial.m_normalScale;
-	shaderMaterial.m_occlusionStrength = gltfMaterial.m_occlusionStrength;
-
-	const auto texIdx = gltfMaterial.GetTextureIndices();
-	std::memcpy(&shaderMaterial.m_texIndices, texIdx.data(), 8 * sizeof(std::int32_t));
-
-	shaderMaterial.m_flags = static_cast<std::uint32_t>(gltfMaterial.m_alphaMode);
-	shaderMaterial.m_flags |= gltfMaterial.m_doubleSided ? (1 << 3) : 0;
-	shaderMaterial.m_flags |= gltfMaterial.GetTextureCoordinateMap() << 16;
 }

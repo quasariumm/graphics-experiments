@@ -4,6 +4,7 @@ export module dx_wrapper.gltf.primitive;
 import std;
 import dx_wrapper.external.fastgltf;
 import dx_wrapper.external.directx12;
+import dx_wrapper.gltf.common;
 import dx_wrapper.gltf.material;
 import dx_wrapper.external.glm;
 import dx_wrapper.core;
@@ -11,28 +12,27 @@ import dx_wrapper.core;
 export struct Vertex
 {
 	glm::vec3 m_position{0.f};
-	float m_padding1;
+	float	  m_padding1;
 	glm::vec2 m_uv0{0.f};
 	glm::vec2 m_uv1{0.f};
 	glm::vec3 m_normal{0.f};
-	float m_padding2;
+	float	  m_padding2;
 	glm::vec4 m_tangent{0.f};
 };
 
 export class GltfPrimitive
 {
-
 public:
 
 	explicit GltfPrimitive(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
-						   const fastgltf::Primitive& primitive);
+						   const fastgltf::Primitive& primitive, const MaterialsList& materials);
 
 	virtual ~GltfPrimitive() = default;
 
 	const std::vector<Vertex>&		  GetVertices() const;
 	const std::vector<std::uint32_t>& GetIndices() const;
 
-	const std::optional<GltfMaterial>& GetMaterial() const;
+	const std::shared_ptr<GltfMaterial>& GetMaterial() const;
 
 	/**
 	 * @brief Binds the primitive vertex and index buffers to the Input Assembler
@@ -46,9 +46,9 @@ public:
 
 protected:
 
-	std::vector<std::uint32_t>	m_indices{};
-	std::vector<Vertex>			m_vertices{};
-	std::optional<GltfMaterial> m_material{};
+	std::vector<std::uint32_t>	  m_indices{};
+	std::vector<Vertex>			  m_vertices{};
+	std::shared_ptr<GltfMaterial> m_material = nullptr;
 
 	ComPtr<ID3D12Resource>	 m_vertexBuffer{};
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView{};

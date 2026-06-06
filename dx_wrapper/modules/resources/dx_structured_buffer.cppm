@@ -15,9 +15,9 @@ public:
 
 	DxStructuredBuffer() = default;
 
-	explicit DxStructuredBuffer(DxDevice& device, std::uint32_t numElements);
-	explicit DxStructuredBuffer(DxDevice& device, std::uint32_t numElements, T value);
-	explicit DxStructuredBuffer(DxDevice& device, const std::vector<T>& data);
+	explicit DxStructuredBuffer(DxDevice& device, std::uint32_t numElements, const std::string& name = "");
+	explicit DxStructuredBuffer(DxDevice& device, std::uint32_t numElements, T value, const std::string& name = "");
+	explicit DxStructuredBuffer(DxDevice& device, const std::vector<T>& data, const std::string& name = "");
 
 	ID3D12Resource* GetResource() const override { return m_resource.Get(); }
 	ID3D12Resource* operator*() const override { return m_resource.Get(); }
@@ -40,17 +40,17 @@ private:
 };
 
 template <typename T>
-DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, std::uint32_t numElements)
-	: DxStructuredBuffer{device, std::vector(numElements, T{0})}
+DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, std::uint32_t numElements, const std::string& name)
+	: DxStructuredBuffer{device, std::vector(numElements, T{})}
 {}
 
 template <typename T>
-DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, std::uint32_t numElements, T value)
+DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, std::uint32_t numElements, T value, const std::string& name)
 	: DxStructuredBuffer{device, std::vector(numElements, value)}
 {}
 
 template <typename T>
-DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>& data)
+DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>& data, const std::string& name)
 {
 	m_cpuData = data;
 
@@ -59,6 +59,7 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 	const CD3DX12_RESOURCE_DESC	  bufferDesc =
 			CD3DX12_RESOURCE_DESC::Buffer(data.size() * sizeof(T), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
+	const std::wstring wname = std::filesystem::path(name).wstring();
 	CheckHR(device->CreateCommittedResource(&heapProps,
 											D3D12_HEAP_FLAG_NONE,
 											&bufferDesc,
@@ -66,11 +67,13 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 											nullptr,
 											GetIID(m_resource),
 											GetPPV(m_resource)));
+	CheckHR(m_resource->SetName(wname.c_str()));
 
 	// Counter
 	const CD3DX12_RESOURCE_DESC counterBufferDesc =
 			CD3DX12_RESOURCE_DESC::Buffer(sizeof(std::uint32_t), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
+	const auto counterName = wname + L" (Counter)";
 	CheckHR(device->CreateCommittedResource(&heapProps,
 											D3D12_HEAP_FLAG_NONE,
 											&counterBufferDesc,
@@ -78,6 +81,7 @@ DxStructuredBuffer<T>::DxStructuredBuffer(DxDevice& device, const std::vector<T>
 											nullptr,
 											GetIID(m_counterResource),
 											GetPPV(m_counterResource)));
+	CheckHR(m_counterResource->SetName(counterName.c_str()));
 
 	// Descriptors
 	m_srvHeapIndex = AllocateShaderResourceView(device, m_resource.Get(), sizeof(T));

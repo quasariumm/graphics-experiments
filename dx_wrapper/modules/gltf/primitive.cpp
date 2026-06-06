@@ -11,7 +11,7 @@ import dx_wrapper.helpers.dx_buffer_helpers;
 import dx_wrapper.external.glm;
 
 GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& modelPath, const fastgltf::Asset& asset,
-							 const fastgltf::Primitive& primitive)
+							 const fastgltf::Primitive& primitive, const MaterialsList& materials)
 {
 	auto positionIt = primitive.findAttribute("POSITION");
 
@@ -29,10 +29,8 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 	ProcessVerticesIndices(asset, primitive);
 
 	// Material
-	if (!primitive.materialIndex.has_value())
-		m_material = std::nullopt;
-	else
-		m_material = GltfMaterial{device, modelPath, asset, asset.materials[*primitive.materialIndex]};
+	if (primitive.materialIndex.has_value())
+		m_material = materials.at(*primitive.materialIndex);
 
 	// Make DX12 buffers
 	CheckHR(CreateStaticBuffer(device,
@@ -52,9 +50,9 @@ GltfPrimitive::GltfPrimitive(DxDevice& device, const std::filesystem::path& mode
 	m_indexBufferView.Format		 = DXGI_FORMAT_R32_UINT;
 }
 
-const std::vector<Vertex>&		   GltfPrimitive::GetVertices() const { return m_vertices; }
-const std::vector<std::uint32_t>&  GltfPrimitive::GetIndices() const { return m_indices; }
-const std::optional<GltfMaterial>& GltfPrimitive::GetMaterial() const { return m_material; }
+const std::vector<Vertex>&			 GltfPrimitive::GetVertices() const { return m_vertices; }
+const std::vector<std::uint32_t>&	 GltfPrimitive::GetIndices() const { return m_indices; }
+const std::shared_ptr<GltfMaterial>& GltfPrimitive::GetMaterial() const { return m_material; }
 
 void GltfPrimitive::Bind(const DxDevice& device, const std::uint32_t vertexBufferSlot) const
 {

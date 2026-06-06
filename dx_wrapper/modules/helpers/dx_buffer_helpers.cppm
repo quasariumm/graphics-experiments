@@ -9,7 +9,7 @@ import dx_wrapper.rendering.dx_descriptor_pile;
 // NOLINTNEXTLINE
 static constexpr auto D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = static_cast<D3D12_RESOURCE_STATES>(4194304);
 
-export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std::size_t size,
+export HRESULT CreateStaticBuffer(const DxDevice& device, const void* data, const std::size_t size,
 								  const D3D12_RESOURCE_STATES initialState, ComPtr<ID3D12Resource>& buffer,
 								  const std::string&		 name		   = "",
 								  const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
@@ -66,7 +66,7 @@ export HRESULT CreateStaticBuffer(DxDevice& device, const void* data, const std:
 }
 
 export template <typename T>
-HRESULT CreateStaticBuffer(DxDevice& device, const std::vector<T>& data, const D3D12_RESOURCE_STATES initialState,
+HRESULT CreateStaticBuffer(const DxDevice& device, const std::vector<T>& data, const D3D12_RESOURCE_STATES initialState,
 						   ComPtr<ID3D12Resource>& buffer, const std::string& name = "",
 						   const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE)
 { return CreateStaticBuffer(device, data.data(), sizeof(T) * data.size(), initialState, buffer, name, resourceFlags); }
@@ -79,7 +79,7 @@ void CreateSRV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU
 			   size_t structuredBufferElementSize)
 {
 	const auto desc = GetDesc(resource);
-	
+
 	switch (desc.Dimension)
 	{
 	case D3D12_RESOURCE_DIMENSION_UNKNOWN:
@@ -129,9 +129,9 @@ void CreateUAV(const DxDevice& device, ID3D12Resource* resource, const D3D12_CPU
 		break;
 	case D3D12_RESOURCE_DIMENSION_BUFFER:
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
-		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+		uavDesc.ViewDimension				= D3D12_UAV_DIMENSION_BUFFER;
 		uavDesc.Buffer.CounterOffsetInBytes = 0;
-		uavDesc.Buffer.FirstElement = 0;
+		uavDesc.Buffer.FirstElement			= 0;
 		if (structuredBufferElementSize == 0)
 		{
 			// User wants a ByteAddressBuffer / Buffer<uint>
@@ -209,7 +209,7 @@ export DxDescriptorPile::IndexType AllocateConstantBufferView(DxDevice& device, 
 	const auto						result	  = device.GetShaderDescriptorPile().GetCpuHandleAt(heapIndex);
 	D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
 	desc.BufferLocation = resource->GetGPUVirtualAddress();
-	desc.SizeInBytes = GetDesc(resource).Width;
+	desc.SizeInBytes	= GetDesc(resource).Width;
 	device->CreateConstantBufferView(&desc, result);
 	return heapIndex;
 }
@@ -257,6 +257,6 @@ export void CreateConstantBufferView(const DxDevice& device, const DxDescriptorH
 	const auto						result = heap.GetCpuHandleAt(index);
 	D3D12_CONSTANT_BUFFER_VIEW_DESC desc;
 	desc.BufferLocation = resource->GetGPUVirtualAddress();
-	desc.SizeInBytes = GetDesc(resource).Width;
+	desc.SizeInBytes	= GetDesc(resource).Width;
 	device->CreateConstantBufferView(&desc, result);
 }

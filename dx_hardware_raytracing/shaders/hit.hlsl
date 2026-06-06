@@ -7,10 +7,12 @@ struct SceneConstBuffer
 {
     int m_vertexBuffers;
     int m_indexBuffers;
+    int m_materialsBuffers;
+    int m_materialIndicesBuffers;
+    int m_blasGeometryCounts;
     uint m_debugMode;
     uint m_maxRecursionDepth;
     uint m_frameNum;
-    uint3 m_padding;
     uint4 m_morePadding[14];
 };
 ConstantBuffer<SceneConstBuffer> SceneCB : register(b0);
@@ -19,13 +21,10 @@ ConstantBuffer<SceneConstBuffer> SceneCB : register(b0);
 RaytracingAccelerationStructure SceneBVH : register(t0);
 
 
-StructuredBuffer<ShaderMaterial> Materials : register(t1);
-
-
 SamplerState SSLinearWrap : register(s0);
 
 
-Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in StructuredBuffer<uint> indexBuffer, float3 bary) 
+Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in Buffer<uint> indexBuffer, float3 bary) 
 {
     uint offset = 3 * PrimitiveIndex();
     Vertex v0 = vertexBuffer[indexBuffer[offset]];
@@ -64,14 +63,26 @@ void ClosestHit(inout HitInfo payload, Attributes attrib)
     if (SceneCB.m_vertexBuffers == -1 || SceneCB.m_indexBuffers == -1)
         return;
     
-    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[SceneCB.m_vertexBuffers + InstanceIndex()];
-    StructuredBuffer<uint> indices = ResourceDescriptorHeap[SceneCB.m_indexBuffers + InstanceIndex()];
+    Buffer<uint> blasGeometryCounts = ResourceDescriptorHeap[SceneCB.m_blasGeometryCounts];
+    uint geomIndex = InstanceIndex() * blasGeometryCounts[InstanceIndex()] + GeometryIndex();
+    
+    StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[SceneCB.m_vertexBuffers + geomIndex];
+    Buffer<uint> indices = ResourceDescriptorHeap[SceneCB.m_indexBuffers + geomIndex];
 
     // Get the interpolated vertex data
     Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
 
     // Shade with the material
-    ShaderMaterial material = Materials[InstanceIndex()];
+    StructuredBuffer<ShaderMaterial> materials = ResourceDescriptorHeap[SceneCB.m_materialsBuffers + InstanceIndex()];
+    Buffer<int> materialIndices = ResourceDescriptorHeap[SceneCB.m_materialIndicesBuffers + InstanceIndex()];
+
+    int materialIndex = materialIndices[GeometryIndex()];
+
+    ShaderMaterial material;
+    if (materialIndex == -1)
+        material = (ShaderMaterial)0;
+    else
+        material = materials[materialIndex];
 
     FragmentAttributes attributes = GetFragmentAttributes(SSLinearWrap, fragment, material);
 

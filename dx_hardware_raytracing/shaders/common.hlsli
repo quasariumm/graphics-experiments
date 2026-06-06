@@ -88,8 +88,7 @@ struct ShaderMaterial
     int m_tex8;
 	
     uint m_flags;
-    uint m_debugMode;
-    uint2 m_padding;
+    uint3 m_padding;
 };
 
 struct Vertex

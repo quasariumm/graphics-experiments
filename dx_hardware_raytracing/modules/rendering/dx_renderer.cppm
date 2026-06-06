@@ -3,7 +3,7 @@
 export module dx_hw_ray.rendering.dx_render;
 import std;
 import dx_wrapper.core;
-import dx_wrapper.gltf;
+import dx_hw_ray.gltf.raytraced_model;
 import dx_hw_ray.gltf.raytraced_primitive;
 import dx_wrapper.rendering;
 import dx_wrapper.resources.dx_const_buffer;
@@ -68,48 +68,30 @@ private:
 	static_assert(sizeof(CameraConstBuffer) % 256 == 0, "Camera const buffer is not 256-byte aligned");
 	DxConstBuffer<CameraConstBuffer> m_cameraConstBuffer;
 
-	struct ShaderMaterial
-	{
-		float m_alphaCutoff = 0.5f;
-
-		glm::vec3 m_emissiveFactor{1.f};
-		glm::vec4 m_baseColorFactor{1.f};
-
-		float m_metallicFactor	  = 0.0f;
-		float m_roughnessFactor	  = 1.0f;
-		float m_normalScale		  = 1.0f;
-		float m_occlusionStrength = 1.0f;
-
-		int m_texIndices[8]{-1};
-
-		std::uint32_t m_flags = 0;
-		std::uint32_t m_padding[3];
-	};
-	static void CompileShaderMaterial(const GltfMaterial& gltfMaterial, ShaderMaterial& shaderMaterial);
-
 	DxRootSignature m_rayGenRootSignature;
 	DxRootSignature m_missRootSignature;
 	DxRootSignature m_closestHitRootSignature;
 	DxRayPipeline	m_renderPipeline;
 
-	DxRenderTexture					   m_rayOutputTexture;
-	DxStructuredBuffer<ShaderMaterial> m_materialBuffer;
-	SceneGeometryBuffer				   m_sceneGeometryBuffer;
+	DxRenderTexture		m_rayOutputTexture;
+	SceneGeometryBuffer m_sceneGeometryBuffer;
 
 	struct SceneConstBuffer
 	{
 		std::int32_t  m_vertexBuffers;
 		std::int32_t  m_indexBuffers;
+		std::int32_t  m_materialsBuffers;
+		std::int32_t  m_materialIndicesBuffers;
+		std::int32_t  m_blasGeometryCounts;
 		DebugMode	  m_debugMode;
 		std::uint32_t m_maxRecursionDepth;
 		std::uint32_t m_frameNum;
-		glm::uvec3    m_padding;
 		glm::uvec4	  m_morePadding[14];
 	};
 	DxConstBuffer<SceneConstBuffer> m_sceneConstBuffer{};
 
-	std::vector<GltfModel<RaytracedGltfPrimitive>> m_models;
-	Tlas										   m_tlas;
+	std::vector<RaytracedModel> m_models;
+	Tlas						m_tlas;
 };
 
 export inline constexpr std::array<const char*, 16> debug_mode_names{
