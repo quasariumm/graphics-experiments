@@ -28,7 +28,8 @@ public:
 
 	explicit DxDevice(int width = 1920, int height = 1080, LPCSTR title = "DX12 Wrapper Window",
 					  D3D_FEATURE_LEVEL featureLevel   = D3D_FEATURE_LEVEL_11_0,
-					  DebugLayerMode	debugLayerMode = DebugLayerMode::Enabled);
+					  DebugLayerMode	debugLayerMode = DebugLayerMode::Enabled,
+					  const std::span<char*>& args = {});
 	~DxDevice();
 
 	Input& GetInput() { return m_input; }
@@ -36,8 +37,8 @@ public:
 	[[nodiscard]] int GetWidth() const { return m_windowWidth; }
 	[[nodiscard]] int GetHeight() const { return m_windowHeight; }
 
-	bool ShouldClose() const { return m_shouldClose; }
-	void RequestClose() { m_shouldClose = true; }
+	bool ShouldClose() const { return static_cast<bool>(m_shouldClose); }
+	void RequestClose() { m_shouldClose = 1; }
 
 	/*
 	 * Features
@@ -80,6 +81,8 @@ public:
 private:
 
 	friend LRESULT WindowProc(HWND, UINT, WPARAM, LPARAM);
+	
+	void ParseArguments(const std::span<char*>& args);
 
 	using Clock = std::chrono::high_resolution_clock;
 	Clock::time_point m_lastFrameTime;
@@ -100,7 +103,12 @@ private:
 	// Win32 stuff
 	WNDCLASSEX		m_windowClass;
 	WINDOWPLACEMENT m_windowedPlacement;
+	
+	DebugLayerMode m_debugLayerMode;
 
-	bool m_shouldClose		 = false;
-	bool m_commandListOpened = false;
+	std::uint8_t m_shouldClose		 : 1 = 0;
+	std::uint8_t m_commandListOpened : 1 = 0;
+	
+	// Parameter flags
+	std::uint8_t m_keepScratchResources : 1 = 0;
 };

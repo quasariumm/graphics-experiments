@@ -6,8 +6,8 @@ import dx_hw_ray.external.imgui;
 
 struct Demo
 {
-	explicit Demo(const DxDevice::DebugLayerMode debugLayerMode = DxDevice::DebugLayerMode::Enabled)
-		: m_device{1920, 1080, "DXR Hardware Raytracing", D3D_FEATURE_LEVEL_12_2, debugLayerMode}, m_renderer{&m_device},
+	explicit Demo(const std::span<char*>& args)
+		: m_device{1920, 1080, "DXR Hardware Raytracing", D3D_FEATURE_LEVEL_12_2, DxDevice::DebugLayerMode::Enabled, args}, m_renderer{&m_device},
 		  m_imguiRenderer{&m_device}
 	{}
 
@@ -22,7 +22,7 @@ struct Demo
 
 int main(const int argc, char** argv)
 {
-	Demo demo{DxDevice::GetDebugLayerModeFromArgs(argc, argv)};
+	Demo demo{std::span{argv, argv + argc}};
 	demo.Run();
 	return 0;
 }

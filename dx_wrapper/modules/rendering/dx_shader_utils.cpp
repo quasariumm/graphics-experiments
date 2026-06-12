@@ -64,7 +64,7 @@ std::optional<ComPtr<IDxcBlob>> RuntimeCompileShader(const Filesystem::path& pat
 
 	// Note: I skip validation to do it manually later. Better error handling then
 	std::wstring shaderType = Filesystem::path{std::format("{}_{}", type, shaderModel)}.wstring();
-	std::vector	 arguments	= {L"-T", shaderType.c_str(), L"-no-warnings", L"-Vd", L"-I", includeDir.c_str()};
+	std::vector	 arguments	= {L"-T", shaderType.c_str(), L"-no-warnings", L"-Zi", L"-Qembed_debug", L"-I", includeDir.c_str()};
 
 	// Compile
 	ComPtr<IDxcIncludeHandler> includeHandler;

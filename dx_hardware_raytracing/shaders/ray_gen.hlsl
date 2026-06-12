@@ -6,6 +6,7 @@ RWTexture2D<float4> Output : register(u0);
 RaytracingAccelerationStructure SceneBVH : register(t0);
 
 ConstantBuffer<ShaderCamera> CameraCB : register(b0);
+ConstantBuffer<SceneConstBuffer> SceneCB : register(b1);
 
 [shader("raygeneration")]
 void RayGen() 
@@ -45,5 +46,12 @@ void RayGen()
         payload
     );
 
-    Output[launchIndex] = float4(TonemappingAgX(payload.m_color), 1.0);
+    float3 color = payload.m_color;
+
+    if (SceneCB.m_accumulationFrame > 0)
+    {
+        float3 accumulatorColor = Output[launchIndex].rgb;
+        color = lerp(accumulatorColor, color, 1.0 / float(SceneCB.m_accumulationFrame));
+    }
+    Output[launchIndex] = float4(color, 1.0);
 }

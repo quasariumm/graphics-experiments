@@ -66,7 +66,7 @@ void Blas::Generate(DxDevice& device)
 	CheckHR(CreateStaticBuffer(device,
 							   nullptr,
 							   scratchSize,
-							   D3D12_RESOURCE_STATE_COMMON,
+							   D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 							   scratchResource,
 							   "BLAS Scratch Resource",
 							   D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS));

@@ -117,10 +117,13 @@ private:
 	void GetAdapter(IDXGIAdapter1** ppAdapter);
 
 	static constexpr size_t MAX_BACK_BUFFER_COUNT = 3;
+	
+	DebugLayerMode m_debugLayerMode;
 
 	UINT m_backBufferIndex;
 
 	// Direct3D objects.
+	Microsoft::WRL::ComPtr<IDXGIAdapter1>			   m_adapter;
 	Microsoft::WRL::ComPtr<ID3D12Device5>			   m_d3dDevice;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6> m_commandList;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>		   m_commandQueue;

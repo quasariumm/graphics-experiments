@@ -82,9 +82,11 @@ RayDesc BounceRay(
 )
 {
     RayDesc desc;
-    desc.Origin = hitPos + 0.001 * attributes.m_normal;
+    desc.Origin = hitPos;
     desc.TMin = 0.001;
     desc.TMax = 10000.0;
+
+	uint seed = RaySeed(hitInfo, frameNum);
 
     if (attributes.m_roughness < 0.0001)
     {
@@ -92,7 +94,6 @@ RayDesc BounceRay(
     }
     else
     {
-        uint seed = RaySeed(hitInfo, frameNum);
         desc.Direction = SampleGGX(
 			seed, 
 			attributes.m_normal, 
@@ -102,6 +103,10 @@ RayDesc BounceRay(
 			attributes.m_roughness
 		);
     }
+
+	bool passThrough = RandomFloat(seed) >= attributes.m_albedo.a;
+	if (passThrough)
+		desc.Direction = -wo;
 
     return desc;
 }

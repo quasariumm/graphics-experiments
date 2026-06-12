@@ -86,6 +86,10 @@ FragmentAttributes GetFragmentAttributes(in SamplerState samplerState, in Vertex
         attributes.m_tangent = fragment.Tangent.w * cross(fragment.Normal, fragment.Tangent.xyz);
     }
 
+    // Alpha masking
+    if ((material.m_flags & 0b111) == 1 && attributes.m_albedo.a < material.m_alphaCutoff)
+        attributes.m_albedo.a = 0.0;
+
     return attributes;
 }
 

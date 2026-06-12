@@ -1,6 +1,30 @@
 #ifndef _COMMON_HLSLI
 #define _COMMON_HLSLI
 
+struct SceneConstBuffer
+{
+	// Geometry buffers
+	int m_vertexBuffers;
+	int m_indexBuffers;
+	int m_materialsBuffers;
+	int m_materialIndicesBuffers;
+	int m_blasGeometryCounts;
+	// Lighting
+	int m_lightBuffer;
+	int m_lightCount;
+	// Frame parameters
+	uint  m_debugMode;
+	uint  m_maxRecursionDepth;
+	uint  m_frameNum;
+    uint  m_accumulationFrame;
+    /*
+    Flags:
+        - accumulate (1 bit)    
+    */
+	uint  m_flags;
+	uint4 m_morePadding[13];
+};
+
 static const float pi = 3.141592653589;
 static const float inv_pi = 0.31830988618;
 

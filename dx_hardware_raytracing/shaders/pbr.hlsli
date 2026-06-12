@@ -41,7 +41,7 @@ float GGXIsoG(float alpha, float NdotO, float NdotI)
 
 float GGXIsoV(float alpha, float NdotO, float NdotI)
 {
-    return lerp(2.0 * NdotO * NdotI, NdotO + NdotI, alpha * alpha);
+    return 0.5 / lerp(2.0 * NdotO * NdotI, NdotO + NdotI, alpha * alpha);
 }
 
 float3 ComputeBRDF(float3 normal, float3 wo, float3 wi, float3 baseColor, float roughness, float metallic)

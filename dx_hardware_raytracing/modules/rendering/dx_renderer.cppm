@@ -14,6 +14,7 @@ import dx_wrapper.resources.dx_render_texture;
 import dx_wrapper.resources.dx_structured_buffer;
 import dx_hw_ray.gltf.scene_geometry_buffer;
 import dx_hw_ray.rendering.scene_lighting;
+import dx_wrapper.resources.dx_texture;
 
 export class DxRenderer
 {
@@ -24,7 +25,7 @@ public:
 	void AddModel(const std::filesystem::path& path);
 
 	void Render();
-	
+
 	void Inspector();
 
 	Camera& GetCamera() { return m_camera; }
@@ -76,7 +77,12 @@ private:
 	DxRootSignature m_closestHitRootSignature;
 	DxRayPipeline	m_renderPipeline;
 
-	DxRenderTexture		m_rayOutputTexture;
+	DxRootSignature m_blitRootSignature;
+	DxPipelineState m_blitPipeline;
+
+	DxTexture m_rayOutputTexture;
+	DxTexture m_blitTexture;
+
 	SceneGeometryBuffer m_sceneGeometryBuffer{};
 	SceneLighting		m_sceneLighting;
 
@@ -95,10 +101,17 @@ private:
 		DebugMode	  m_debugMode;
 		std::uint32_t m_maxRecursionDepth;
 		std::uint32_t m_frameNum;
-		glm::uvec2	  m_padding;
+		std::uint32_t m_accumulationFame;
+		/*
+		 * Flags:
+		 *  - accumulate (1 bit)
+		 */
+		std::uint32_t m_flags;
 		glm::uvec4	  m_morePadding[13];
 	};
 	DxConstBuffer<SceneConstBuffer> m_sceneConstBuffer{};
+
+	bool m_accumulate = false;
 
 	std::vector<RaytracedModel> m_models;
 	Tlas						m_tlas;

@@ -3,29 +3,9 @@
 #include "pbr.hlsli"
 #include "ray_bounce.hlsli"
 
-struct SceneConstBuffer
-{
-	// Geometry buffers
-	int m_vertexBuffers;
-	int m_indexBuffers;
-	int m_materialsBuffers;
-	int m_materialIndicesBuffers;
-	int m_blasGeometryCounts;
-	// Lighting
-	int m_lightBuffer;
-	int m_lightCount;
-	// Frame parameters
-	uint  m_debugMode;
-	uint  m_maxRecursionDepth;
-	uint  m_frameNum;
-	uint2 m_padding;
-	uint4 m_morePadding[13];
-};
 ConstantBuffer<SceneConstBuffer> SceneCB : register(b0);
 
-
 RaytracingAccelerationStructure SceneBVH : register(t0);
-
 
 SamplerState SSLinearWrap : register(s0);
 
@@ -50,45 +30,10 @@ Vertex GetFragmentData(in StructuredBuffer<Vertex> vertexBuffer, in Buffer<uint>
 static const uint shadow_flags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_CULL_BACK_FACING_TRIANGLES |
 								 RAY_FLAG_SKIP_CLOSEST_HIT_SHADER | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
 
-[shader("closesthit")] void ClosestHit(inout HitInfo payload, Attributes attrib)
+float3 ComputeRadiance(in float3 hitPos, in FragmentAttributes attributes, in float3 wo)
 {
-	float3 barycentrics = float3(1.0 - attrib.m_bary.x - attrib.m_bary.y, attrib.m_bary.x, attrib.m_bary.y);
-
-	// Set distance on primary ray only
-	if (all(payload.m_color == 0.0))
-		payload.m_distance = RayTCurrent();
-
-	// Get the triangle
-	if (SceneCB.m_vertexBuffers == -1 || SceneCB.m_indexBuffers == -1)
-		return;
-
-	Buffer<uint> blasGeometryCounts = ResourceDescriptorHeap[SceneCB.m_blasGeometryCounts];
-	uint		 geomIndex			= InstanceIndex() * blasGeometryCounts[InstanceIndex()] + GeometryIndex();
-
-	StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[SceneCB.m_vertexBuffers + geomIndex];
-	Buffer<uint>			 indices  = ResourceDescriptorHeap[SceneCB.m_indexBuffers + geomIndex];
-
-	// Get the interpolated vertex data
-	Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
-
-	// Shade with the material
-	StructuredBuffer<ShaderMaterial> materials = ResourceDescriptorHeap[SceneCB.m_materialsBuffers + InstanceIndex()];
-	Buffer<int> materialIndices				   = ResourceDescriptorHeap[SceneCB.m_materialIndicesBuffers + InstanceIndex()];
-
-	int materialIndex = materialIndices[GeometryIndex()];
-
-	ShaderMaterial material;
-	if (materialIndex == -1)
-		material = (ShaderMaterial)0;
-	else
-		material = materials[materialIndex];
-
-	FragmentAttributes attributes = GetFragmentAttributes(SSLinearWrap, fragment, material);
-
-	// Perform PBR
-	float3 hitPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
-
-	float3 wo = -WorldRayDirection();
+	if (attributes.m_albedo.a == 0.0)
+		return 0.0;
 
 	// Sample all lights in the scene
 	StructuredBuffer<ShaderLight> lights = ResourceDescriptorHeap[SceneCB.m_lightBuffer];
@@ -125,25 +70,70 @@ static const uint shadow_flags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_CULL_BACK_FACI
 							attributes.m_roughness,
 							attributes.m_metallic);
 
-		float pdf = ComputePDF(attributes.m_normal, wo, wi, attributes.m_roughness);
-
-        if (pdf != 0.0)
-            radiance += lightSample * brdf / pdf;
+		radiance += lightSample * brdf;
 	}
 
-	// Debug mode
-	if (SceneCB.m_debugMode != debug_none)
-	{
-		payload.m_color = GetDebugOutput(fragment, attributes, SceneCB.m_debugMode);
+	return radiance;
+}
+
+[shader("closesthit")] void ClosestHit(inout HitInfo payload, Attributes attrib)
+{
+	float3 barycentrics = float3(1.0 - attrib.m_bary.x - attrib.m_bary.y, attrib.m_bary.x, attrib.m_bary.y);
+
+	// Set distance on primary ray only
+	if (all(payload.m_color == 0.0))
+		payload.m_distance = RayTCurrent();
+
+	/*
+		Get the triangle
+	*/
+	if (SceneCB.m_vertexBuffers == -1 || SceneCB.m_indexBuffers == -1)
 		return;
-	}
 
-	// Update the ray color
+	Buffer<uint> blasGeometryCounts = ResourceDescriptorHeap[SceneCB.m_blasGeometryCounts];
+	uint		 geomIndex			= InstanceIndex() * blasGeometryCounts[InstanceIndex()] + GeometryIndex();
+
+	StructuredBuffer<Vertex> vertices = ResourceDescriptorHeap[SceneCB.m_vertexBuffers + geomIndex];
+	Buffer<uint>			 indices  = ResourceDescriptorHeap[SceneCB.m_indexBuffers + geomIndex];
+
+	// Get the interpolated vertex data
+	Vertex fragment = GetFragmentData(vertices, indices, barycentrics);
+
+	/* 
+		Shade with the material
+	*/
+	StructuredBuffer<ShaderMaterial> materials = ResourceDescriptorHeap[SceneCB.m_materialsBuffers + InstanceIndex()];
+	Buffer<int> materialIndices				   = ResourceDescriptorHeap[SceneCB.m_materialIndicesBuffers + InstanceIndex()];
+
+	int materialIndex = materialIndices[GeometryIndex()];
+
+	ShaderMaterial material;
+	if (materialIndex == -1)
+		material = (ShaderMaterial)0;
+	else
+		material = materials[materialIndex];
+
+	FragmentAttributes attributes = GetFragmentAttributes(SSLinearWrap, fragment, material);
+
+	/*
+		Perform PBR
+	*/
+	float3 hitPos = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
+
+	float3 wo = -WorldRayDirection();
+
+	float3 radiance = ComputeRadiance(hitPos, attributes, wo);
+
+	/*
+		Update ray color
+	*/
 	payload.m_color += payload.m_rayColor * (radiance + attributes.m_emissive);
 
-	payload.m_rayColor *= attributes.m_albedo.rgb;
+	payload.m_rayColor *= lerp(1.0, attributes.m_albedo.rgb, attributes.m_albedo.a);
 
-	// Update recursion depth and return if done
+	/*
+		Update recursion depth and return if done
+	*/
 	IncRecursionDepth(payload.m_flags);
 	if (GetRecursionDepth(payload.m_flags) >= SceneCB.m_maxRecursionDepth - 1) // - 1 is accounting shadow rays
 		return;
@@ -152,9 +142,44 @@ static const uint shadow_flags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_CULL_BACK_FACI
 	if (all(payload.m_rayColor < 0.0001))
 		return;
 
-	// Trace a new ray
+	/*
+		New ray BRDF/PDF
+	*/
 	RayDesc newRay = BounceRay(payload, hitPos, wo, attributes, SceneCB.m_frameNum);
 
+	float3 brdf = ComputeBRDF(
+		attributes.m_normal, 
+		wo, newRay.Direction, 
+		attributes.m_albedo.rgb, 
+		attributes.m_roughness, attributes.m_metallic
+	);
+	float pdf = ComputePDF(attributes.m_normal, wo, newRay.Direction, attributes.m_roughness);
+
+	// if (pdf > 0.0)
+	// 	payload.m_rayColor *= (brdf / pdf) * saturate(dot(attributes.m_normal, newRay.Direction));
+
+	/*
+		Debug mode
+	*/
+	if (SceneCB.m_debugMode != debug_none)
+	{
+		if (SceneCB.m_debugMode == debug_brdf)
+		{
+			payload.m_color = brdf;
+			return;
+		}
+		else if (SceneCB.m_debugMode == debug_pdf)
+		{
+			payload.m_color = pdf;
+			return;
+		}
+		payload.m_color = GetDebugOutput(fragment, attributes, SceneCB.m_debugMode);
+		return;
+	}
+
+	/*
+		Trace a new ray
+	*/
 	HitInfo newPayload = payload;
 
 	TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0u, 0u, 0u, newRay, newPayload);

@@ -115,6 +115,7 @@ DeviceResources::~DeviceResources()
 // Configures the Direct3D device, and stores handles to it and the device context.
 void DeviceResources::CreateDeviceResources(DebugLayerMode debugLayerMode)
 {
+	m_debugLayerMode = debugLayerMode;
 #ifndef NDEBUG
 	// Enable the debug layer (requires the Graphics Tools "optional feature").
 	//
@@ -197,12 +198,11 @@ void DeviceResources::CreateDeviceResources(DebugLayerMode debugLayerMode)
 		}
 	}
 
-	ComPtr<IDXGIAdapter1> adapter;
-	GetAdapter(adapter.GetAddressOf());
+	GetAdapter(m_adapter.GetAddressOf());
 
 	// Create the DX12 API device object.
 	auto**	device = m_d3dDevice.ReleaseAndGetAddressOf();
-	HRESULT hr	   = D3D12CreateDevice(adapter.Get(), m_d3dMinFeatureLevel, GetIID(device), GetPPV(device));
+	HRESULT hr	   = D3D12CreateDevice(m_adapter.Get(), m_d3dMinFeatureLevel, GetIID(device), GetPPV(device));
 	CheckHR(hr);
 
 	m_d3dDevice->SetName(L"DeviceResources");
@@ -595,7 +595,7 @@ void DeviceResources::HandleDeviceLost()
 	m_d3dDevice.Reset();
 	m_dxgiFactory.Reset();
 
-	CreateDeviceResources();
+	CreateDeviceResources(m_debugLayerMode);
 	CreateWindowSizeDependentResources();
 
 	if (m_deviceNotify)

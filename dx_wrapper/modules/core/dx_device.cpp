@@ -17,8 +17,14 @@ import dx_wrapper.rendering;
 
 inline std::unordered_map<HWND, DxDevice*> registered_devices = {}; // NOLINT
 
-extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 619; }
-extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = "."; }
+extern "C"
+{
+	__declspec(dllexport) extern const UINT D3D12SDKVersion = 619;
+}
+extern "C"
+{
+	__declspec(dllexport) extern const char* D3D12SDKPath = ".";
+}
 
 #ifdef TESTPLATE_HAS_IMGUI
 extern "C++" LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam); // NOLINT
@@ -62,9 +68,13 @@ LRESULT WindowProc(HWND hwnd, const UINT msg, const WPARAM wp, const LPARAM lp)
 DxDevice::DebugLayerMode DxDevice::GetDebugLayerModeFromArgs(int argc, char** argv)
 { return DirectX::DeviceResources::GetDebugLayerModeFromArgs(argc, argv); }
 
-DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel, DebugLayerMode debugLayerMode)
-	: m_windowWidth(width), m_windowHeight(height)
+DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FEATURE_LEVEL featureLevel,
+				   const DebugLayerMode debugLayerMode, const std::span<char*>& args)
+	: m_windowWidth{width}, m_windowHeight{height}, m_debugLayerMode{debugLayerMode}
 {
+	if (args.size() != 0)
+		ParseArguments(args);
+	
 	// Needed for WIC textures
 	CheckHR(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 
@@ -102,7 +112,7 @@ DxDevice::DxDevice(const int width, const int height, const LPCSTR title, D3D_FE
 												 featureLevel,
 												 DirectX::DeviceResources::c_AllowTearing};
 	m_deviceResources.SetWindow(window, width, height);
-	m_deviceResources.CreateDeviceResources(debugLayerMode);
+	m_deviceResources.CreateDeviceResources(m_debugLayerMode);
 	m_deviceResources.CreateWindowSizeDependentResources();
 
 	m_resourceUpload = std::make_unique<DxResourceUpload>(m_deviceResources.GetD3DDevice());
@@ -249,7 +259,8 @@ void DxDevice::EndFrame()
 		m_deviceResources.HandleDeviceLost();
 	}
 
-	m_scratchResources.clear();
+	if (!m_keepScratchResources)
+		m_scratchResources.clear();
 
 	MSG msg{};
 	::PeekMessage(&msg, m_deviceResources.GetWindow(), 0, 0, PM_REMOVE);
@@ -265,4 +276,52 @@ void DxDevice::EndFrame()
 
 	m_input.Update();
 	m_deltaTime = std::chrono::duration<float>(Clock::now() - m_lastFrameTime).count();
+}
+
+void DxDevice::ParseArguments(const std::span<char*>& args)
+{	
+	for (const char* arg : args)
+	{
+		/*
+		 * Debug layer
+		 */
+		if (std::strcmp(arg, "--disable-debug-layer") == 0)
+			m_debugLayerMode = DebugLayerMode::Disabled;
+		else if (std::strcmp(arg, "-nd") == 0)
+			m_debugLayerMode = DebugLayerMode::Disabled;
+		else if (std::strcmp(arg, "--no-gpu-validation") == 0)
+			m_debugLayerMode = DebugLayerMode::EnabledNoGpuValidation;
+		else if (std::strcmp(arg, "--no-com-queue-validation") == 0)
+			m_debugLayerMode = DebugLayerMode::EnabledNoComQueueValidation;
+		else if (std::strcmp(arg, "--only-basic-validation") == 0)
+			m_debugLayerMode = DebugLayerMode::EnabledOnlyBasicValidation;
+		/*
+		 * Debugging tools
+		 */
+		else if (std::strcmp(arg, "--keep-scratch-resources") == 0)
+			m_keepScratchResources = 1;
+	}
+	
+	// Log changes
+	switch (m_debugLayerMode)
+	{
+	case DebugLayerMode::Disabled:
+		Log::Info("D3D12 Debug Layer Mode: Disabled");
+		break;
+	case DebugLayerMode::Enabled:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (All validation layers)");
+		break;
+	case DebugLayerMode::EnabledNoGpuValidation:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (No GPU validation)");
+		break;
+	case DebugLayerMode::EnabledNoComQueueValidation:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (No synchronized CommandQueue validation)");
+		break;
+	case DebugLayerMode::EnabledOnlyBasicValidation:
+		Log::Info("D3D12 Debug Layer Mode: Enabled (Only basic debug info)");
+		break;
+	}
+	
+	if (m_keepScratchResources)
+		Log::Info("Keeping scratch resources registered in the device alive");
 }

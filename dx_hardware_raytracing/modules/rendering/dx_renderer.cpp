@@ -14,22 +14,30 @@ import dx_wrapper.helpers.dx_buffer_helpers;
 DxRenderer::DxRenderer(DxDevice* device)
 	: m_rayOutputTexture{*device,
 						 TextureType::D2,
-						 DXGI_FORMAT_R8G8B8A8_UNORM,
+						 DXGI_FORMAT_R11G11B10_FLOAT,
 						 static_cast<std::uint32_t>(device->GetWidth()),
 						 static_cast<std::uint32_t>(device->GetHeight()),
 						 1,
-						 false,
-						 true},
+						 false},
+	  m_blitTexture{*device,
+					TextureType::D2,
+					DXGI_FORMAT_R8G8B8A8_UNORM,
+					static_cast<std::uint32_t>(device->GetWidth()),
+					static_cast<std::uint32_t>(device->GetHeight()),
+					1,
+					false},
 	  m_sceneLighting{*device}
 {
 	m_device = device;
 
 	m_rayOutputTexture.CreateUAV(*m_device, 0);
+	m_blitTexture.CreateUAV(*m_device, 0);
 
 	m_rayGenRootSignature = DxRootSignature{};
 	m_rayGenRootSignature.AddDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 0, 1); // Output texture
 	m_rayGenRootSignature.AddBufferSRV(0);											 // BVH
 	m_rayGenRootSignature.AddConstantBuffer(0);										 // CameraCB
+	m_rayGenRootSignature.AddConstantBuffer(1);										 // SceneCB
 	m_rayGenRootSignature.Finalize(*m_device, "Ray Gen Root Signature", false, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 
 	m_missRootSignature = DxRootSignature{};
@@ -62,6 +70,13 @@ DxRenderer::DxRenderer(DxDevice* device)
 			.SetMaxPayloadSize(8 * sizeof(DWORD32))
 			.SetMaxAttributesSize(2 * sizeof(DWORD32))
 			.SetMaxRecursionDepth(8);
+
+	// Blitting pipeline
+	m_blitRootSignature = DxRootSignature{};
+	m_blitRootSignature.Add32BitConstants(0, 16).Finalize(*device, "Blit Root Sig", true);
+
+	m_blitPipeline = DxPipelineState{};
+	m_blitPipeline.SetComputeShader("shaders/rt_blit_compute.hlsl").Finalize(*device, m_blitRootSignature, "Blit Pipeline");
 }
 
 void DxRenderer::AddModel(const std::filesystem::path& path) { m_models.emplace_back(*m_device, path); }
@@ -72,6 +87,7 @@ void DxRenderer::Render()
 	if (m_device->GetWidth() != m_rayOutputTexture.GetWidth() || m_device->GetHeight() != m_rayOutputTexture.GetHeight())
 	{
 		m_rayOutputTexture.ResizeClear(*m_device, m_device->GetWidth(), m_device->GetHeight());
+		m_blitTexture.ResizeClear(*m_device, m_device->GetWidth(), m_device->GetHeight());
 		m_camera.SetAspectRatio(*m_device);
 	}
 
@@ -87,7 +103,8 @@ void DxRenderer::Render()
 										 "RayGen",
 										 {reinterpret_cast<void*>(rayOutGpuHandle.ptr),
 										  reinterpret_cast<void*>(m_tlas->GetGPUVirtualAddress()),
-										  reinterpret_cast<void*>(m_cameraConstBuffer->GetGPUVirtualAddress())});
+										  reinterpret_cast<void*>(m_cameraConstBuffer->GetGPUVirtualAddress()),
+										  reinterpret_cast<void*>(m_sceneConstBuffer->GetGPUVirtualAddress())});
 
 		m_renderPipeline.AddMissShader("shaders/miss.hlsl", "Miss");
 		m_renderPipeline.AddMissShader("shaders/miss.hlsl", "ShadowMiss");
@@ -120,12 +137,15 @@ void DxRenderer::Render()
 	sceneConstBuffer.m_debugMode		 = m_debugMode;
 	sceneConstBuffer.m_maxRecursionDepth = 8u;
 	sceneConstBuffer.m_frameNum++;
+	sceneConstBuffer.m_accumulationFame = m_accumulate ? sceneConstBuffer.m_accumulationFame + 1 : 0;
+	sceneConstBuffer.m_flags			= m_accumulate ? 1u : 0u;
 	m_sceneConstBuffer.UpdateData(*m_device, sceneConstBuffer);
 
 	/*
 	 * Ray tracing
 	 */
 	m_rayOutputTexture.Transition(commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	m_blitTexture.Transition(commandList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_DISPATCH_RAYS_DESC desc{};
 
@@ -166,14 +186,38 @@ void DxRenderer::Render()
 	commandList->DispatchRays(&desc);
 
 	// Copy the output to the RTV
+	// Blit to the intermediate buffer
+	commandList->SetComputeRootSignature(*m_blitRootSignature);
+	commandList->SetPipelineState(*m_blitPipeline);
+
+	struct BlitParams
+	{
+		std::int32_t  m_input;
+		std::int32_t  m_output;
+		std::uint32_t m_width;
+		std::uint32_t m_height;
+	};
+	const BlitParams params{m_rayOutputTexture.GetUavHeapIndex(),
+							m_blitTexture.GetUavHeapIndex(),
+							static_cast<std::uint32_t>(m_rayOutputTexture.GetWidth()),
+							static_cast<std::uint32_t>(m_rayOutputTexture.GetHeight())};
+
+	commandList->SetComputeRoot32BitConstants(0, 4, &params, 0);
+
+	const std::uint32_t threadsX = m_rayOutputTexture.GetWidth() >> 4;
+	const std::uint32_t threadsY = m_rayOutputTexture.GetHeight() >> 4;
+	commandList->Dispatch(threadsX, threadsY, 1);
+
+	// Copy to RT
 	auto* rt = m_device->GetRenderTarget();
 
-	m_rayOutputTexture.Transition(commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	m_blitTexture.Transition(commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	Transition(commandList, rt, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
 
-	commandList->CopyResource(rt, *m_rayOutputTexture);
+	commandList->CopyResource(rt, *m_blitTexture);
 
 	Transition(commandList, rt, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_blitTexture.Transition(commandList, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 }
 
 void DxRenderer::Inspector()
@@ -189,10 +233,14 @@ void DxRenderer::Inspector()
 	else
 		smoothFPS += fps_alpha * (currentFPS - smoothFPS);
 
+	ImGui::Text("Frame %d", m_sceneConstBuffer.GetLocalStorage().m_frameNum);
+	ImGui::Text("Accumulation frame %d", m_sceneConstBuffer.GetLocalStorage().m_accumulationFame);
 	ImGui::Text("%.1f fps", smoothFPS);
 	ImGui::Text("%.1f ms", 1000.0f * dt);
 
 	ImGui::SeparatorText("Debugging");
+
+	ImGui::Checkbox("Accumulate", &m_accumulate);
 
 	// Debug mode selector
 	const auto* const* debugModeOptions = debug_mode_names.data();
