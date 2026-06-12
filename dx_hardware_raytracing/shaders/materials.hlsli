@@ -26,6 +26,18 @@ struct FragmentAttributes
     float m_ior; // Implemented later on
 };
 
+static const FragmentAttributes default_fragment_attributes = { 
+    float4(1.0, 1.0, 1.0, 1.0), // albedo
+    float3(0.0, 0.0, 0.0), // emissive
+    1.0, // roughness
+    float3(0.0, 0.0, 0.0), // normal
+    0.0, // metallic
+    float3(0.0, 0.0, 0.0), // tangent
+    0.0, // transmission
+    float3(0.0, 0.0, 0.0), // bitangent
+    1.5  // IOR
+};
+
 float  SampleTexture(in Texture2D<float> tex,  in SamplerState samplerState, in float2 uv0, in float2 uv1, in uint flags, in uint index);
 float2 SampleTexture(in Texture2D<float2> tex, in SamplerState samplerState, in float2 uv0, in float2 uv1, in uint flags, in uint index);
 float3 SampleTexture(in Texture2D<float3> tex, in SamplerState samplerState, in float2 uv0, in float2 uv1, in uint flags, in uint index);
@@ -33,11 +45,7 @@ float4 SampleTexture(in Texture2D<float4> tex, in SamplerState samplerState, in 
 
 FragmentAttributes GetFragmentAttributes(in SamplerState samplerState, in Vertex fragment, in ShaderMaterial material) 
 {
-    FragmentAttributes attributes = (FragmentAttributes)0;
-    
-    // TODO: Add textures or params for this
-    attributes.m_transmission = 0.0;
-    attributes.m_ior = 1.5;
+    FragmentAttributes attributes = default_fragment_attributes;
 
     // Albedo
     if (material.m_albedoTex != -1)
@@ -70,6 +78,10 @@ FragmentAttributes GetFragmentAttributes(in SamplerState samplerState, in Vertex
         Texture2D<float3> normalTex = ResourceDescriptorHeap[material.m_normalTex];
         float3 normalSample = SampleTexture(normalTex, samplerState, fragment.Uv0, fragment.Uv1, material.m_flags, tex_normal);
         normalSample = 2.0 * normalSample - 1.0;
+
+        // reconstruct z always (in case a normal map is BC5)
+        normalSample.z = sqrt(1.0 - saturate(dot(normalSample.xy, normalSample.xy)));
+
         normalSample *= float3(material.m_normalScale, material.m_normalScale, 1.0);
 
         float3x3 TBN = float3x3(fragment.Tangent.xyz, fragment.Tangent.w * cross(fragment.Normal, fragment.Tangent.xyz), fragment.Normal);
