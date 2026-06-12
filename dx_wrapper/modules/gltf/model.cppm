@@ -44,7 +44,7 @@ GltfModel<T>::GltfModel(DxDevice& device, const std::filesystem::path& path)
 	m_materials.clear();
 	m_meshes.clear();
 	m_nodes.clear();
-	
+
 	fastgltf::Parser parser{};
 
 	constexpr auto gltfOptions = fastgltf::Options::DontRequireValidAssetMember | fastgltf::Options::LoadExternalBuffers |
@@ -66,10 +66,10 @@ GltfModel<T>::GltfModel(DxDevice& device, const std::filesystem::path& path)
 	// Parse meshes
 	m_meshes.clear();
 	m_meshes.reserve(asset.meshes.size());
-	
+
 	for (const auto& mesh : asset.meshes)
 		m_meshes.push_back(std::make_shared<GltfMesh<T>>(device, path, asset, mesh, m_materials));
-	
+
 	// Parse scene nodes
 	auto function = [&](const size_t nodeIndex, std::shared_ptr<GltfNode<T>> parent, auto& self) -> void
 	{
