@@ -82,7 +82,7 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 		CheckHR(DirectX::LoadFromWICFile(path.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, image));
 	isCubemap = metadata.IsCubemap();
 
-	if (generateMips && image.GetMetadata().mipLevels == 1)
+	if (generateMips && metadata.mipLevels == 1 && metadata.width > 1)
 	{
 		DirectX::ScratchImage mipChain;
 		CheckHR(DirectX::GenerateMipMaps(*image.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, mipChain));
@@ -90,7 +90,8 @@ DxTexture::DxTexture(const DxDevice& device, const std::filesystem::path& path, 
 		metadata = image.GetMetadata();
 	}
 
-	auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	auto flags = IsUAVCompatible(*device, true, metadata.format) ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+																 : D3D12_RESOURCE_FLAG_NONE;
 	if (additionalFlags != D3D12_RESOURCE_FLAG_NONE)
 		flags = static_cast<D3D12_RESOURCE_FLAGS>(flags | additionalFlags);
 
@@ -341,7 +342,7 @@ void DxTexture::ResizeClear(const DxDevice& device, std::uint32_t width, std::ui
 	UpdateOrCreateSrv(device, m_textureType == TextureType::DCube, true);
 	for (int i = 0; i < m_uavDescs.size(); ++i)
 		UpdateOrCreateUav(device, 0, 0, 0, true, i);
-	
+
 	DerivedUpdateDescriptors(device);
 }
 
